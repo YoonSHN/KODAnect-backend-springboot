@@ -65,6 +65,7 @@ public class BoardTestController {
         return ResponseEntity.ok(ApiResponse.fail(404, "이 코드는 도달하지 않습니다."));
     }
 
+    //test
     @GetMapping("/error/500")
     public ResponseEntity<ApiResponse<Void>> simulateInternalError() {
         boardTestService.simulateInternalError();
