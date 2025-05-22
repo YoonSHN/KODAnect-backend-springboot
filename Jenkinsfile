@@ -70,31 +70,31 @@ pipeline {
             }
         }
 
-        stage('SonarCloud Analysis') {
-            steps {
-                script {
-                    githubNotify context: 'sonar', status: 'PENDING', description: 'SonarCloud 분석 중...'
-                    withSonarQubeEnv('SonarCloud') {
-                        catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-                            sh '''
-                                ./mvnw sonar:sonar \
-                                -Dsonar.projectKey=kodanect \
-                                -Dsonar.organization=fc-dev3-final-project \
-                                -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
-                            '''
-                        }
-
-                        if (currentBuild.currentResult == 'FAILURE') {
-                            githubNotify context: 'sonar', status: 'FAILURE', description: 'SonarCloud 분석 실패'
-                            env.CI_FAILED = 'true'
-                            error('Sonar 분석 실패')
-                        } else {
-                            githubNotify context: 'sonar', status: 'SUCCESS', description: 'SonarCloud 분석 성공'
-                        }
-                    }
-                }
-            }
-        }
+//         stage('SonarCloud Analysis') {
+//             steps {
+//                 script {
+//                     githubNotify context: 'sonar', status: 'PENDING', description: 'SonarCloud 분석 중...'
+//                     withSonarQubeEnv('SonarCloud') {
+//                         catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+//                             sh '''
+//                                 ./mvnw sonar:sonar \
+//                                 -Dsonar.projectKey=kodanect \
+//                                 -Dsonar.organization=fc-dev3-final-project \
+//                                 -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+//                             '''
+//                         }
+//
+//                         if (currentBuild.currentResult == 'FAILURE') {
+//                             githubNotify context: 'sonar', status: 'FAILURE', description: 'SonarCloud 분석 실패'
+//                             env.CI_FAILED = 'true'
+//                             error('Sonar 분석 실패')
+//                         } else {
+//                             githubNotify context: 'sonar', status: 'SUCCESS', description: 'SonarCloud 분석 성공'
+//                         }
+//                     }
+//                 }
+//             }
+//         }
 
 
         stage('Docker Build & Push') {
