@@ -142,7 +142,7 @@ pipeline {
                         string(credentialsId: 'db-username', variable: 'DB_USERNAME'),
                         string(credentialsId: 'db-password', variable: 'DB_PASSWORD'),
                         string(credentialsId: 'spring-profile', variable: 'SPRING_PROFILES_ACTIVE'),
-                        string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN'),
+                        string(credentialsId: 'github-token-string', variable: 'GITHUB_TOKEN'),
                         usernamePassword(credentialsId: 'server-ssh-login', usernameVariable: 'SSH_USER', passwordVariable: 'SSH_PASS')
                     ]) {
                         sh """
