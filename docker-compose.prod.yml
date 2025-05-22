@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  spring:
+    image: docker.io/${DOCKER_USER}/kodanect:${IMAGE_TAG}
+    container_name: kodanect-spring-prod
+    restart: always
+    env_file:
+      - .env
+    environment:
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_NAME: ${DB_NAME}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+    ports:
+      - "8080:8080"
+    networks:
+      - kodanect-net
+
+networks:
+  kodanect-net:
+    driver: bridge

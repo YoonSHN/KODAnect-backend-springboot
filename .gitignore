@@ -1,0 +1,61 @@
+# === 운영체제 무시 항목 ===
+.DS_Store
+Thumbs.db
+
+# === IDE 설정 파일 ===
+# Eclipse
+.classpath
+.project
+.settings/
+
+# IntelliJ IDEA (선택적, 사용하는 경우)
+.idea/
+*.iml
+
+# === 빌드 결과물 ===
+target/
+build/
+bin/
+out/
+
+# === Maven ===
+*.log
+*.tmp
+*.bak
+*.swp
+*.swo
+*.orig
+dependency-reduced-pom.xml
+release.properties
+
+# === eGovFrame 특화 ===
+.egovprops/
+.egovfiles/
+.egovtemp/
+
+# === 로그 및 환경 설정 ===
+logs/
+*.log
+*.properties~
+*.yml~
+*.env
+.env.dev
+.env.prod
+
+# === 배포 패키지 ===
+*.war
+*.jar
+*.ear
+
+# === 테스트 및 커버리지 ===
+test-output/
+coverage/
+
+# === 기타 ===
+*.class
+*.cache
+*.sql~
+*.db
+
+KODAnect-backend-springboot.git/
+KODAnect-backend-springboot.git.bfg-report/
