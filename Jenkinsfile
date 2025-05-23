@@ -70,33 +70,6 @@ pipeline {
             }
         }
 
-//         stage('SonarCloud Analysis') {
-//             steps {
-//                 script {
-//                     githubNotify context: 'sonar', status: 'PENDING', description: 'SonarCloud 분석 중...'
-//                     withSonarQubeEnv('SonarCloud') {
-//                         catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-//                             sh '''
-//                                 ./mvnw sonar:sonar \
-//                                 -Dsonar.projectKey=kodanect \
-//                                 -Dsonar.organization=fc-dev3-final-project \
-//                                 -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
-//                             '''
-//                         }
-//
-//                         if (currentBuild.currentResult == 'FAILURE') {
-//                             githubNotify context: 'sonar', status: 'FAILURE', description: 'SonarCloud 분석 실패'
-//                             env.CI_FAILED = 'true'
-//                             error('Sonar 분석 실패')
-//                         } else {
-//                             githubNotify context: 'sonar', status: 'SUCCESS', description: 'SonarCloud 분석 성공'
-//                         }
-//                     }
-//                 }
-//             }
-//         }
-
-
         stage('Docker Build & Push') {
             when {
                 branch 'main'
@@ -158,24 +131,27 @@ DOCKER_USER=${DOCKER_USER}
 IMAGE_TAG=${imageTag}
 EOF
 
-                            # 서버에 .env 전송
-                            sshpass -p "$SSH_PASS" scp -o StrictHostKeyChecking=no .env $SSH_USER@$SERVER_HOST:~/docker-compose-prod/.env
+                            # 서버에 디렉토리 생성
+                            sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no $SSH_USER@$SERVER_HOST 'mkdir -p /root/docker-compose-prod'
+
+                            # .env 파일 전송
+                            sshpass -p "$SSH_PASS" scp -o StrictHostKeyChecking=no .env $SSH_USER@$SERVER_HOST:/root/docker-compose-prod/.env
 
                             # 서버에서 배포 수행
                             sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no $SSH_USER@$SERVER_HOST '
                                 echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
 
-                                if [ ! -d ~/docker-compose-prod ]; then
-                                    git clone https://github.com/FC-DEV3-Final-Project/KODAnect-backend-springboot.git ~/docker-compose-prod
+                                if [ ! -d /root/docker-compose-prod ]; then
+                                    git clone https://github.com/FC-DEV3-Final-Project/KODAnect-backend-springboot.git /root/docker-compose-prod
                                 else
-                                    cd ~/docker-compose-prod && git pull
+                                    cd /root/docker-compose-prod && git pull
                                 fi
 
-                                cd ~/docker-compose-prod &&
+                                cd /root/docker-compose-prod &&
                                 docker-compose -f docker-compose.prod.yml pull &&
                                 docker-compose -f docker-compose.prod.yml up -d
 
-                                rm -f .env
+                                rm -f /root/docker-compose-prod/.env
                             '
 
                             rm -f .env
