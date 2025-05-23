@@ -71,6 +71,9 @@ pipeline {
         }
 
         stage('SonarCloud Analysis') {
+            when {
+                branch 'main'
+            }
             steps {
                 script {
                     githubNotify context: 'sonar', status: 'PENDING', description: 'SonarCloud 분석 중...'
