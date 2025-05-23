@@ -9,6 +9,7 @@ pipeline {
 
         CI_FAILED = 'false'
         CD_FAILED = 'false'
+        MAVEN_OPTS = '-Xmx2g'
     }
 
     stages {
