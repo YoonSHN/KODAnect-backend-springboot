@@ -14,11 +14,4 @@ services:
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
-    ports:
-      - "8080:8080"
-    networks:
-      - kodanect-net
-
-networks:
-  kodanect-net:
-    driver: bridge
+    network_mode: host
