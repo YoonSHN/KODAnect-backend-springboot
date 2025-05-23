@@ -70,6 +70,32 @@ pipeline {
             }
         }
 
+        stage('SonarCloud Analysis') {
+            steps {
+                script {
+                    githubNotify context: 'sonar', status: 'PENDING', description: 'SonarCloud 분석 중...'
+                    withSonarQubeEnv('SonarCloud') {
+                        catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                            sh '''
+                                ./mvnw sonar:sonar \
+                                -Dsonar.projectKey=kodanect \
+                                -Dsonar.organization=fc-dev3-final-project \
+                                -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+                            '''
+                        }
+
+                        if (currentBuild.currentResult == 'FAILURE') {
+                            githubNotify context: 'sonar', status: 'FAILURE', description: 'SonarCloud 분석 실패'
+                            env.CI_FAILED = 'true'
+                            error('Sonar 분석 실패')
+                        } else {
+                            githubNotify context: 'sonar', status: 'SUCCESS', description: 'SonarCloud 분석 성공'
+                        }
+                    }
+                }
+            }
+        }
+
         stage('Docker Build & Push') {
             when {
                 branch 'main'
@@ -119,7 +145,6 @@ pipeline {
                         usernamePassword(credentialsId: 'server-ssh-login', usernameVariable: 'SSH_USER', passwordVariable: 'SSH_PASS')
                     ]) {
                         sh """
-                            # .env 파일 생성
                             cat > .env <<EOF
 DB_HOST=${DB_HOST}
 DB_PORT=${DB_PORT}
@@ -131,13 +156,10 @@ DOCKER_USER=${DOCKER_USER}
 IMAGE_TAG=${imageTag}
 EOF
 
-                            # 서버에 디렉토리 생성
                             sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no $SSH_USER@$SERVER_HOST 'mkdir -p /root/docker-compose-prod'
 
-                            # .env 파일 전송
                             sshpass -p "$SSH_PASS" scp -o StrictHostKeyChecking=no .env $SSH_USER@$SERVER_HOST:/root/docker-compose-prod/.env
 
-                            # 서버에서 배포 수행
                             sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no $SSH_USER@$SERVER_HOST '
                                 echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
 
@@ -159,7 +181,6 @@ EOF
 
                         githubNotify context: 'deploy', status: 'SUCCESS', description: "배포 완료 [${imageTag}]"
 
-                        // GitHub Release 생성
                         sh """
                             export GITHUB_TOKEN=${GITHUB_TOKEN}
                             gh release create ${imageTag} \\
