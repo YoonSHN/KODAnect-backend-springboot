@@ -1,4 +1,4 @@
-package kodanect.domain.remembrance.entity;
+package kodanect.domain.recipient.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -36,12 +36,14 @@ public class RecipientEntity {
     // 편지 작성자
     private String letterWriter;
     // 편지 익명여부
-    @Column(name = "anonymity_flag", columnDefinition = "CHAR(1)")
-    private char anonymityFlag;
+    @Column(name = "anonymity_flag", length = 1)
+    private String anonymityFlag;
     // 조회 건수 (Request 시에는 0으로 초기화되거나 무시)
     @Builder.Default
     private int readCount = 0;
     // 편지 내용
+    @Lob
+    @Column(name = "letter_contents", columnDefinition = "TEXT")
     private String letterContents;
     // 이미지 파일 명
     private String fileName;
@@ -57,9 +59,9 @@ public class RecipientEntity {
     // 수정자 아이디
     private String modifierId;
     // 삭제 여부 (Request 시에는 클라이언트에서 보내지 않음)
-    @Column(name = "del_flag", columnDefinition = "CHAR(1)")
+    @Column(name = "del_flag", length = 1)
     @Builder.Default
-    private char delFlag = 'N';
+    private String delFlag = "N";
 
     // 검색 키워드용
     @Transient

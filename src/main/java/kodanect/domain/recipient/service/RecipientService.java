@@ -1,7 +1,7 @@
-package kodanect.domain.remembrance.service;
+package kodanect.domain.recipient.service;
 
-import kodanect.domain.remembrance.dto.RecipientResponseDto;
-import kodanect.domain.remembrance.entity.RecipientEntity;
+import kodanect.domain.recipient.dto.RecipientResponseDto;
+import kodanect.domain.recipient.entity.RecipientEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -51,7 +51,7 @@ public interface RecipientService {
             List<Predicate> predicates = new ArrayList<>();
 
             // 삭제되지 않은 게시물만 조회
-            predicates.add(cb.equal(root.get("delFlag"), false));
+            predicates.add(cb.equal(root.get("delFlag"), "N"));
 
             // 제목 조건
             if (StringUtils.hasText(searchCondition.getLetterTitle())) {

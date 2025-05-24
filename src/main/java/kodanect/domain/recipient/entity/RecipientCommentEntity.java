@@ -1,4 +1,4 @@
-package kodanect.domain.remembrance.entity;
+package kodanect.domain.recipient.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -33,6 +33,8 @@ public class RecipientCommentEntity {
     // 댓글 비밀번호 (Request 시 필요, Response 시 제외)
     private String commentPasscode;
     // 댓글 내용
+    @Lob
+    @Column(name = "contents", columnDefinition = "TEXT")
     private String contents;
     // 생성 일시
     @Column(nullable = false, updatable = false)
@@ -45,9 +47,9 @@ public class RecipientCommentEntity {
     // 수정자 아이디
     private String modifierId;
     // 삭제 여부
-    @Column(nullable = false, columnDefinition = "CHAR(1)")
+    @Column(name = "del_flag", nullable = false, columnDefinition = "CHAR(1)")
     @Builder.Default
-    private char delFlag = 'N';
+    private String delFlag = "N";
 
     @PrePersist
     public void prePersist() {

@@ -1,8 +1,8 @@
-package kodanect.domain.remembrance.dto;
+package kodanect.domain.recipient.dto;
 
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import kodanect.domain.remembrance.entity.RecipientCommentEntity;
+import kodanect.domain.recipient.entity.RecipientCommentEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -30,7 +30,7 @@ public class RecipientCommentResponseDto {
     private LocalDateTime modifyTime;
     private String modifierId;
 
-    private char delFlag;
+    private String delFlag;
 
     // Entity -> DTO 변환 메서드 (정적 팩토리 메서드)
     public static RecipientCommentResponseDto fromEntity(RecipientCommentEntity entity) {
