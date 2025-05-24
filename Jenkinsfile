@@ -149,7 +149,7 @@ pipeline {
                         usernamePassword(credentialsId: 'server-ssh-login', usernameVariable: 'SSH_USER', passwordVariable: 'SSH_PASS')
                     ]) {
                         sh """
-                            cat > .env <<EOF
+                            cat > .env <<'EOF'
 DB_HOST=${DB_HOST}
 DB_PORT=${DB_PORT}
 DB_NAME=${DB_NAME}
