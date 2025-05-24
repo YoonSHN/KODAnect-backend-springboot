@@ -6,7 +6,7 @@
 <module name="Checker">
     <property name="severity" value="error"/>
 
-    <!-- ✔ LineLength는 TreeWalker 바깥에 위치해야 함 -->
+    <!-- LineLength는 TreeWalker 바깥에 위치해야 함 -->
     <module name="LineLength">
         <property name="max" value="200"/>
         <property name="ignorePattern" value="^package.*|^import.*"/>
@@ -39,6 +39,7 @@
         <module name="AvoidStarImport">
             <property name="allowClassImports" value="true"/>
         </module>
+        <module name="RedundantImport"/>
 
         <!-- Javadoc -->
         <module name="JavadocMethod">
@@ -51,6 +52,20 @@
         <module name="IllegalImport">
             <property name="illegalClasses" value="java.util.Vector, java.util.Hashtable"/>
         </module>
+
+        <!-- 예외 무시 방지 -->
+        <module name="EmptyCatchBlock"/>
+
+        <!-- 멤버 순서 일관성 -->
+        <module name="DeclarationOrder"/>
+
+        <!-- 상수 사용 권장 -->
+        <module name="MagicNumber">
+            <property name="ignoreNumbers" value="0,1,-1"/>
+        </module>
+
+        <!-- null-safe 비교 습관 -->
+        <module name="EqualsAvoidNull"/>
 
     </module>
 </module>

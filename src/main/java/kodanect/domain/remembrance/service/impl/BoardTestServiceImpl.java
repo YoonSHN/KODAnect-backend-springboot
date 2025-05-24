@@ -2,14 +2,19 @@ package kodanect.domain.remembrance.service.impl;
 
 import kodanect.domain.remembrance.entity.BoardTest;
 import kodanect.domain.remembrance.service.BoardTestService;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * BoardTest 서비스 구현체
+ *
+ * 역할
+ * - 더미 게시글 데이터 반환
+ * - 서버 내부 예외 시뮬레이션
+ */
 @Service
 public class BoardTestServiceImpl implements BoardTestService {
 
@@ -39,16 +44,21 @@ public class BoardTestServiceImpl implements BoardTestService {
 
     private final List<BoardTest> boards = Arrays.asList(dummy1, dummy2, dummy3);
 
+    /**
+     * 게시글 목록 반환
+     *
+     * 더미 게시글 리스트 반환
+     */
     @Override
     public List<BoardTest> success() {
         return boards;
     }
 
-    @Override
-    public void simulateNotFound() {
-        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "요청한 리소스를 찾을 수 없습니다.");
-    }
-
+    /**
+     * 내부 오류 시뮬레이션
+     *
+     * IllegalArgumentException 강제 발생
+     */
     @Override
     public void simulateInternalError() {
         throw new IllegalArgumentException("서버 내부 오류가 발생했습니다.");
