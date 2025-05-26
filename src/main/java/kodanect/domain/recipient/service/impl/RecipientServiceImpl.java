@@ -1,6 +1,7 @@
 package kodanect.domain.recipient.service.impl;
 
 import kodanect.domain.recipient.dto.RecipientResponseDto;
+import kodanect.domain.recipient.entity.RecipientCommentEntity;
 import kodanect.domain.recipient.entity.RecipientEntity;
 import kodanect.domain.recipient.repository.RecipientCommentRepository;
 import kodanect.domain.recipient.repository.RecipientRepository;
@@ -104,8 +105,24 @@ public class RecipientServiceImpl implements RecipientService {
         if (letterPasscode == null || !letterPasscode.equals(recipientEntity_old.getLetterPasscode())) {
             throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
         } else {
+            // 게시물 소프트 삭제
             recipientEntity_old.setDelFlag("Y");
             recipientRepository.save(recipientEntity_old);
+
+            // 해당 게시물의 모든 댓글 소프트 삭제
+            List<RecipientCommentEntity> commentsToSoftDelete =
+                    recipientCommentRepository.findByLetter_LetterSeqAndDelFlagOrderByWriteTimeAsc(letterSeq, "N");
+
+            if (commentsToSoftDelete != null && !commentsToSoftDelete.isEmpty()) {
+                for (RecipientCommentEntity comment : commentsToSoftDelete) {
+                    comment.setDelFlag("Y"); // 댓글의 delflag를 'Y'로 변경
+                    // 각 댓글을 저장하여 변경사항을 DB에 반영 (벌크 업데이트가 더 효율적일 수 있으나, 현재 상황에서 단일 저장)
+                    recipientCommentRepository.save(comment);
+                }
+                // logger.info("게시물 {} 에 연결된 {}개의 댓글이 소프트 삭제 처리되었습니다.", letterSeq, commentsToSoftDelete.size());
+            } else {
+                // logger.info("게시물 {} 에 연결된 활성 댓글이 없습니다. 소프트 삭제할 댓글 없음.", letterSeq);
+            }
         }
     }
 

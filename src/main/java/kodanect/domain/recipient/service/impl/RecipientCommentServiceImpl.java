@@ -56,6 +56,11 @@ public class RecipientCommentServiceImpl implements RecipientCommentService {
         RecipientEntity recipientEntity = recipientRepository.findById(letterSeq)
                 .orElseThrow(() -> new IllegalArgumentException("게시물을 찾을 수 없습니다: " + letterSeq));
 
+        if ("Y".equalsIgnoreCase(recipientEntity.getDelFlag())) { // delflag가 'Y'이면 삭제된 게시물
+            logger.warn("댓글 작성 실패: 삭제된 게시물에 댓글을 달 수 없습니다. letterSeq: {}", letterSeq);
+            throw new IllegalArgumentException("삭제된 게시물에는 댓글을 달 수 없습니다.");
+        }
+
         // 2. 댓글 저장을 위한 부모레터 세팅
         commentEntityRequest.setLetter(recipientEntity); // JPA 연관관계 설정을 위해 실제 엔티티 참조
 

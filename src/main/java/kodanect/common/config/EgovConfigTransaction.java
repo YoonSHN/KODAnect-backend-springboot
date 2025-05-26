@@ -6,13 +6,16 @@ import org.springframework.aop.support.DefaultPointcutAdvisor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+//import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.orm.jpa.JpaTransactionManager;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.interceptor.*;
 
 import javax.sql.DataSource;
 import java.util.Collections;
 import java.util.HashMap;
+import javax.persistence.EntityManagerFactory;
 
 /**
  * 트랜잭션 AOP 설정
@@ -35,11 +38,21 @@ public class EgovConfigTransaction {
 	 *
 	 * DataSource 기반 트랜잭션 처리기 등록
 	 */
-	@Bean(name="txManager")
-	public DataSourceTransactionManager txManager(@Qualifier("dataSource") DataSource dataSource) {
-		DataSourceTransactionManager dataSourceTransactionManager = new DataSourceTransactionManager();
-		dataSourceTransactionManager.setDataSource(dataSource);
-		return dataSourceTransactionManager;
+//	@Bean(name="transactionManager")
+//	public PlatformTransactionManager txManager(@Qualifier("dataSource") DataSource dataSource) {
+//		return new DataSourceTransactionManager(dataSource);
+//	}
+
+	/**
+	 * 트랜잭션 매니저 Bean
+	 *
+	 * JPA 기반 트랜잭션 처리기 등록 (JpaTransactionManager 사용)
+	 */
+	@Bean(name="transactionManager")
+	// DataSourceTransactionManager 대신 JpaTransactionManager를 사용하고, EntityManagerFactory를 주입받습니다.
+	public PlatformTransactionManager transactionManager(EntityManagerFactory entityManagerFactory) {
+		// DataSourceTransactionManager 대신 JpaTransactionManager 반환
+		return new JpaTransactionManager(entityManagerFactory);
 	}
 
 	/**
@@ -48,12 +61,14 @@ public class EgovConfigTransaction {
 	 * 트랜잭션 전파 방식과 롤백 정책 설정
 	 */
 	@Bean
-	public TransactionInterceptor txAdvice(DataSourceTransactionManager txManager) {
+	public TransactionInterceptor txAdvice(@Qualifier("transactionManager") PlatformTransactionManager transactionManager) {
+		// 기본 트랜잭션 속성 정의
 		RuleBasedTransactionAttribute txAttribute = new RuleBasedTransactionAttribute();
 		txAttribute.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRED);
 		txAttribute.setRollbackRules(Collections.singletonList(new RollbackRuleAttribute(Exception.class)));
 
-		HashMap<String, TransactionAttribute> txMethods = new HashMap<String, TransactionAttribute>();
+		// 메서드명 패턴과 속성 매핑
+		HashMap<String, TransactionAttribute> txMethods = new HashMap<>();
 		txMethods.put("*", txAttribute);
 
 		NameMatchTransactionAttributeSource txAttributeSource = new NameMatchTransactionAttributeSource();
@@ -61,8 +76,7 @@ public class EgovConfigTransaction {
 
 		TransactionInterceptor txAdvice = new TransactionInterceptor();
 		txAdvice.setTransactionAttributeSource(txAttributeSource);
-		txAdvice.setTransactionManager(txManager);
-
+		txAdvice.setTransactionManager(transactionManager);
 		return txAdvice;
 	}
 
@@ -72,10 +86,10 @@ public class EgovConfigTransaction {
 	 * kodanect.domain 하위 service.impl 패키지의 모든 메서드에 트랜잭션 AOP 적용
 	 */
 	@Bean
-	public Advisor txAdvisor(@Qualifier("txManager") DataSourceTransactionManager txManager) {
+	public Advisor txAdvisor(@Qualifier("transactionManager") PlatformTransactionManager transactionManager) {
 		AspectJExpressionPointcut pointcut = new AspectJExpressionPointcut();
 		pointcut.setExpression("execution(* kodanect.domain..service.impl..*(..))");
-		return new DefaultPointcutAdvisor(pointcut, txAdvice(txManager));
+		return new DefaultPointcutAdvisor(pointcut, txAdvice(transactionManager));
 	}
 
 }
