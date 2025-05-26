@@ -46,12 +46,13 @@ public class RecipientCommentServiceImpl implements RecipientCommentService {
 //    @Transactional
     @Override
     public RecipientCommentResponseDto insertComment(RecipientCommentEntity commentEntityRequest) throws Exception {
-        logger.info("Inserting comment for letterSeq: {}", commentEntityRequest.getLetter().getLetterSeq());
 
         // 1. 댓글을 달 게시물(RecipientVO)이 실제로 존재하는지 확인
         Integer letterSeq = Optional.ofNullable(commentEntityRequest.getLetter())
                 .map(RecipientEntity::getLetterSeq)
                 .orElseThrow(() -> new IllegalArgumentException("댓글을 달 게시물 정보가 누락되었습니다."));
+        // 로그 출력
+        logger.info("Inserting comment for letterSeq: {}", letterSeq);
 
         RecipientEntity recipientEntity = recipientRepository.findById(letterSeq)
                 .orElseThrow(() -> new IllegalArgumentException("게시물을 찾을 수 없습니다: " + letterSeq));

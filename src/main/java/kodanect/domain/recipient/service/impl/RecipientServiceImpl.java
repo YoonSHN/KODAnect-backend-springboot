@@ -86,7 +86,15 @@ public class RecipientServiceImpl implements RecipientService {
         recipientEntityold.setOrganEtc(recipientEntityRequest.getOrganEtc());
         recipientEntityold.setLetterTitle(recipientEntityRequest.getLetterTitle());
         recipientEntityold.setRecipientYear(recipientEntityRequest.getRecipientYear());
-        recipientEntityold.setLetterWriter(recipientEntityRequest.getLetterWriter());
+        // --- 익명 처리 로직 추가 시작 ---
+        String writerToSave;
+        if ("Y".equalsIgnoreCase(recipientEntityRequest.getAnonymityFlag())) {
+            writerToSave = ANONYMOUS_WRITER_VALUE;
+        }
+        else {
+            writerToSave = recipientEntityRequest.getLetterWriter();
+        }
+        recipientEntityold.setLetterWriter(writerToSave);
         // 비밀번호는 수정 시 변경될 수 있으므로, 요청 DTO에 새로운 비밀번호가 있다면 업데이트
         if (recipientEntityRequest.getLetterPasscode() != null && !recipientEntityRequest.getLetterPasscode().isEmpty()) {
             recipientEntityold.setLetterPasscode(recipientEntityRequest.getLetterPasscode());
@@ -164,10 +172,12 @@ public class RecipientServiceImpl implements RecipientService {
         // Safelist.relaxed(): 기본적인 안전한 HTML 태그 (a, b, blockquote, br, cite, code, dd, dl, dt, em, i, li, ol, p, pre, q, small, span, strike, strong, sub, sup, u, ul, img) 허용
         Safelist safelist = Safelist.relaxed();
         String cleanContents = Jsoup.clean(recipientEntityRequest.getLetterContents(), safelist);
-        recipientEntityRequest.setLetterContents(cleanContents);
+        // 필터링 후 HTML 태그를 포함한 내용이 아니라, 순수 텍스트 내용이 비어있는지 확인 (HTML 태그를 제거하고 순수 텍스트만 얻음)
+        String pureTextContents = Jsoup.parse(cleanContents).text();
+        recipientEntityRequest.setLetterContents(cleanContents.trim());
 
         // 필터링 후 내용이 비어있는지 다시 확인 (모든 태그가 제거될 경우 대비)
-        if (cleanContents.trim().isEmpty()) {
+        if (pureTextContents.trim().isEmpty()) {
             logger.warn("내용 유효성 검사 실패: 필터링 후 내용이 비어있음");
             throw new Exception("내용은 필수 입력 항목입니다.");
         }

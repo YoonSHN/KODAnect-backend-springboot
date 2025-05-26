@@ -14,13 +14,13 @@ public interface RecipientRepository extends JpaRepository<RecipientEntity, Inte
     // 페이징된 게시물 ID 목록에 대해서만 댓글 수 조회
     @Query(value =  "SELECT c.letter_seq, COUNT(c.comment_seq) " +
                     "FROM tb25_431_recipient_letter_comment c " +
-                    "WHERE c.letter_seq IN :letterSeqs " +
+                    "WHERE c.letter_seq IN (:letterSeqs) AND c.del_flag = 'N' " + // <-- del_flag 조건 추가
                     "GROUP BY c.letter_seq", nativeQuery = true)
     List<Object[]> countCommentsByLetterSeqs(@Param("letterSeqs") List<Integer> letterSeqs);
 
     // 단일 게시물 댓글 수 조회 시 (selectRecipient에서 사용)
     @Query(value =  "SELECT COUNT(c.comment_seq) " +
                     "FROM tb25_431_recipient_letter_comment c " +
-                    "WHERE c.letter_seq = :letterSeq", nativeQuery = true)
+                    "WHERE c.letter_seq = :letterSeq AND c.del_flag = 'N'", nativeQuery = true) // <-- del_flag 조건 추가
     Integer countCommentsByLetterSeq(@Param("letterSeq") int letterSeq);
 }
