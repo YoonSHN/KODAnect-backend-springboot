@@ -38,13 +38,16 @@ public class RecipientCommentController {
             RecipientCommentResponseDto savedComment = recipientCommentService.insertComment(commentEntityRequest);
             logger.info("Comment successfully written with commentSeq: {}", savedComment.getCommentSeq());
             return new ResponseEntity<>(savedComment, HttpStatus.CREATED); // 201 Created
-        } catch (IllegalArgumentException e) {
+        }
+        catch (IllegalArgumentException e) {
             logger.warn("Bad request for comment write: {}", e.getMessage());
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST); // 400 Bad Request (예: 게시물 없음)
-        } catch (NoSuchElementException e) { // 서비스에서 NoSuchElementException을 던질 수 있음
+        }
+        catch (NoSuchElementException e) { // 서비스에서 NoSuchElementException을 던질 수 있음
             logger.warn("Not Found for comment write: {}", e.getMessage());
             return new ResponseEntity<>(HttpStatus.NOT_FOUND); // 404 Not Found
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             logger.error("Error writing comment for letterSeq {}: {}", letterSeq, e.getMessage(), e);
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR); // 500 Internal Server Error
         }
@@ -71,16 +74,19 @@ public class RecipientCommentController {
             RecipientCommentResponseDto updatedComment = recipientCommentService.updateComment(commentEntityRequest, inputPassword);
             logger.info("Comment successfully updated for commentSeq: {}", updatedComment.getCommentSeq());
             return new ResponseEntity<>(updatedComment, HttpStatus.OK); // 200 OK
-        } catch (IllegalArgumentException e) {
+        }
+        catch (IllegalArgumentException e) {
             logger.warn("Error updating comment {}: {}", commentSeq, e.getMessage());
             // 비밀번호 불일치: 403 Forbidden, 댓글 없음: 404 Not Found
             if (e.getMessage().contains("비밀번호가 일치하지 않습니다")) {
                 return new ResponseEntity<>(HttpStatus.FORBIDDEN); // 403 Forbidden
-            } else if (e.getMessage().contains("댓글을 찾을 수 없거나 이미 삭제되었습니다")) {
+            }
+            else if (e.getMessage().contains("댓글을 찾을 수 없거나 이미 삭제되었습니다")) {
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND); // 404 Not Found
             }
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST); // 400 Bad Request
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             logger.error("Error updating commentSeq {}: {}", commentSeq, e.getMessage(), e);
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR); // 500 Internal Server Error
         }
@@ -103,15 +109,18 @@ public class RecipientCommentController {
             recipientCommentService.deleteComment(commentSeq, commentPasscode);
             logger.info("Comment successfully deleted (logically) for commentSeq: {}", commentSeq);
             return new ResponseEntity<>(HttpStatus.NO_CONTENT); // 204 No Content
-        } catch (IllegalArgumentException e) {
+        }
+        catch (IllegalArgumentException e) {
             logger.warn("Error deleting comment {}: {}", commentSeq, e.getMessage());
             if (e.getMessage().contains("비밀번호가 일치하지 않습니다")) {
                 return new ResponseEntity<>(HttpStatus.FORBIDDEN); // 403 Forbidden
-            } else if (e.getMessage().contains("댓글을 찾을 수 없거나 이미 삭제되었습니다")) {
+            }
+            else if (e.getMessage().contains("댓글을 찾을 수 없거나 이미 삭제되었습니다")) {
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND); // 404 Not Found
             }
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST); // 400 Bad Request
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             logger.error("Error deleting commentSeq {}: {}", commentSeq, e.getMessage(), e);
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR); // 500 Internal Server Error
         }

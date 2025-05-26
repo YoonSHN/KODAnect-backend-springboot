@@ -27,7 +27,7 @@ public class RecipientCommentServiceImpl implements RecipientCommentService {
     private final RecipientCommentRepository recipientCommentRepository;
     private final RecipientRepository recipientRepository;
 
-    private static final Logger logger = LoggerFactory.getLogger(RecipientCommentServiceImpl.class); // 로거 선언
+    private final Logger logger = LoggerFactory.getLogger(RecipientCommentServiceImpl.class); // 로거 선언
 
     // 특정 게시물의 댓글 조회
     @Transactional(readOnly = true)
@@ -35,7 +35,7 @@ public class RecipientCommentServiceImpl implements RecipientCommentService {
     public List<RecipientCommentResponseDto> selectRecipientCommentByLetterSeq(int letterSeq) throws Exception{
         logger.info("Selecting comments for letterSeq: {}", letterSeq);
         // 삭제되지 않은 댓글만 조회하고, 작성시간 기준 오름차순으로 정렬
-        List<RecipientCommentEntity> comments = recipientCommentRepository.findByLetter_LetterSeqAndDelFlagOrderByWriteTimeAsc(letterSeq, "N"); // "N"으로 비교
+        List<RecipientCommentEntity> comments = recipientCommentRepository.findByLetterLetterSeqAndDelFlagOrderByWriteTimeAsc(letterSeq, "N"); // "N"으로 비교
 
         return comments.stream()
                 .map(RecipientCommentResponseDto::fromEntity) // Entity를 Response DTO로 변환

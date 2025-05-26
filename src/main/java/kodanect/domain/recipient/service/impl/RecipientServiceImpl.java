@@ -12,7 +12,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.safety.Safelist;
@@ -30,7 +29,19 @@ public class RecipientServiceImpl implements RecipientService {
     private final RecipientRepository recipientRepository;
     private final RecipientCommentRepository recipientCommentRepository;
 
-    private static final Logger logger = LoggerFactory.getLogger(RecipientService.class); // 로거 선언
+    private final Logger logger = LoggerFactory.getLogger(RecipientService.class); // 로거 선언
+
+    // 상수 정의
+    private final String PASSWORD_REGEX = "^(?=.*[a-zA-Z])(?=.*[0-9]).{8,}$";
+    private final int TITLE_MAX_LENGTH_BYTES = 50;
+    private final String ORGAN_CODE_REGEX = "^ORGAN(00[0-9]|01[0-4])$";
+    private final String ORGAN_CODE_DIRECT_INPUT = "ORGAN000";
+    private final int ORGAN_ETC_MAX_LENGTH_BYTES = 30;
+    private final String ANONYMOUS_WRITER_VALUE = "익명";
+    private final int WRITER_MAX_LENGTH_BYTES = 10;
+    private final int RECIPIENT_YEAR_MIN = 1995;
+    private final int RECIPIENT_YEAR_MAX = 2030;
+    private final int FILE_NAME_MAX_LENGTH_BYTES = 600;
 
     public RecipientServiceImpl(RecipientRepository recipientRepository, RecipientCommentRepository recipientCommentRepository) {
         this.recipientRepository = recipientRepository;
@@ -38,80 +49,82 @@ public class RecipientServiceImpl implements RecipientService {
     }
 
     // 게시물 비밀번호 확인
-    @Transactional
+//    @Transactional
     @Override
     public boolean verifyLetterPassword(Integer letterSeq, String letterPasscode) throws Exception {
 
         // 게시물 조회 (삭제되지 않은 게시물만 조회)
-        RecipientEntity recipientEntity_old = recipientRepository.findById(letterSeq)
+        RecipientEntity recipientEntityold = recipientRepository.findById(letterSeq)
                 .filter(entity -> "N".equalsIgnoreCase(entity.getDelFlag())) // 삭제되지 않은 게시물만 필터링
                 .orElseThrow(() -> new Exception("해당 게시물이 존재하지 않거나 이미 삭제되었습니다."));
 
         // 비밀번호 불일치
-        if (letterPasscode == null || !letterPasscode.equals(recipientEntity_old.getLetterPasscode())) {
+        if (letterPasscode == null || !letterPasscode.equals(recipientEntityold.getLetterPasscode())) {
             return false;
-        } else {
+        }
+        else {
             return true;
         }
     }
 
     // 게시물 수정
-    @Transactional
+//    @Transactional
     @Override
     public RecipientResponseDto updateRecipient(RecipientEntity recipientEntityRequest, Integer letterSeq, String requestPasscode) throws Exception {
         // 게시물 조회 (삭제되지 않은 게시물만 조회)
-        RecipientEntity recipientEntity_old = recipientRepository.findById(letterSeq)
+        RecipientEntity recipientEntityold = recipientRepository.findById(letterSeq)
                 .filter(entity -> "N".equalsIgnoreCase(entity.getDelFlag()))
                 .orElseThrow(() -> new NoSuchElementException("해당 게시물이 존재하지 않거나 이미 삭제되었습니다."));
 
         // 비밀번호 검증
-        if (requestPasscode == null || !requestPasscode.equals(recipientEntity_old.getLetterPasscode())) {
+        if (requestPasscode == null || !requestPasscode.equals(recipientEntityold.getLetterPasscode())) {
             throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
         }
 
         // 엔티티 필드 업데이트
-        recipientEntity_old.setOrganCode(recipientEntityRequest.getOrganCode());
-        recipientEntity_old.setOrganEtc(recipientEntityRequest.getOrganEtc());
-        recipientEntity_old.setLetterTitle(recipientEntityRequest.getLetterTitle());
-        recipientEntity_old.setRecipientYear(recipientEntityRequest.getRecipientYear());
-        recipientEntity_old.setLetterWriter(recipientEntityRequest.getLetterWriter());
+        recipientEntityold.setOrganCode(recipientEntityRequest.getOrganCode());
+        recipientEntityold.setOrganEtc(recipientEntityRequest.getOrganEtc());
+        recipientEntityold.setLetterTitle(recipientEntityRequest.getLetterTitle());
+        recipientEntityold.setRecipientYear(recipientEntityRequest.getRecipientYear());
+        recipientEntityold.setLetterWriter(recipientEntityRequest.getLetterWriter());
         // 비밀번호는 수정 시 변경될 수 있으므로, 요청 DTO에 새로운 비밀번호가 있다면 업데이트
         if (recipientEntityRequest.getLetterPasscode() != null && !recipientEntityRequest.getLetterPasscode().isEmpty()) {
-            recipientEntity_old.setLetterPasscode(recipientEntityRequest.getLetterPasscode());
+            recipientEntityold.setLetterPasscode(recipientEntityRequest.getLetterPasscode());
         }
-        recipientEntity_old.setAnonymityFlag(recipientEntityRequest.getAnonymityFlag());
-        recipientEntity_old.setLetterContents(recipientEntityRequest.getLetterContents());
-        recipientEntity_old.setFileName(recipientEntityRequest.getFileName());
-        recipientEntity_old.setOrgFileName(recipientEntityRequest.getOrgFileName());
-        recipientEntity_old.setModifierId(recipientEntityRequest.getModifierId()); // 수정자 ID 업데이트
+        recipientEntityold.setAnonymityFlag(recipientEntityRequest.getAnonymityFlag());
+        recipientEntityold.setLetterContents(recipientEntityRequest.getLetterContents());
+        recipientEntityold.setFileName(recipientEntityRequest.getFileName());
+        recipientEntityold.setOrgFileName(recipientEntityRequest.getOrgFileName());
+        recipientEntityold.setModifierId(recipientEntityRequest.getModifierId()); // 수정자 ID 업데이트
 
-        RecipientEntity updatedEntity = recipientRepository.save(recipientEntity_old); // 변경사항 저장
+        RecipientEntity updatedEntity = recipientRepository.save(recipientEntityold); // 변경사항 저장
 
         return RecipientResponseDto.fromEntity(updatedEntity); // DTO로 변환하여 반환
     }
 
     // 게시물 삭제
     // 조건 : 등록된 게시물의 비밀번호와 일치하는 경우
-    @Transactional
+//    @Transactional
     @Override
     public void deleteRecipient(Integer letterSeq, String letterPasscode) throws Exception {
 
         // 게시물 조회 (삭제되지 않은 게시물만 조회)
-        RecipientEntity recipientEntity_old = recipientRepository.findById(letterSeq)
+        RecipientEntity recipientEntityold = recipientRepository.findById(letterSeq)
                 .filter(entity -> "N".equalsIgnoreCase(entity.getDelFlag()))
                 .orElseThrow(() -> new NoSuchElementException("해당 게시물이 존재하지 않거나 이미 삭제되었습니다."));
 
         // 게시물 비번이 없거나 or 비밀번호 불일치
-        if (letterPasscode == null || !letterPasscode.equals(recipientEntity_old.getLetterPasscode())) {
+        if (letterPasscode == null || !letterPasscode.equals(recipientEntityold.getLetterPasscode())) {
             throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
-        } else {
+        }
+        else {
             // 게시물 소프트 삭제
-            recipientEntity_old.setDelFlag("Y");
-            recipientRepository.save(recipientEntity_old);
+            recipientEntityold.setDelFlag("Y");
+            recipientRepository.save(recipientEntityold);
 
             // 해당 게시물의 모든 댓글 소프트 삭제
             List<RecipientCommentEntity> commentsToSoftDelete =
-                    recipientCommentRepository.findByLetter_LetterSeqAndDelFlagOrderByWriteTimeAsc(letterSeq, "N");
+                    recipientCommentRepository.findByLetterLetterSeqAndDelFlagOrderByWriteTimeAsc(letterSeq, "N");
 
             if (commentsToSoftDelete != null && !commentsToSoftDelete.isEmpty()) {
                 for (RecipientCommentEntity comment : commentsToSoftDelete) {
@@ -120,7 +133,8 @@ public class RecipientServiceImpl implements RecipientService {
                     recipientCommentRepository.save(comment);
                 }
                 // logger.info("게시물 {} 에 연결된 {}개의 댓글이 소프트 삭제 처리되었습니다.", letterSeq, commentsToSoftDelete.size());
-            } else {
+            }
+            else {
                 // logger.info("게시물 {} 에 연결된 활성 댓글이 없습니다. 소프트 삭제할 댓글 없음.", letterSeq);
             }
         }
@@ -128,16 +142,18 @@ public class RecipientServiceImpl implements RecipientService {
 
     // 게시물 등록
     // 조건 : letter_writer 한영자 10자 제한, letter_passcode 영숫자 8자 이상, 캡챠 인증
-    @Transactional
+//    @Transactional
     @Override
     public RecipientResponseDto insertRecipient(RecipientEntity recipientEntityRequest) throws Exception {
         // 게시판 등록조건 확인
         // 1. 비밀번호 유효성 검사
-        if (recipientEntityRequest.getLetterPasscode() == null || !recipientEntityRequest.getLetterPasscode().matches("^(?=.*[a-zA-Z])(?=.*[0-9]).{8,}$"))
+        if (recipientEntityRequest.getLetterPasscode() == null || !recipientEntityRequest.getLetterPasscode().matches(PASSWORD_REGEX)) {
             throw new Exception("비밀번호는 영문 숫자 8자 이상 이어야 합니다.");
+        }
         // 2. 제목 유효성 검사 (한영 50자 제한)
-        if (recipientEntityRequest.getLetterTitle() == null || recipientEntityRequest.getLetterTitle().getBytes("UTF-8").length > 50)
+        if (recipientEntityRequest.getLetterTitle() == null || recipientEntityRequest.getLetterTitle().getBytes("UTF-8").length > TITLE_MAX_LENGTH_BYTES) {
             throw new Exception("제목은 한글 영문 50자 이하여야 합니다.");
+        }
         // 3. 내용 널 체크
         if (recipientEntityRequest.getLetterContents() == null || recipientEntityRequest.getLetterContents().trim().isEmpty()) {
             logger.warn("내용 유효성 검사 실패: 내용이 비어있음");
@@ -157,22 +173,25 @@ public class RecipientServiceImpl implements RecipientService {
         }
 
         // 4. 장기 코드 (organCode) 널 체크
-        String OrganCode = recipientEntityRequest.getOrganCode();
-        if (OrganCode == null || OrganCode.trim().isEmpty())
+        String organCode = recipientEntityRequest.getOrganCode();
+        if (organCode == null || organCode.trim().isEmpty()) {
             throw new Exception("기증받은 장기를 선택해주세요.");
-
+        }
         // 코드 형식 확인, 패턴: "ORGAN"으로 시작하고, 뒤에 000부터 014까지의 숫자 (000, 001, ..., 014)
-        Pattern organCodePattern = Pattern.compile("^ORGAN(00[0-9]|01[0-4])$");
-        if (OrganCode == null || !organCodePattern.matcher(OrganCode).matches())
+        Pattern organCodePattern = Pattern.compile(ORGAN_CODE_REGEX);
+        if (organCode == null || !organCodePattern.matcher(organCode).matches()) {
             throw new Exception("유효하지 않은 장기 코드입니다.");
-
+        }
         // ORGAN000 (직접입력)일 경우 organEtc 필수 및 길이 제한
-        if (OrganCode.equals("ORGAN000")) {
-            if (recipientEntityRequest.getOrganEtc() == null || recipientEntityRequest.getOrganEtc().trim().isEmpty())
+        if (organCode.equals(ORGAN_CODE_DIRECT_INPUT)) {
+            if (recipientEntityRequest.getOrganEtc() == null || recipientEntityRequest.getOrganEtc().trim().isEmpty()) {
                 throw new Exception("직접입력 선택 시 기타 장기를 입력해야 합니다.");
-            if (recipientEntityRequest.getOrganEtc().getBytes(StandardCharsets.UTF_8).length > 30)
+            }
+            if (recipientEntityRequest.getOrganEtc().getBytes(StandardCharsets.UTF_8).length > ORGAN_ETC_MAX_LENGTH_BYTES) {
                 throw new Exception("기타 장기는 한글/영문 30자 이하여야 합니다.");
-        } else {
+            }
+        }
+        else {
             // ORGAN001~ORGAN014와 같은 유효한 코드일 경우 organEtc는 null로 클리어
             recipientEntityRequest.setOrganEtc(null);
         }
@@ -180,41 +199,48 @@ public class RecipientServiceImpl implements RecipientService {
         String writerToSave = recipientEntityRequest.getLetterWriter(); // 기본적으로 입력된 작성자 사용
         // anonymityFlag가 'Y'이면 (char 타입이므로 'Y'와 비교)
         if ("Y".equalsIgnoreCase(recipientEntityRequest.getAnonymityFlag())) {
-            writerToSave = "익명";
-        } else {
+            writerToSave = ANONYMOUS_WRITER_VALUE;
+        }
+        else {
             // 익명이 아닐 경우에만 작성자 유효성 검사
-            if (writerToSave == null || writerToSave.trim().isEmpty())
+            if (writerToSave == null || writerToSave.trim().isEmpty()) {
                 throw new Exception("작성자는 필수 입력 항목입니다.");
+            }
             // 한영 10자 제한
-            if (writerToSave.getBytes(StandardCharsets.UTF_8).length > 10)
+            if (writerToSave.getBytes(StandardCharsets.UTF_8).length > WRITER_MAX_LENGTH_BYTES) {
                 throw new Exception("작성자는 한글/영문 10자 이하여야 합니다.");
+            }
         }
         // 6. 기증받은 년도 (recipientYear) 유효성 검사
         String recipientYear = recipientEntityRequest.getRecipientYear(); // String 타입으로 가져옴
         // 널 체크
-        if (recipientYear == null || recipientYear.trim().isEmpty())
+        if (recipientYear == null || recipientYear.trim().isEmpty()) {
             throw new Exception("기증받은 년도는 필수 입력 항목입니다.");
+        }
         // 년도범위 체크
         int year;
         try {
             year = Integer.parseInt(recipientYear); // String을 int로 변환
-        } catch (NumberFormatException e) {
+        }
+        catch (NumberFormatException e) {
             throw new Exception("기증받은 년도는 유효한 숫자 형식이어야 합니다.");
         }
-        if (year < 1995 || year > 2030) {
+        if (year < RECIPIENT_YEAR_MIN || year > RECIPIENT_YEAR_MAX) {
             throw new Exception("기증받은 년도는 1995년에서 2030년 사이의 값이어야 합니다.");
         }
         // 7. 파일 이름 유효성 검사
         if (StringUtils.hasText(recipientEntityRequest.getFileName())) {
             // DB 컬럼 길이(varchar(600))를 고려한 길이 검사
-            if (recipientEntityRequest.getFileName().getBytes(StandardCharsets.UTF_8).length > 600)
+            if (recipientEntityRequest.getOrgFileName().getBytes(StandardCharsets.UTF_8).length > FILE_NAME_MAX_LENGTH_BYTES){
                 throw new Exception("저장 파일명이 너무 깁니다.");
+            }
         }
 
         if (StringUtils.hasText(recipientEntityRequest.getOrgFileName())) {
             // DB 컬럼 길이(varchar(600))를 고려한 길이 검사
-            if (recipientEntityRequest.getOrgFileName().getBytes(StandardCharsets.UTF_8).length > 600)
+            if (recipientEntityRequest.getOrgFileName().getBytes(StandardCharsets.UTF_8).length > FILE_NAME_MAX_LENGTH_BYTES){
                 throw new Exception("원본 파일명이 너무 깁니다.");
+            }
         }
 
         // 빌더 패턴을 사용하여 RecipientEntity 객체 생성
@@ -239,7 +265,7 @@ public class RecipientServiceImpl implements RecipientService {
     }
 
     // 특정 게시물 조회
-    @Transactional
+//    @Transactional
     @Override
     public RecipientResponseDto selectRecipient(int letterSeq) throws Exception {
         // 1. 해당 게시물 조회 (삭제되지 않은 게시물만 조회하도록 필터링)
@@ -262,7 +288,7 @@ public class RecipientServiceImpl implements RecipientService {
     }
 
     // 페이징 처리된 게시물 목록 조회 (댓글 수 포함)
-    @Transactional(readOnly = true)
+//    @Transactional(readOnly = true)
     @Override
     public Page<RecipientResponseDto> selectRecipientListPaged(RecipientEntity searchCondition, Pageable pageable) throws Exception {
 
@@ -347,11 +373,13 @@ public class RecipientServiceImpl implements RecipientService {
         try {
             if (obj instanceof Number) {
                 return ((Number) obj).intValue();
-            } else if (obj instanceof String) {
+            }
+            else if (obj instanceof String) {
                 return Integer.parseInt((String) obj);
             }
-        } catch (Exception e) {
-            RecipientServiceImpl.logger.error("Error converting {} to Integer: value = {}, type = {}", fieldName, obj, obj.getClass().getName(), e);
+        }
+        catch (Exception e) {
+//            RecipientServiceImpl.logger.error("Error converting {} to Integer: value = {}, type = {}", fieldName, obj, obj.getClass().getName(), e);
             throw new RuntimeException("Invalid value for " + fieldName + ": " + obj, e);
         }
         throw new ClassCastException("Unsupported type for " + fieldName + ": " + obj.getClass().getName());
