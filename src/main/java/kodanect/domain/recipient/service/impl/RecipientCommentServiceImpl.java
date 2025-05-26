@@ -30,7 +30,7 @@ public class RecipientCommentServiceImpl implements RecipientCommentService {
     private final Logger logger = LoggerFactory.getLogger(RecipientCommentServiceImpl.class); // 로거 선언
 
     // 특정 게시물의 댓글 조회
-    @Transactional(readOnly = true)
+//    @Transactional(readOnly = true)
     @Override
     public List<RecipientCommentResponseDto> selectRecipientCommentByLetterSeq(int letterSeq) throws Exception{
         logger.info("Selecting comments for letterSeq: {}", letterSeq);
@@ -43,7 +43,7 @@ public class RecipientCommentServiceImpl implements RecipientCommentService {
     }
 
     // 댓글 작성
-    @Transactional
+//    @Transactional
     @Override
     public RecipientCommentResponseDto insertComment(RecipientCommentEntity commentEntityRequest) throws Exception {
         logger.info("Inserting comment for letterSeq: {}", commentEntityRequest.getLetter().getLetterSeq());
@@ -92,7 +92,7 @@ public class RecipientCommentServiceImpl implements RecipientCommentService {
     }
 
     // 댓글 수정
-    @Transactional
+//    @Transactional
     @Override
     public RecipientCommentResponseDto updateComment(RecipientCommentEntity commentEntityRequest, String inputPassword) throws Exception {
         logger.info("Attempting to update commentSeq: {}", commentEntityRequest.getCommentSeq());
@@ -123,7 +123,7 @@ public class RecipientCommentServiceImpl implements RecipientCommentService {
     }
 
     // 댓글 삭제
-    @Transactional
+//    @Transactional
     @Override
     public void deleteComment(int commentSeq, String inputPassword) throws Exception {
         logger.info("Attempting to delete commentSeq: {}", commentSeq);
@@ -145,7 +145,7 @@ public class RecipientCommentServiceImpl implements RecipientCommentService {
     }
 
     // 댓글 비밀번호 확인
-    @Transactional(readOnly = true)
+//    @Transactional(readOnly = true)
     @Override
     public boolean verifyCommentPassword(int commentSeq, String inputPassword) throws Exception {
         logger.info("Verifying password for commentSeq: {}", commentSeq);
