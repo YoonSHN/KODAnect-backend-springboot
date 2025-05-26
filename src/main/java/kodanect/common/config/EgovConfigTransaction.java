@@ -31,63 +31,69 @@ import java.util.HashMap;
 @Configuration
 public class EgovConfigTransaction {
 
-//	/**
-//	 * 트랜잭션 매니저 Bean
-//	 *
-//	 * DataSource 기반 트랜잭션 처리기 등록
-//	 */
-//	@Bean(name="txManager")
-//	public DataSourceTransactionManager txManager(@Qualifier("dataSource") DataSource dataSource) {
-//		DataSourceTransactionManager dataSourceTransactionManager = new DataSourceTransactionManager();
-//		dataSourceTransactionManager.setDataSource(dataSource);
-//		return dataSourceTransactionManager;
-//	}
-
 	/**
 	 * 트랜잭션 매니저 Bean (JPA 전용)
+	 *
+	 * EntityManagerFactory 기반의 JPA 트랜잭션 처리기 등록
 	 */
 	@Bean(name = "transactionManager")
 	public PlatformTransactionManager transactionManager(EntityManagerFactory emf) {
 		return new JpaTransactionManager(emf);
 	}
-//
-//	/**
-//	 * 트랜잭션 인터셉터 Bean
-//	 *
-//	 * 트랜잭션 전파 방식과 롤백 정책 설정
-//	 */
-//	@Bean
-//	public TransactionInterceptor txAdvice(DataSourceTransactionManager txManager) {
-//		RuleBasedTransactionAttribute txAttribute = new RuleBasedTransactionAttribute();
-//		txAttribute.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRED);
-//		txAttribute.setRollbackRules(Collections.singletonList(new RollbackRuleAttribute(Exception.class)));
-//
-//		HashMap<String, TransactionAttribute> txMethods = new HashMap<String, TransactionAttribute>();
-//		txMethods.put("*", txAttribute);
-//
-//		NameMatchTransactionAttributeSource txAttributeSource = new NameMatchTransactionAttributeSource();
-//		txAttributeSource.setNameMap(txMethods);
-//
-//		TransactionInterceptor txAdvice = new TransactionInterceptor();
-//		txAdvice.setTransactionAttributeSource(txAttributeSource);
-//		txAdvice.setTransactionManager(txManager);
-//
-//		return txAdvice;
-//	}
 
 	/**
 	 * 트랜잭션 인터셉터 Bean
 	 *
 	 * 트랜잭션 전파 방식과 롤백 정책 설정
+	 *
+	 * [읽기 계열] (readOnly = true)
+	 * - get*, find*, read*, select*, list*, fetch*, load*, search*, query*, check*
+	 *
+	 * [쓰기 계열] (트랜잭션 전파 + 예외 발생 시 롤백)
+	 * - save*, insert*, update*, delete*, create*, remove*, register*,
+	 *   edit*, change*, process*, apply*, sync*
+	 *
+	 * [기본 처리]
+	 * - 위 조건에 해당하지 않는 모든 메서드는 쓰기 계열로 처리
 	 */
 	@Bean
 	public TransactionInterceptor txAdvice(@Qualifier("transactionManager") PlatformTransactionManager txManager) {
-		RuleBasedTransactionAttribute txAttribute = new RuleBasedTransactionAttribute();
-		txAttribute.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRED);
-		txAttribute.setRollbackRules(Collections.singletonList(new RollbackRuleAttribute(Exception.class)));
+
+		RuleBasedTransactionAttribute readOnlyTx = new RuleBasedTransactionAttribute();
+		readOnlyTx.setReadOnly(true);
+		readOnlyTx.setPropagationBehavior(TransactionDefinition.PROPAGATION_SUPPORTS);
+
+		RuleBasedTransactionAttribute writeTx = new RuleBasedTransactionAttribute();
+		writeTx.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRED);
+		writeTx.setRollbackRules(Collections.singletonList(new RollbackRuleAttribute(Exception.class)));
 
 		HashMap<String, TransactionAttribute> txMethods = new HashMap<>();
-		txMethods.put("*", txAttribute);
+
+		txMethods.put("get*", readOnlyTx);
+		txMethods.put("find*", readOnlyTx);
+		txMethods.put("read*", readOnlyTx);
+		txMethods.put("select*", readOnlyTx);
+		txMethods.put("list*", readOnlyTx);
+		txMethods.put("fetch*", readOnlyTx);
+		txMethods.put("load*", readOnlyTx);
+		txMethods.put("search*", readOnlyTx);
+		txMethods.put("query*", readOnlyTx);
+		txMethods.put("check*", readOnlyTx);
+
+		txMethods.put("save*", writeTx);
+		txMethods.put("insert*", writeTx);
+		txMethods.put("update*", writeTx);
+		txMethods.put("delete*", writeTx);
+		txMethods.put("create*", writeTx);
+		txMethods.put("remove*", writeTx);
+		txMethods.put("register*", writeTx);
+		txMethods.put("edit*", writeTx);
+		txMethods.put("change*", writeTx);
+		txMethods.put("process*", writeTx);
+		txMethods.put("apply*", writeTx);
+		txMethods.put("sync*", writeTx);
+
+		txMethods.put("*", writeTx);
 
 		NameMatchTransactionAttributeSource txAttributeSource = new NameMatchTransactionAttributeSource();
 		txAttributeSource.setNameMap(txMethods);
@@ -98,18 +104,6 @@ public class EgovConfigTransaction {
 
 		return txAdvice;
 	}
-//
-//	/**
-//	 * 트랜잭션 AOP 어드바이저 Bean
-//	 *
-//	 * kodanect.domain 하위 service.impl 패키지의 모든 메서드에 트랜잭션 AOP 적용
-//	 */
-//	@Bean
-//	public Advisor txAdvisor(@Qualifier("txManager") DataSourceTransactionManager txManager) {
-//		AspectJExpressionPointcut pointcut = new AspectJExpressionPointcut();
-//		pointcut.setExpression("execution(* kodanect.domain..service.impl..*(..))");
-//		return new DefaultPointcutAdvisor(pointcut, txAdvice(txManager));
-//	}
 
 	/**
 	 * 트랜잭션 AOP 어드바이저 Bean
