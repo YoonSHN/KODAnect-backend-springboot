@@ -1,7 +1,7 @@
 package kodanect.domain.recipient.service.impl;
 
 import kodanect.common.exception.CommentNotFoundException;
-import kodanect.common.exception.InvalidCommentDataException;
+import kodanect.common.exception.InvalidRecipientDataException;
 import kodanect.common.exception.InvalidPasscodeException;
 import kodanect.common.exception.RecipientNotFoundException;
 import kodanect.domain.recipient.dto.RecipientCommentResponseDto;
@@ -18,7 +18,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -36,7 +35,7 @@ public class RecipientCommentServiceImpl implements RecipientCommentService {
 
     // 특정 게시물의 댓글 조회
     @Override
-    public List<RecipientCommentResponseDto> selectRecipientCommentByLetterSeq(int letterSeq) throws Exception{
+    public List<RecipientCommentResponseDto> selectRecipientCommentByLetterSeq(int letterSeq) {
         logger.info("Selecting comments for letterSeq: {}", letterSeq);
         // 삭제되지 않은 댓글만 조회하고, 작성시간 기준 오름차순으로 정렬
         List<RecipientCommentEntity> comments = recipientCommentRepository.findByLetterLetterSeqAndDelFlagOrderByWriteTimeAsc(letterSeq, "N"); // "N"으로 비교
@@ -48,12 +47,12 @@ public class RecipientCommentServiceImpl implements RecipientCommentService {
 
     // 댓글 작성
     @Override
-    public RecipientCommentResponseDto insertComment(RecipientCommentEntity commentEntityRequest) throws Exception {
+    public RecipientCommentResponseDto insertComment(RecipientCommentEntity commentEntityRequest) {
 
         // 1. 댓글을 달 게시물(RecipientVO)이 실제로 존재하는지 확인
         Integer letterSeq = Optional.ofNullable(commentEntityRequest.getLetter())
                 .map(RecipientEntity::getLetterSeq)
-                .orElseThrow(() -> new InvalidCommentDataException("댓글을 달 게시물 정보가 누락되었습니다."));
+                .orElseThrow(() -> new InvalidRecipientDataException("댓글을 달 게시물 정보가 누락되었습니다."));
         // 로그 출력
         logger.info("Inserting comment for letterSeq: {}", letterSeq);
 
@@ -62,7 +61,7 @@ public class RecipientCommentServiceImpl implements RecipientCommentService {
 
         if ("Y".equalsIgnoreCase(recipientEntity.getDelFlag())) { // delflag가 'Y'이면 삭제된 게시물
             logger.warn("댓글 작성 실패: 삭제된 게시물에 댓글을 달 수 없습니다. letterSeq: {}", letterSeq);
-            throw new InvalidCommentDataException("삭제된 게시물에는 댓글을 달 수 없습니다.");
+            throw new InvalidRecipientDataException("삭제된 게시물에는 댓글을 달 수 없습니다.");
         }
 
         // 2. 댓글 저장을 위한 부모레터 세팅
@@ -71,13 +70,13 @@ public class RecipientCommentServiceImpl implements RecipientCommentService {
         // 3. 댓글 비밀번호 유효성 검사 (필수 입력, 영문 숫자 8자 이상)
         if (commentEntityRequest.getCommentPasscode() == null || !commentEntityRequest.getCommentPasscode().matches(COMMENT_PASSCODE_PATTERN)) {
             logger.warn("댓글 작성 실패: 비밀번호 유효성 검사 실패");
-            throw new InvalidCommentDataException("비밀번호는 영문 숫자 8자 이상 이어야 합니다.");
+            throw new InvalidRecipientDataException("비밀번호는 영문 숫자 8자 이상 이어야 합니다.");
         }
 
         // 4. 댓글 내용 유효성 검사 (필수 입력, HTML 필터링, 길이 제한)
         if (commentEntityRequest.getContents() == null || commentEntityRequest.getContents().trim().isEmpty()) {
             logger.warn("댓글 작성 실패: 내용이 비어있음");
-            throw new InvalidCommentDataException("댓글 내용은 필수 입력 항목입니다.");
+            throw new InvalidRecipientDataException("댓글 내용은 필수 입력 항목입니다.");
         }
         // Jsoup을 사용하여 댓글 내용 HTML 필터링
         Safelist commentSafelist = Safelist.none();
@@ -86,7 +85,7 @@ public class RecipientCommentServiceImpl implements RecipientCommentService {
         // 필터링 후 내용이 비어있는지 다시 확인
         if (cleanCommentContents.trim().isEmpty()) {
             logger.warn("댓글 작성 실패: 필터링 후 내용이 비어있음");
-            throw new Exception("댓글 내용은 필수 입력 항목입니다. (HTML 태그 필터링 후)");
+            throw new InvalidRecipientDataException("댓글 내용은 필수 입력 항목입니다. (HTML 태그 필터링 후)");
         }
         commentEntityRequest.setContents(cleanCommentContents); // 필터링된 내용으로 설정
 
@@ -114,7 +113,7 @@ public class RecipientCommentServiceImpl implements RecipientCommentService {
         String cleanContents = Jsoup.clean(commentEntityRequest.getContents(), Safelist.none().addTags("br"));
         if (cleanContents.trim().isEmpty()) {
             logger.warn("댓글 수정 실패: 필터링 후 내용이 비어있음");
-            throw new InvalidCommentDataException("수정할 댓글 내용은 필수 입력 항목입니다. (HTML 태그 필터링 후)");
+            throw new InvalidRecipientDataException("수정할 댓글 내용은 필수 입력 항목입니다. (HTML 태그 필터링 후)");
         }
         existingComment.setContents(cleanContents);
         existingComment.setModifierId(commentEntityRequest.getModifierId());

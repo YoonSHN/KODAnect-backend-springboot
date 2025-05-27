@@ -8,7 +8,7 @@ import java.lang.annotation.*;
 
 @Target({ElementType.TYPE}) // 클래스 레벨에 적용
 @Retention(RetentionPolicy.RUNTIME)
-@Constraint(validatedBy = ConditionalValidator.class) // 이 애노테이션의 유효성 검사를 수행할 Validator 지정
+@Constraint(validatedBy = recipientConditionalValidator.class) // 이 애노테이션의 유효성 검사를 수행할 Validator 지정
 @Documented
 public @interface recipientConditionalValidation {
 

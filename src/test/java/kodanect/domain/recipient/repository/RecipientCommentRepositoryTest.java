@@ -56,7 +56,7 @@ public class RecipientCommentRepositoryTest {
         otherRecipient = new RecipientEntity();
         otherRecipient.setLetterTitle("다른 게시물 제목");
         otherRecipient.setLetterWriter("다른 작성자");
-        otherRecipient.setLetterPasscode("otherabcd");
+        otherRecipient.setLetterPasscode("otherabcd1");
         otherRecipient.setLetterContents("다른 게시물 내용입니다.");
         otherRecipient.setAnonymityFlag("N");
         otherRecipient.setDelFlag("N");
@@ -69,7 +69,6 @@ public class RecipientCommentRepositoryTest {
 
     @After
     public void teardown() {
-        // @Transactional이 롤백을 처리하므로, 여기서 특별히 할 일 없음.
     }
 
     private RecipientCommentEntity createAndSaveComment(RecipientEntity letter, String writer, String contents, String passcode, String delFlag, LocalDateTime writeTime) {
@@ -111,13 +110,14 @@ public class RecipientCommentRepositoryTest {
     public void testFindByLetterLetterSeqAndDelFlagOrderByWriteTimeAsc() {
         // Given
         // 테스트 게시물(testRecipient)에 댓글 추가 (정렬 순서 및 삭제 플래그 고려)
-        createAndSaveComment(testRecipient, "댓글A", "내용A", "passA", "Y", LocalDateTime.now().minusMinutes(30)); // 삭제된 댓글
-        RecipientCommentEntity comment1 = createAndSaveComment(testRecipient, "댓글C", "내용C", "passC", "N", LocalDateTime.now().minusMinutes(25)); // 시간은 더 이르지만, 나중에 저장
-        RecipientCommentEntity comment2 = createAndSaveComment(testRecipient, "댓글B", "내용B", "passB", "N", LocalDateTime.now().minusMinutes(20));
-        RecipientCommentEntity comment3 = createAndSaveComment(testRecipient, "댓글D", "내용D", "passD", "N", LocalDateTime.now().minusMinutes(15));
+        // 댓글 비밀번호도 유효성 규칙 준수
+        createAndSaveComment(testRecipient, "댓글A", "내용A", "passA1234", "Y", LocalDateTime.now().minusMinutes(30)); // 삭제된 댓글
+        RecipientCommentEntity comment1 = createAndSaveComment(testRecipient, "댓글C", "내용C", "passC5678", "N", LocalDateTime.now().minusMinutes(25)); // 시간은 더 이르지만, 나중에 저장
+        RecipientCommentEntity comment2 = createAndSaveComment(testRecipient, "댓글B", "내용B", "passB9012", "N", LocalDateTime.now().minusMinutes(20));
+        RecipientCommentEntity comment3 = createAndSaveComment(testRecipient, "댓글D", "내용D", "passD3456", "N", LocalDateTime.now().minusMinutes(15));
 
         // 다른 게시물(otherRecipient)에도 댓글 추가 (조회 대상이 아님)
-        createAndSaveComment(otherRecipient, "다른게시물댓글", "다른내용", "otherpass", "N", LocalDateTime.now().minusMinutes(10));
+        createAndSaveComment(otherRecipient, "다른게시물댓글", "다른내용", "otherpass7890", "N", LocalDateTime.now().minusMinutes(10));
 
         // When
         List<RecipientCommentEntity> foundComments = recipientCommentRepository.findByLetterLetterSeqAndDelFlagOrderByWriteTimeAsc(testRecipient.getLetterSeq(), "N");
@@ -146,8 +146,8 @@ public class RecipientCommentRepositoryTest {
     @Test
     public void testFindByCommentSeqAndDelFlag() {
         // Given
-        RecipientCommentEntity activeComment = createAndSaveComment(testRecipient, "활성댓글", "활성 댓글 내용", "activepass", "N", LocalDateTime.now());
-        RecipientCommentEntity deletedComment = createAndSaveComment(testRecipient, "삭제댓글", "삭제 댓글 내용", "deletepass", "Y", LocalDateTime.now());
+        RecipientCommentEntity activeComment = createAndSaveComment(testRecipient, "활성댓글", "활성 댓글 내용", "activepass1", "N", LocalDateTime.now());
+        RecipientCommentEntity deletedComment = createAndSaveComment(testRecipient, "삭제댓글", "삭제 댓글 내용", "deletepass1", "Y", LocalDateTime.now());
 
         // When
         Optional<RecipientCommentEntity> foundActiveComment = recipientCommentRepository.findByCommentSeqAndDelFlag(activeComment.getCommentSeq(), "N");
@@ -172,11 +172,11 @@ public class RecipientCommentRepositoryTest {
     @Test
     public void testUpdateComment() {
         // Given
-        RecipientCommentEntity comment = createAndSaveComment(testRecipient, "초기 작성자", "초기 내용", "oldpass", "N", LocalDateTime.now());
+        RecipientCommentEntity comment = createAndSaveComment(testRecipient, "초기 작성자", "초기 내용", "oldpass12", "N", LocalDateTime.now());
         Assert.assertNotNull("댓글이 저장되었는지 확인", comment.getCommentSeq());
 
         String updatedContents = "수정된 댓글 내용입니다.";
-        String updatedPasscode = "newpass";
+        String updatedPasscode = "newpass123";
         String updatedDelFlag = "Y";
 
         // When
@@ -198,9 +198,9 @@ public class RecipientCommentRepositoryTest {
     @Test
     public void testFindAllComments() {
         // Given
-        createAndSaveComment(testRecipient, "댓글 A", "내용 A", "passA", "N", LocalDateTime.now().minusMinutes(3));
-        createAndSaveComment(testRecipient, "댓글 B", "내용 B", "passB", "N", LocalDateTime.now().minusMinutes(2));
-        createAndSaveComment(otherRecipient, "댓글 C", "내용 C", "passC", "N", LocalDateTime.now().minusMinutes(1));
+        createAndSaveComment(testRecipient, "댓글 A", "내용 A", "pass1234A", "N", LocalDateTime.now().minusMinutes(3));
+        createAndSaveComment(testRecipient, "댓글 B", "내용 B", "pass1234B", "N", LocalDateTime.now().minusMinutes(2));
+        createAndSaveComment(otherRecipient, "댓글 C", "내용 C", "pass1234C", "N", LocalDateTime.now().minusMinutes(1));
 
         // When
         List<RecipientCommentEntity> allComments = recipientCommentRepository.findAll();

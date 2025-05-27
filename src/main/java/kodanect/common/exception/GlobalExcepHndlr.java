@@ -89,8 +89,8 @@ public class GlobalExcepHndlr {
      * 유효하지 않은 요청 데이터 또는 비즈니스 로직 상의 문제 예외 처리 (400 Bad Request)
      * InvalidCommentDataException
      */
-    @ExceptionHandler(InvalidCommentDataException.class)
-    public ResponseEntity<ApiResponse<String>> handleInvalidCommentDataException(InvalidCommentDataException ex) {
+    @ExceptionHandler(InvalidRecipientDataException.class)
+    public ResponseEntity<ApiResponse<String>> handleInvalidCommentDataException(InvalidRecipientDataException ex) {
         log.warn("Bad Request (400 Bad Request): {}", ex.getMessage());
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)

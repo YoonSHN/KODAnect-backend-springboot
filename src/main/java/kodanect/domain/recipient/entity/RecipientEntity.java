@@ -11,9 +11,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Pattern;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 import java.time.LocalDateTime;
 
 @recipientConditionalValidation(
@@ -37,72 +35,77 @@ public class RecipientEntity {
     // 수혜자 편지 일련번호, AutoIncrement
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "LETTER_SEQ", nullable = false)
+    @Column(name = "letter_seq", nullable = false)
     private Integer letterSeq;
     // 장기 구분 코드
-    @Column(name = "ORGAN_CODE", length = 10, nullable = false)
+    @Column(name = "organ_code", length = 10, nullable = false)
     @NotBlank(message = "기증받은 장기를 선택해주세요.")
     @Pattern(regexp = "^ORGAN(00[0-9]|01[0-4])$", message = "유효하지 않은 장기 코드입니다.")
     private String organCode;
     // 기타 장기
-    @Column(name = "ORGAN_ETC", length = 90) // 한글 30자 = 90바이트, 30자 제한
+    @Column(name = "organ_etc", length = 90) // 한글 30자 = 90바이트, 30자 제한
+    @Size(max = 30, message = "기타 장기는 30자(한글) 이하여야 합니다.")
     private String organEtc;
     // 스토리 제목
-    @Column(name = "LETTER_TITLE", length = 150, nullable = false) // 한글 50자 = 150바이트, 50자 제한
+    @Column(name = "letter_title", length = 150, nullable = false) // 한글 50자 = 150바이트, 50자 제한
     @NotBlank(message = "제목은 필수 입력 항목입니다.")
     @Size(max = 50, message = "제목은 50자 이하여야 합니다.") // 글자 수 제한
     private String letterTitle;
     // 수혜 연도
-    @Column(name = "RECIPIENT_YEAR", length = 4, nullable = false)
+    @Column(name = "recipient_year", length = 4, nullable = false)
     @NotBlank(message = "기증받은 년도는 필수 입력 항목입니다.")
-    @Pattern(regexp = "^(199[5-9]|20[0-2][0-9]|2030)$", message = "기증받은 년도는 1995년에서 2030년 사이의 값이어야 합니다.")
+    @Pattern(regexp = "^\\d{4}$", message = "기증받은 년도는 4자리 숫자여야 합니다.") // 숫자만 허용하는 패턴
+    @Min(value = 1995, message = "기증받은 년도는 1995년에서 2030년 사이의 값이어야 합니다.")
+    @Max(value = 2030, message = "기증받은 년도는 1995년에서 2030년 사이의 값이어야 합니다.")
     private String recipientYear;
     // 편지 비밀번호 (Request 시 필요)
-    @Column(name = "LETTER_PASSCODE", length = 20, nullable = false)
+    @Column(name = "letter_passcode", length = 20, nullable = false)
     @NotBlank(message = "비밀번호는 필수 입력 항목입니다.")
     // 영문/숫자 8자 이상 (정규식 패턴)
     @Pattern(regexp = "^(?=.*[a-zA-Z])(?=.*[0-9]).{8,}$", message = "비밀번호는 영문 숫자 8자 이상 이어야 합니다.")
     private String letterPasscode;
     // 편지 작성자
-    @Column(name = "LETTER_WRITER", length = 30) // 한글 10자 = 30바이트, 10자 제한
-    @Size(max = 30)
+    @Column(name = "letter_writer", length = 30) // 한글 10자 = 30바이트, 10자 제한
+    @Size(max = 10, message = "작성자는 10자(한글) 이하여야 합니다.")
     @NotBlank(message = "작성자는 필수 입력 항목입니다.")
     private String letterWriter;
     // 편지 익명여부
-    @Column(name = "ANONYMITY_FLAG", length = 1, nullable = false)
+    @Column(name = "anonymity_flag", length = 1, nullable = false)
     @Pattern(regexp = "[YN]", message = "익명 여부는 'Y' 또는 'N'이어야 합니다.")
     private String anonymityFlag;
     // 조회 건수 (Request 시에는 0으로 초기화되거나 무시)
     @Builder.Default
-    @Column(name = "READ_COUNT")
+    @Column(name = "read_count")
     private int readCount = 0;
     // 편지 내용
     @Lob
-    @Column(name = "LETTER_CONTENTS", columnDefinition = "TEXT", nullable = false)
+    @Column(name = "letter_contents", columnDefinition = "TEXT", nullable = false)
     @NotBlank(message = "내용은 필수 입력 항목입니다.")
     private String letterContents;
     // 이미지 파일 명
-    @Column(name = "FILE_NAME", length = 200)
-    @Size(max = 200, message = "파일명이 너무 깁니다. (최대 200자)")
+    @Column(name = "file_name", length = 600)
+    @Size(max = 600, message = "파일명이 너무 깁니다. (최대 600자)")
     private String fileName;
     // 이미지 원본 파일 명
+    @Column(name = "org_file_name", length = 600)
+    @Size(max = 600, message = "원본 파일명이 너무 깁니다. (최대 600자)")
     private String orgFileName;
     // 생성 일시 (Request 시에는 클라이언트에서 보내지 않음)
     @CreatedDate
-    @Column(name = "WRITE_TIME", nullable = false, updatable = false)
+    @Column(name = "write_time", nullable = false, updatable = false)
     private LocalDateTime writeTime;
     // 생성자 아이디
-    @Column(name = "WRITER_ID", length = 50)
+    @Column(name = "writer_id", length = 50)
     private String writerId;
     // 수정 일시 (Request 시에는 클라이언트에서 보내지 않음)
     @LastModifiedDate
-    @Column(name = "MODIFY_TIME")
+    @Column(name = "modify_time")
     private LocalDateTime modifyTime;
     // 수정자 아이디
-    @Column(name = "MODIFIER_ID", length = 50)
+    @Column(name = "modifier_id", length = 50)
     private String modifierId;
     // 삭제 여부 (Request 시에는 클라이언트에서 보내지 않음)
-    @Column(name = "DEL_FLAG", length = 1, nullable = false)
+    @Column(name = "del_flag", length = 1, nullable = false)
     @Builder.Default
     private String delFlag = "N";
 

@@ -1,6 +1,7 @@
 package kodanect.domain.recipient.service.impl;
 
 import kodanect.common.exception.InvalidPasscodeException;
+import kodanect.common.exception.InvalidRecipientDataException;
 import kodanect.common.exception.RecipientNotFoundException;
 import kodanect.domain.recipient.dto.RecipientResponseDto;
 import kodanect.domain.recipient.entity.RecipientCommentEntity;
@@ -101,7 +102,7 @@ public class RecipientServiceImpl implements RecipientService {
     // 게시물 삭제
     // 조건 : 등록된 게시물의 비밀번호와 일치하는 경우
     @Override
-    public void deleteRecipient(Integer letterSeq, String letterPasscode) throws Exception {
+    public void deleteRecipient(Integer letterSeq, String letterPasscode) {
 
         // 게시물 조회 (삭제되지 않은 게시물만 조회)
         RecipientEntity recipientEntityold = recipientRepository.findById(letterSeq)
@@ -132,36 +133,52 @@ public class RecipientServiceImpl implements RecipientService {
     // 게시물 등록
     // 조건 : letter_writer 한영자 10자 제한, letter_passcode 영숫자 8자 이상, 캡챠 인증
     @Override
-    public RecipientResponseDto insertRecipient(RecipientEntity recipientEntityRequest) throws Exception {
-        // 1. Jsoup을 사용하여 HTML 필터링
-        // Safelist.relaxed(): 기본적인 안전한 HTML 태그 (a, b, blockquote, br, cite, code, dd, dl, dt, em, i, li, ol, p, pre, q, small, span, strike, strong, sub, sup, u, ul, img) 허용
-        Safelist safelist = Safelist.relaxed();
-        String cleanContents = Jsoup.clean(recipientEntityRequest.getLetterContents(), safelist);
-        // 필터링 후 HTML 태그를 포함한 내용이 아니라, 순수 텍스트 내용이 비어있는지 확인 (HTML 태그를 제거하고 순수 텍스트만 얻음)
-        String pureTextContents = Jsoup.parse(cleanContents).text();
-        recipientEntityRequest.setLetterContents(cleanContents.trim());
+    public RecipientResponseDto insertRecipient(RecipientEntity recipientEntityRequest) {
+        // 1. Jsoup을 사용하여 HTML 필터링 및 내용 유효성 검사
+        String originalContents = recipientEntityRequest.getLetterContents();
 
-        // 2. 익명 처리 로직 및 작성자(letterWriter) 유효성 검사
-        String writerToSave = recipientEntityRequest.getLetterWriter(); // 기본적으로 입력된 작성자 사용
-        // anonymityFlag가 'Y'이면 (char 타입이므로 'Y'와 비교)
+        // letterContents가 null이거나 비어있는 경우 InvalidRecipientDataException 발생
+        if (originalContents == null || originalContents.trim().isEmpty()) {
+            logger.warn("게시물 내용이 비어있거나 null입니다."); // 로깅 추가
+            throw new InvalidRecipientDataException("게시물 내용은 필수 입력 항목입니다.");
+        }
+        Safelist safelist = Safelist.relaxed();
+        String cleanContents = Jsoup.clean(originalContents, safelist);
+        logger.debug("Cleaned contents before trim: '{}'", cleanContents); // 디버깅용
+        // 필터링 후 HTML 태그를 포함한 내용이 아니라, 순수 텍스트 내용이 비어있는지 확인
+        String pureTextContents = Jsoup.parse(cleanContents).text();
+        if (pureTextContents.trim().isEmpty()) { // 필터링 후 내용이 실질적으로 비어있는지 다시 확인
+            logger.warn("게시물 작성 실패: 필터링 후 내용이 비어있음"); // 로깅 추가
+            throw new InvalidRecipientDataException("게시물 내용은 필수 입력 항목입니다. (HTML 태그 필터링 후)");
+        }
+        recipientEntityRequest.setLetterContents(cleanContents.trim()); // 필터링되고 트림된 내용으로 설정
+        logger.debug("Cleaned contents after trim: '{}'", recipientEntityRequest.getLetterContents()); // 디버깅용
+        // 2. 익명 처리 로직 및 작성자(letterWriter) 유효성 검사 (기존 코드 유지)
+        String writerToSave = recipientEntityRequest.getLetterWriter();
         if ("Y".equalsIgnoreCase(recipientEntityRequest.getAnonymityFlag())) {
             writerToSave = ANONYMOUS_WRITER_VALUE;
+        } else {
+            // @Valid에서 검증된 값이 들어오므로 여기서는 추가 유효성 검사 불필요
+            writerToSave = recipientEntityRequest.getLetterWriter();
         }
-        else {
-            writerToSave = recipientEntityRequest.getLetterWriter(); // @Valid에서 검증된 값이 들어옴
-        }
-        recipientEntityRequest.setLetterWriter(writerToSave); // 엔티티에 최종 작성자 설정
+        recipientEntityRequest.setLetterWriter(writerToSave);
 
         // 3. organCode가 "ORGAN000" (직접입력) 일 경우 organEtc 설정, 아니면 null
+        // @Valid에서NotBlank 등의 유효성 검사가 organEtc에 적용되어 있어야 함.
+        // 만약 @Valid가 아닌 서비스 내부에서 추가적인 비즈니스 로직 유효성 검사가 필요하다면 여기에 추가.
         if (!ORGAN_CODE_DIRECT_INPUT.equals(recipientEntityRequest.getOrganCode())) {
-            recipientEntityRequest.setOrganEtc(null); // @Valid에서 검증된 값이 들어옴
+            recipientEntityRequest.setOrganEtc(null);
+        } else {
+            // ORGAN000인데 organEtc가 null이거나 비어있을 경우 (이전 NullPointerException의 다른 원인 가능성)
+            // @Valid에 @NotBlank 또는 @NotNull이 RecipientEntity.organEtc 에 적용되어 있다면 이 로직은 필요 없음
+            // 만약 @Valid로 처리되지 않는다면 아래 로직 추가
+            if (recipientEntityRequest.getOrganEtc() == null || recipientEntityRequest.getOrganEtc().trim().isEmpty()) {
+                logger.warn("ORGAN000 선택 시 organEtc는 필수 입력 항목입니다.");
+                throw new InvalidRecipientDataException("ORGAN000 선택 시 organEtc는 필수 입력 항목입니다.");
+            }
         }
-        // else의 경우 organEtc는 요청에서 넘어온 값이 그대로 사용됨 (NotBlank 조건 등은 @Valid에서 처리)
 
-        // 4. 빌더 패턴을 사용하여 RecipientEntity 객체 생성 (이미 받은 request 엔티티를 사용)
-        // 새로운 객체를 만들지 않고, 받은 request 엔티티를 바로 저장하는 것이 일반적
-        // 필요한 기본값 설정 (delFlag, readCount 등은 @Builder 기본값 또는 @DynamicInsert로 처리)
-
+        // 4. RecipientEntity 저장
         RecipientEntity savedEntity = recipientRepository.save(recipientEntityRequest);
 
         return RecipientResponseDto.fromEntity(savedEntity);
@@ -169,7 +186,7 @@ public class RecipientServiceImpl implements RecipientService {
 
     // 특정 게시물 조회
     @Override
-    public RecipientResponseDto selectRecipient(int letterSeq) throws Exception {
+    public RecipientResponseDto selectRecipient(int letterSeq) {
         // 1. 해당 게시물 조회 (삭제되지 않은 게시물만 조회하도록 필터링)
         RecipientEntity recipientEntity = recipientRepository.findById(letterSeq)
                 .filter(entity -> "N".equalsIgnoreCase(entity.getDelFlag()))
@@ -191,7 +208,7 @@ public class RecipientServiceImpl implements RecipientService {
 
     // 페이징 처리된 게시물 목록 조회 (댓글 수 포함)
     @Override
-    public Page<RecipientResponseDto> selectRecipientListPaged(RecipientEntity searchCondition, Pageable pageable) throws Exception {
+    public Page<RecipientResponseDto> selectRecipientListPaged(RecipientEntity searchCondition, Pageable pageable){
 
         // 1. 조건에 맞는 RecipientVO 목록 조회 (페이징 및 정렬 적용)
         Specification<RecipientEntity> spec = getRecipientSpecification(searchCondition);
@@ -227,7 +244,7 @@ public class RecipientServiceImpl implements RecipientService {
 
     // 제목, 내용, 전체 검색
     @Override
-    public List<RecipientResponseDto> selectRecipientList(RecipientEntity searchCondition) throws Exception {
+    public List<RecipientResponseDto> selectRecipientList(RecipientEntity searchCondition) {
         Specification<RecipientEntity> spec = getRecipientSpecification(searchCondition);
         List<RecipientEntity> recipientList = recipientRepository.findAll(spec);
 
@@ -246,7 +263,7 @@ public class RecipientServiceImpl implements RecipientService {
 
     // 제목, 내용, 전체 검색 결과 수
     @Override
-    public int selectRecipientListTotCnt(RecipientEntity searchCondition) throws Exception {
+    public int selectRecipientListTotCnt(RecipientEntity searchCondition) {
         Specification<RecipientEntity> spec = getRecipientSpecification(searchCondition);
         return (int) recipientRepository.count(spec);
     }
