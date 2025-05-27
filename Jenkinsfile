@@ -230,7 +230,39 @@ EOF
                 }
             }
         }
-    }
+
+
+        stage('Health Check') {
+            steps {
+                script {
+                    githubNotify context: 'healthcheck', status: 'PENDING', description: '헬스체크 중...'
+
+
+                    def healthCheckUrl = "http://${SERVER_HOST}:8081/actuator/health"
+
+
+                    def retries = 3
+                    def success = false
+                    for (int i = 0; i < retries; i++) {
+                        def response = sh(script: "curl -s -o /dev/null -w '%{http_code}' ${healthCheckUrl}", returnStdout: true).trim()
+                        if (response == '200') {
+                            success = true
+                            break
+                        }
+                        sleep(5)
+                    }
+
+                    if (success) {
+                        githubNotify context: 'healthcheck', status: 'SUCCESS', description: '헬스체크 성공'
+                    } else {
+                        githubNotify context: 'healthcheck', status: 'FAILURE', description: '헬스체크 실패'
+                        env.CD_FAILED = 'true'
+                        error('Health check failed')
+                    }
+                }
+            }
+        }
+
 
     post {
         always {
@@ -246,6 +278,12 @@ EOF
                 } else {
                     githubNotify context: 'cd/kodanect', status: 'SUCCESS', description: 'CD 단계 성공'
                 }
+
+                if (env.CD_FAILED == 'true') {
+                    githubNotify context: 'cd/kodanect', status: 'FAILURE', description: '배포 실패'
+                } else {
+                    githubNotify context: 'cd/kodanect', status: 'SUCCESS', description: '배포 성공'
+                }
             }
         }
 
@@ -256,6 +294,12 @@ EOF
                 token: env.SLACK_TOKEN,
                 message: "빌드 성공: ${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|바로가기>)"
             )
+            slackSend(
+                channel: '4_파이널프로젝트_1조_jenkins',
+                color: 'good',
+                token: env.SLACK_TOKEN,
+                message: "배포 성공: ${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|바로가기>)"
+            )
         }
 
         failure {
@@ -265,6 +309,12 @@ EOF
                 token: env.SLACK_TOKEN,
                 message: "빌드 실패: ${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|바로가기>)"
             )
+            slackSend(
+                channel: '4_파이널프로젝트_1조_jenkins',
+                color: 'danger',
+                token: env.SLACK_TOKEN,
+                message: "배포 실패: ${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|바로가기>)"
+            )
         }
     }
-}
+
