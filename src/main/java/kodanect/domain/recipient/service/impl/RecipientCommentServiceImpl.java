@@ -1,7 +1,7 @@
 package kodanect.domain.recipient.service.impl;
 
 import kodanect.common.exception.CommentNotFoundException;
-import kodanect.common.exception.InvalidRecipientDataException;
+import kodanect.common.exception.RecipientInvalidDataException;
 import kodanect.common.exception.InvalidPasscodeException;
 import kodanect.common.exception.RecipientNotFoundException;
 import kodanect.domain.recipient.dto.RecipientCommentResponseDto;
@@ -30,7 +30,7 @@ public class RecipientCommentServiceImpl implements RecipientCommentService {
     private final RecipientRepository recipientRepository;
 
     private final Logger logger = LoggerFactory.getLogger(RecipientCommentServiceImpl.class); // 로거 선언
-    // 상수 정의
+    // 비밀번호 영숫자 8자 이상
     private static final String COMMENT_PASSCODE_PATTERN = "^(?=.*[a-zA-Z])(?=.*[0-9]).{8,}$";
 
     // 특정 게시물의 댓글 조회
@@ -52,7 +52,7 @@ public class RecipientCommentServiceImpl implements RecipientCommentService {
         // 1. 댓글을 달 게시물(RecipientVO)이 실제로 존재하는지 확인
         Integer letterSeq = Optional.ofNullable(commentEntityRequest.getLetter())
                 .map(RecipientEntity::getLetterSeq)
-                .orElseThrow(() -> new InvalidRecipientDataException("댓글을 달 게시물 정보가 누락되었습니다."));
+                .orElseThrow(() -> new RecipientInvalidDataException("댓글을 달 게시물 정보가 누락되었습니다."));
         // 로그 출력
         logger.info("Inserting comment for letterSeq: {}", letterSeq);
 
@@ -61,7 +61,7 @@ public class RecipientCommentServiceImpl implements RecipientCommentService {
 
         if ("Y".equalsIgnoreCase(recipientEntity.getDelFlag())) { // delflag가 'Y'이면 삭제된 게시물
             logger.warn("댓글 작성 실패: 삭제된 게시물에 댓글을 달 수 없습니다. letterSeq: {}", letterSeq);
-            throw new InvalidRecipientDataException("삭제된 게시물에는 댓글을 달 수 없습니다.");
+            throw new RecipientInvalidDataException("삭제된 게시물에는 댓글을 달 수 없습니다.");
         }
 
         // 2. 댓글 저장을 위한 부모레터 세팅
@@ -70,13 +70,13 @@ public class RecipientCommentServiceImpl implements RecipientCommentService {
         // 3. 댓글 비밀번호 유효성 검사 (필수 입력, 영문 숫자 8자 이상)
         if (commentEntityRequest.getCommentPasscode() == null || !commentEntityRequest.getCommentPasscode().matches(COMMENT_PASSCODE_PATTERN)) {
             logger.warn("댓글 작성 실패: 비밀번호 유효성 검사 실패");
-            throw new InvalidRecipientDataException("비밀번호는 영문 숫자 8자 이상 이어야 합니다.");
+            throw new RecipientInvalidDataException("비밀번호는 영문 숫자 8자 이상 이어야 합니다.");
         }
 
         // 4. 댓글 내용 유효성 검사 (필수 입력, HTML 필터링, 길이 제한)
         if (commentEntityRequest.getContents() == null || commentEntityRequest.getContents().trim().isEmpty()) {
             logger.warn("댓글 작성 실패: 내용이 비어있음");
-            throw new InvalidRecipientDataException("댓글 내용은 필수 입력 항목입니다.");
+            throw new RecipientInvalidDataException("댓글 내용은 필수 입력 항목입니다.");
         }
         // Jsoup을 사용하여 댓글 내용 HTML 필터링
         Safelist commentSafelist = Safelist.none();
@@ -85,7 +85,7 @@ public class RecipientCommentServiceImpl implements RecipientCommentService {
         // 필터링 후 내용이 비어있는지 다시 확인
         if (cleanCommentContents.trim().isEmpty()) {
             logger.warn("댓글 작성 실패: 필터링 후 내용이 비어있음");
-            throw new InvalidRecipientDataException("댓글 내용은 필수 입력 항목입니다. (HTML 태그 필터링 후)");
+            throw new RecipientInvalidDataException("댓글 내용은 필수 입력 항목입니다. (HTML 태그 필터링 후)");
         }
         commentEntityRequest.setContents(cleanCommentContents); // 필터링된 내용으로 설정
 
@@ -101,19 +101,19 @@ public class RecipientCommentServiceImpl implements RecipientCommentService {
 
         // 삭제되지 않은 기존 댓글 조회
         RecipientCommentEntity existingComment = recipientCommentRepository.findByCommentSeqAndDelFlag(commentEntityRequest.getCommentSeq(), "N")
-                .orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수 없거나 이미 삭제되었습니다."));
+                .orElseThrow(() -> new CommentNotFoundException("댓글을 찾을 수 없거나 이미 삭제되었습니다."));
 
         // 비밀번호 검증
         if (!existingComment.getCommentPasscode().equals(inputPassword)) {
             logger.warn("Password mismatch for commentSeq: {}", commentEntityRequest.getCommentSeq());
-            throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
+            throw new InvalidPasscodeException("비밀번호가 일치하지 않습니다.");
         }
 
         // 수정 필드 업데이트 및 HTML 필터링
         String cleanContents = Jsoup.clean(commentEntityRequest.getContents(), Safelist.none().addTags("br"));
         if (cleanContents.trim().isEmpty()) {
             logger.warn("댓글 수정 실패: 필터링 후 내용이 비어있음");
-            throw new InvalidRecipientDataException("수정할 댓글 내용은 필수 입력 항목입니다. (HTML 태그 필터링 후)");
+            throw new RecipientInvalidDataException("수정할 댓글 내용은 필수 입력 항목입니다. (HTML 태그 필터링 후)");
         }
         existingComment.setContents(cleanContents);
         existingComment.setModifierId(commentEntityRequest.getModifierId());

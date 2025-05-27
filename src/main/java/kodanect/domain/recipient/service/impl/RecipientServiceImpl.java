@@ -1,8 +1,9 @@
 package kodanect.domain.recipient.service.impl;
 
 import kodanect.common.exception.InvalidPasscodeException;
-import kodanect.common.exception.InvalidRecipientDataException;
+import kodanect.common.exception.RecipientInvalidDataException;
 import kodanect.common.exception.RecipientNotFoundException;
+import kodanect.common.util.hCaptchaService;
 import kodanect.domain.recipient.dto.RecipientResponseDto;
 import kodanect.domain.recipient.entity.RecipientCommentEntity;
 import kodanect.domain.recipient.entity.RecipientEntity;
@@ -19,27 +20,27 @@ import org.springframework.util.StringUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.safety.Safelist;
 
-import javax.annotation.Resource;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service("recipientService")
 public class RecipientServiceImpl implements RecipientService {
 
-    @Resource(name = "recipientRepository")
     private final RecipientRepository recipientRepository;
     private final RecipientCommentRepository recipientCommentRepository;
+    private final hCaptchaService hcaptchaService; // hCaptchaService 주입
 
-    private final Logger logger = LoggerFactory.getLogger(RecipientService.class); // 로거 선언
+    // 로거 선언
+    private final Logger logger = LoggerFactory.getLogger(RecipientServiceImpl.class);
 
     // 상수 정의
-    private final String ORGAN_CODE_DIRECT_INPUT = "ORGAN000";
+    private final String ORGAN_CODE_DIRECT_INPUT = "ORGAN000";  // 직접입력 코드
     private final String ANONYMOUS_WRITER_VALUE = "익명";
 
-
-    public RecipientServiceImpl(RecipientRepository recipientRepository, RecipientCommentRepository recipientCommentRepository) {
+    public RecipientServiceImpl(RecipientRepository recipientRepository, RecipientCommentRepository recipientCommentRepository, hCaptchaService hcaptchaService) {
         this.recipientRepository = recipientRepository;
         this.recipientCommentRepository = recipientCommentRepository;
+        this.hcaptchaService = hcaptchaService; // hCaptchaService 초기화
     }
 
     // 게시물 비밀번호 확인
@@ -133,14 +134,21 @@ public class RecipientServiceImpl implements RecipientService {
     // 게시물 등록
     // 조건 : letter_writer 한영자 10자 제한, letter_passcode 영숫자 8자 이상, 캡챠 인증
     @Override
-    public RecipientResponseDto insertRecipient(RecipientEntity recipientEntityRequest) {
+    public RecipientResponseDto insertRecipient(RecipientEntity recipientEntityRequest, String captchaToken) {
+        // --- 0. hCaptcha 인증 검증 추가 ---
+        if (!hcaptchaService.verifyCaptcha(captchaToken)) {
+            logger.warn("hCaptcha 인증 실패: 유효하지 않은 캡차 토큰입니다.");
+            throw new RecipientInvalidDataException("캡차 인증에 실패했습니다. 다시 시도해주세요.");
+        }
+        logger.info("hCaptcha 인증 성공. 게시물 등록 진행.");
+
         // 1. Jsoup을 사용하여 HTML 필터링 및 내용 유효성 검사
         String originalContents = recipientEntityRequest.getLetterContents();
 
         // letterContents가 null이거나 비어있는 경우 InvalidRecipientDataException 발생
         if (originalContents == null || originalContents.trim().isEmpty()) {
             logger.warn("게시물 내용이 비어있거나 null입니다."); // 로깅 추가
-            throw new InvalidRecipientDataException("게시물 내용은 필수 입력 항목입니다.");
+            throw new RecipientInvalidDataException("게시물 내용은 필수 입력 항목입니다.");
         }
         Safelist safelist = Safelist.relaxed();
         String cleanContents = Jsoup.clean(originalContents, safelist);
@@ -149,10 +157,11 @@ public class RecipientServiceImpl implements RecipientService {
         String pureTextContents = Jsoup.parse(cleanContents).text();
         if (pureTextContents.trim().isEmpty()) { // 필터링 후 내용이 실질적으로 비어있는지 다시 확인
             logger.warn("게시물 작성 실패: 필터링 후 내용이 비어있음"); // 로깅 추가
-            throw new InvalidRecipientDataException("게시물 내용은 필수 입력 항목입니다. (HTML 태그 필터링 후)");
+            throw new RecipientInvalidDataException("게시물 내용은 필수 입력 항목입니다. (HTML 태그 필터링 후)");
         }
         recipientEntityRequest.setLetterContents(cleanContents.trim()); // 필터링되고 트림된 내용으로 설정
         logger.debug("Cleaned contents after trim: '{}'", recipientEntityRequest.getLetterContents()); // 디버깅용
+
         // 2. 익명 처리 로직 및 작성자(letterWriter) 유효성 검사 (기존 코드 유지)
         String writerToSave = recipientEntityRequest.getLetterWriter();
         if ("Y".equalsIgnoreCase(recipientEntityRequest.getAnonymityFlag())) {
@@ -174,7 +183,7 @@ public class RecipientServiceImpl implements RecipientService {
             // 만약 @Valid로 처리되지 않는다면 아래 로직 추가
             if (recipientEntityRequest.getOrganEtc() == null || recipientEntityRequest.getOrganEtc().trim().isEmpty()) {
                 logger.warn("ORGAN000 선택 시 organEtc는 필수 입력 항목입니다.");
-                throw new InvalidRecipientDataException("ORGAN000 선택 시 organEtc는 필수 입력 항목입니다.");
+                throw new RecipientInvalidDataException("ORGAN000 선택 시 organEtc는 필수 입력 항목입니다.");
             }
         }
 

@@ -20,8 +20,7 @@ public interface RecipientService {
 
     // 게시물 등록
     // 조건 : letter_writer 한영자 10자 제한, letter_passcode 영숫자 8자 이상, 캡챠 인증
-//    @Transactional
-    RecipientResponseDto insertRecipient(RecipientEntity recipientEntityRequest);
+    RecipientResponseDto insertRecipient(RecipientEntity recipientEntityRequest, String captchaToken);
 
     // 특정 게시물 조회
     RecipientResponseDto selectRecipient(int letterSeq);

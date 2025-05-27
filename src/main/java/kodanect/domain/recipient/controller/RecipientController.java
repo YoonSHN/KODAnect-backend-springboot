@@ -1,11 +1,13 @@
 package kodanect.domain.recipient.controller;
 
+import kodanect.common.exception.RecipientInvalidDataException;
+import kodanect.common.response.ApiResponse;
+import kodanect.common.response.PageApiResponse;
 import kodanect.domain.recipient.dto.RecipientResponseDto;
 import kodanect.domain.recipient.entity.RecipientEntity;
 import kodanect.domain.recipient.service.RecipientService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -23,7 +25,6 @@ public class RecipientController {
     private static final Logger logger = LoggerFactory.getLogger(RecipientController.class);
     private static final int DEFAULT_PAGE_SIZE = 20; // 상수로 정의
 
-    @Autowired
     private final RecipientService recipientService;
 
     public RecipientController(RecipientService recipientService) {
@@ -32,121 +33,145 @@ public class RecipientController {
 
     // 게시판 조회 (페이지, 검색 포함)
     @GetMapping
-    public ResponseEntity<Page<RecipientResponseDto>> search(@ModelAttribute RecipientEntity searchVO,
-                                                             @PageableDefault(size = DEFAULT_PAGE_SIZE, sort = "writeTime", direction = org.springframework.data.domain.Sort.Direction.DESC)
-                                                    Pageable pageable){
+    public ResponseEntity<PageApiResponse<RecipientResponseDto>> search(@ModelAttribute RecipientEntity searchVO,
+                                                                        @PageableDefault(size = DEFAULT_PAGE_SIZE, sort = "writeTime", direction = org.springframework.data.domain.Sort.Direction.DESC)
+                                                                        Pageable pageable){
         try {
             Page<RecipientResponseDto> recipientPage = recipientService.selectRecipientListPaged(searchVO,pageable);
-            return ResponseEntity.ok(recipientPage);  //  200 OK
+
+            PageApiResponse<RecipientResponseDto> response = PageApiResponse.success(
+                    recipientPage, "수혜자 편지 목록 가져오기 성공" // 요청하신 메시지
+            );
+            return ResponseEntity.ok(response);  //  200 OK
         }
         catch (Exception e) {
             logger.error("게시물 목록 조회 중 오류 발생: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);  // 500 Internal Server Error
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(PageApiResponse.fail(HttpStatus.INTERNAL_SERVER_ERROR.value(), "게시물 목록 조회 중 오류가 발생했습니다."));  // 500 Internal Server Error
         }
     }
 
     // 게시판 등록 페이지 요청 (단순 200 응답)
     @GetMapping("/new")
-    public ResponseEntity<Void> writeForm() {
-        return ResponseEntity.ok().build(); // 200 OK
-
+    public ResponseEntity<ApiResponse<Void>> writeForm() {
+        return ResponseEntity.ok(ApiResponse.success(200, "게시물 작성 페이지 접근 성공", null)); // 200 OK
+    }
 
     // 게시판 등록
-    @PostMapping //
-    public ResponseEntity<RecipientResponseDto> write(@Valid @RequestBody RecipientEntity recipientEntityRequest
-                                         /*, // 캡챠 인증 적용시 주석 해제
-                                         @RequestParam(value = "captchaResponse", required = false) String captchaResponse  */) {
+    @PostMapping
+    public ResponseEntity<ApiResponse<RecipientResponseDto>> write(@Valid @RequestBody RecipientEntity recipientEntityRequest) {
         try {
-            RecipientResponseDto createdRecipient = recipientService.insertRecipient(recipientEntityRequest);
-            return ResponseEntity.status(HttpStatus.CREATED).body(createdRecipient); // 201 Created
+            // RecipientEntity 객체에서 captchaToken을 추출하여 서비스로 전달
+            RecipientResponseDto createdRecipient = recipientService.insertRecipient(
+                    recipientEntityRequest,recipientEntityRequest.getCaptchaToken() // RecipientEntity에서 captchaToken 추출
+            );
+            // 성공 시 RecipientResponseDto 객체를 본문에 담아 반환
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(ApiResponse.success(HttpStatus.CREATED.value(), "게시물이 성공적으로 등록되었습니다.", createdRecipient)); // 201 Created
         }
-        catch (Exception e) {
+        catch (RecipientInvalidDataException e) {
+            logger.warn("게시물 등록 실패: 유효하지 않은 데이터 - 제목: {}, 메시지: {}", recipientEntityRequest.getLetterTitle(), e.getMessage());
+            // 실패 시 ApiResponse 객체를 본문에 담아 반환
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.fail(HttpStatus.BAD_REQUEST.value(), e.getMessage())); // 400 Bad Request
+        } catch (Exception e) {
             logger.error("게시물 등록 중 오류 발생 - 제목: {}", recipientEntityRequest.getLetterTitle(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null); // 500 Internal Server Error
+            // 실패 시 ApiResponse 객체를 본문에 담아 반환
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.fail(HttpStatus.INTERNAL_SERVER_ERROR.value(), "게시물 등록 중 알 수 없는 오류가 발생했습니다.")); // 500 Internal Server Error
         }
     }
 
     // 특정 게시판 조회
     @GetMapping("/{letterSeq}")
-    public ResponseEntity<RecipientResponseDto> view(@PathVariable("letterSeq") int letterSeq){
+    public ResponseEntity<ApiResponse<RecipientResponseDto>> view(@PathVariable("letterSeq") int letterSeq){
         try {
             RecipientResponseDto recipientDto = recipientService.selectRecipient(letterSeq);
-            return ResponseEntity.ok(recipientDto);  // 200 OK
-        }
-        catch (NoSuchElementException e) { // 게시물이 존재하지 않거나 삭제된 경우
+            return ResponseEntity.ok(ApiResponse.success(200, "게시물 조회 성공", recipientDto)); // 200 OK
+        } catch (NoSuchElementException e) { // 게시물이 존재하지 않거나 삭제된 경우
             logger.warn("게시물을 찾을 수 없습니다: {}", letterSeq);
-            return ResponseEntity.notFound().build();   // 404 Not Found
-        }
-        catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);  // 500 Internal Server Error
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.fail(HttpStatus.NOT_FOUND.value(), "요청하신 게시물을 찾을 수 없습니다.")); // 404 Not Found
+        } catch (Exception e) {
+            logger.error("게시물 조회 중 오류 발생 - letterSeq: {}", letterSeq, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.fail(HttpStatus.INTERNAL_SERVER_ERROR.value(), "게시물 조회 중 오류가 발생했습니다.")); // 500 Internal Server Error
         }
     }
 
     // 게시물 수정을 위한 비밀번호 인증
     @PostMapping("/{letterSeq}/verifyPwd")
-    public ResponseEntity<Void> verifyPassword(@PathVariable("letterSeq") int letterSeq,
-                                               @RequestParam("letterPasscode") String letterPasscode) {
+    public ResponseEntity<ApiResponse<Void>> verifyPassword(@PathVariable("letterSeq") int letterSeq,
+                                                            @RequestParam("letterPasscode") String letterPasscode) {
         try {
             boolean isVerified = recipientService.verifyLetterPassword(letterSeq, letterPasscode);
             if (isVerified) {
-                return ResponseEntity.ok().build(); // 200 OK (인증 성공)
+                return ResponseEntity.ok(ApiResponse.success(200, "비밀번호 인증 성공")); // 200 OK (인증 성공)
             }
             else {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build(); // 401 Unauthorized (비밀번호 불일치)
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.fail(HttpStatus.UNAUTHORIZED.value(), "비밀번호가 일치하지 않습니다.")); // 401 Unauthorized (비밀번호 불일치)
             }
         }
         catch (NoSuchElementException e) { // 게시물이 존재하지 않거나 삭제된 경우
             logger.warn("비밀번호 인증 실패: 게시물을 찾을 수 없습니다. letterSeq: {}", letterSeq);
-            return ResponseEntity.notFound().build(); // 404 Not Found
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(ApiResponse.fail(HttpStatus.NOT_FOUND.value(), "비밀번호 인증 실패: 게시물을 찾을 수 없습니다.")); // 404 Not Found
         }
         catch (Exception e) {
             logger.error("비밀번호 인증 중 오류 발생 - letterSeq: {}", letterSeq, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build(); // 500 Internal Server Error
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body(ApiResponse.fail(HttpStatus.INTERNAL_SERVER_ERROR.value(), "비밀번호 인증 중 오류가 발생했습니다.")); // 500 Internal Server Error
         }
     }
 
     // 게시물 수정
     @PatchMapping("/{letterSeq}")
-    public ResponseEntity<RecipientResponseDto> edit(@PathVariable("letterSeq") int letterSeq,
-                                                     @Valid @RequestBody RecipientEntity recipientEntityRequest) {
+    public ResponseEntity<ApiResponse<RecipientResponseDto>> edit(@PathVariable("letterSeq") int letterSeq,
+                                                                  @Valid @RequestBody RecipientEntity recipientEntityRequest) {
         try {
             RecipientResponseDto updatedRecipientVO = recipientService.updateRecipient(recipientEntityRequest, letterSeq, recipientEntityRequest.getLetterPasscode());
-
-            return ResponseEntity.ok(updatedRecipientVO);   // 200 OK
+            return ResponseEntity.ok(ApiResponse.success(200, "게시물이 성공적으로 수정되었습니다.", updatedRecipientVO)); // 200 OK
         }
         catch (NoSuchElementException e) { // 게시물을 찾을 수 없는 경우
             logger.warn("게시물 수정 실패: 게시물을 찾을 수 없습니다. letterSeq: {}", letterSeq);
-            return ResponseEntity.notFound().build();   // 404 Not Found
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.fail(HttpStatus.NOT_FOUND.value(), "게시물 수정 실패: 게시물을 찾을 수 없습니다.")); // 404 Not Found
         }
         catch (IllegalArgumentException e) { // 비밀번호 불일치 등 유효하지 않은 인자
             logger.warn("게시물 수정 실패: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build(); // 400 Bad Request 또는 401 Unauthorized
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.fail(HttpStatus.BAD_REQUEST.value(), e.getMessage())); // 400 Bad Request
         }
         catch (Exception e) {
             logger.error("게시물 수정 중 오류 발생 - letterSeq: {}", letterSeq, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);  // 500 Internal Server Error
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.fail(HttpStatus.INTERNAL_SERVER_ERROR.value(), "게시물 수정 중 알 수 없는 오류가 발생했습니다.")); // 500 Internal Server Error
         }
     }
 
     // 게시물 삭제
     @DeleteMapping("/{letterSeq}")
-    public ResponseEntity<Void> delete(@PathVariable("letterSeq") int letterSeq,
-                                       @RequestBody RecipientEntity recipientEntityRequest){
+    public ResponseEntity<ApiResponse<Void>> delete(@PathVariable("letterSeq") int letterSeq,
+                                                    @RequestBody RecipientEntity recipientEntityRequest){
         try {
             recipientService.deleteRecipient(letterSeq, recipientEntityRequest.getLetterPasscode());
-            return ResponseEntity.noContent().build();  // 204 No Content (성공적으로 삭제됨)
+            return ResponseEntity.ok(ApiResponse.success(200, "게시물이 성공적으로 삭제되었습니다.")); // 200 OK
         }
         catch (NoSuchElementException e) { // 게시물을 찾을 수 없는 경우
             logger.warn("게시물 삭제 실패: 게시물을 찾을 수 없습니다. letterSeq: {}", letterSeq);
-            return ResponseEntity.notFound().build(); // 404 Not Found
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.fail(HttpStatus.NOT_FOUND.value(), "게시물 삭제 실패: 게시물을 찾을 수 없습니다.")); // 404 Not Found
         }
         catch (IllegalArgumentException e) { // 비밀번호 불일치
             logger.warn("게시물 삭제 실패: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build(); // 401 Unauthorized
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.fail(HttpStatus.UNAUTHORIZED.value(), "비밀번호가 일치하지 않습니다.")); // 401 Unauthorized
         }
         catch (Exception e) {
             logger.error("게시물 삭제 중 오류 발생 - letterSeq: {}", letterSeq, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build(); // 500 Internal Server Error
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.fail(HttpStatus.INTERNAL_SERVER_ERROR.value(), "게시물 삭제 중 알 수 없는 오류가 발생했습니다.")); // 500 Internal Server Error
         }
     }
 }

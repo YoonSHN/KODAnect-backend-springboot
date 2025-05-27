@@ -43,34 +43,6 @@
 //    private RecipientEntity testRecipient3; // 페이징 테스트용
 //    private RecipientEntity deletedRecipient; // 조회수, 댓글수 증가에서 제외
 //
-//    // 서비스 임플리먼테이션에 정의된 상수들을 여기에 복사하거나
-//    // 해당 클래스에서 가져올 수 있도록 설정해야 합니다.
-//    private static final String PASSWORD_REGEX = "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{8,}$";
-//    private static final int TITLE_MAX_LENGTH_BYTES = 50; // UTF-8 기준
-//    private static final String ORGAN_CODE_REGEX = "^ORGAN(000|0(0[1-9]|1[0-4]))$";
-//    private static final String ORGAN_CODE_DIRECT_INPUT = "ORGAN000";
-//    private static final int ORGAN_ETC_MAX_LENGTH_BYTES = 30; // UTF-8 기준
-//    private static final String ANONYMOUS_WRITER_VALUE = "익명";
-//    private static final int WRITER_MAX_LENGTH_BYTES = 10; // UTF-8 기준
-//    private static final int RECIPIENT_YEAR_MIN = 1995;
-//    private static final int RECIPIENT_YEAR_MAX = 2030;
-//    private static final int FILE_NAME_MAX_LENGTH_BYTES = 600; // varchar(600) 기준
-//
-//    // 테스트용 RecipientEntity 생성 헬퍼 메서드
-//    private RecipientEntity createValidRecipientEntity() {
-//        return RecipientEntity.builder()
-//                .letterWriter("테스터") // 10바이트 이하의 유효한 값
-//                .letterTitle("테스트 제목입니다.")
-//                .letterContents("테스트 내용입니다.") // Jsoup 필터링 후 공백 없음
-//                .letterPasscode("testpass123")
-//                .anonymityFlag("N")
-//                .organCode("ORGAN001")
-//                .recipientYear("2020")
-//                .fileName("test_file.jpg")
-//                .orgFileName("original_test_file.jpg")
-//                .build();
-//    }
-//
 //    // 테스트용 RecipientCommentEntity 생성 헬퍼 메서드
 //    private RecipientCommentEntity createAndSaveComment(RecipientEntity letter, String writer, String contents, String passcode, String delFlag, LocalDateTime writeTime) {
 //        RecipientCommentEntity comment = new RecipientCommentEntity();
