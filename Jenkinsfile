@@ -237,7 +237,7 @@ EOF
                     githubNotify context: 'healthcheck', status: 'PENDING', description: '헬스체크 중...'
 
 
-                    def healthCheckUrl = "http://${SERVER_HOST}:8081/actuator/health"
+                    def healthCheckUrl = "http://${SERVER_HOST}:8080/actuator/health"
 
 
                     def retries = 3
