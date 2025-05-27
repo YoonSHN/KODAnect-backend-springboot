@@ -1,7 +1,7 @@
 package kodanect.common.config;
 
-import kodanect.common.exception.EgovAopExceptionTransfer;
-import kodanect.common.exception.EgovExcepHndlr;
+import kodanect.common.exception.config.EgovAopExceptionTransfer;
+import kodanect.common.exception.config.EgovExcepHndlr;
 import org.egovframe.rte.fdl.cmmn.aspect.ExceptionTransfer;
 import org.egovframe.rte.fdl.cmmn.exception.handler.ExceptionHandler;
 import org.egovframe.rte.fdl.cmmn.exception.manager.DefaultExceptionHandleManager;
@@ -50,7 +50,7 @@ public class EgovConfigAspect {
 	 * - donation.service.impl
 	 * - heaven.service.impl
 	 * - info.service.impl
-	 * - notice.service.impl
+	 * - article.service.impl
 	 * - organ.service.impl
 	 * - recipient.service.impl
 	 * - remembrance.service.impl
@@ -64,7 +64,7 @@ public class EgovConfigAspect {
 			"**donation.service.impl.*",
 			"**heaven.service.impl.*",
 			"**info.service.impl.*",
-			"**notice.service.impl.*",
+			"**article.service.impl.*",
 			"**organ.service.impl.*",
 			"**recipient.service.impl.*",
 			"**remembrance.service.impl.*"

@@ -1,4 +1,4 @@
-package kodanect.common.exception;
+package kodanect.common.exception.config;
 
 import kodanect.common.response.ApiResponse;
 import lombok.extern.slf4j.Slf4j;

@@ -1,4 +1,4 @@
-package kodanect.common.exception;
+package kodanect.common.exception.config;
 
 import lombok.Setter;
 import org.aspectj.lang.JoinPoint;
