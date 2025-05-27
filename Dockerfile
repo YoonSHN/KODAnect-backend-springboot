@@ -50,8 +50,8 @@ ENV SPRING_PROFILES_ACTIVE=${RUN_MODE}
 WORKDIR /app
 
 COPY --from=builder /app/target/KODAnect-backend-springboot-1.0.0.jar ./app.jar
-COPY application.properties ./
-COPY application-${RUN_MODE}.properties ./
+COPY src/main/resources/application.properties ./
+COPY src/main/resources/application-${RUN_MODE}.properties ./
 
 ENTRYPOINT ["/bin/sh", "-c", "\
   echo \"Runtime mode: $RUN_MODE\" && \
