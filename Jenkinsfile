@@ -5,6 +5,7 @@ pipeline {
         DOCKER_USER = credentials('docker-user')
         DOCKER_PASS = credentials('docker-pass')
         SERVER_HOST = credentials('server-host')
+        SLACK_TOKEN = credentials('slack-token')
         IMAGE_NAME = 'kodanect'
 
         CI_FAILED = 'false'
@@ -256,7 +257,7 @@ EOF
             slackSend(
                 channel: '#ci-cd',
                 color: 'good',
-                tokenCredentialId: 'slack-token',
+                token: env.SLACK_TOKEN,
                 message: "빌드 성공: ${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|바로가기>)"
             )
         }
@@ -265,7 +266,7 @@ EOF
             slackSend(
                 channel: '#ci-cd',
                 color: 'danger',
-                tokenCredentialId: 'slack-token',
+                token: env.SLACK_TOKEN,
                 message: "빌드 실패: ${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|바로가기>)"
             )
         }
