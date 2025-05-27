@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.util.NoSuchElementException;
 
 @RestController
@@ -52,7 +53,7 @@ public class RecipientController {
 
     // 게시판 등록
     @PostMapping //
-    public ResponseEntity<RecipientResponseDto> write(@RequestBody RecipientEntity recipientEntityRequest
+    public ResponseEntity<RecipientResponseDto> write(@Valid @RequestBody RecipientEntity recipientEntityRequest
                                          /*, // 캡챠 인증 적용시 주석 해제
                                          @RequestParam(value = "captchaResponse", required = false) String captchaResponse  */) {
         try {
@@ -107,7 +108,7 @@ public class RecipientController {
     // 게시물 수정
     @PatchMapping("/{letterSeq}")
     public ResponseEntity<RecipientResponseDto> edit(@PathVariable("letterSeq") int letterSeq,
-                                                     @RequestBody RecipientEntity recipientEntityRequest) {
+                                                     @Valid @RequestBody RecipientEntity recipientEntityRequest) {
         try {
             RecipientResponseDto updatedRecipientVO = recipientService.updateRecipient(recipientEntityRequest, letterSeq, recipientEntityRequest.getLetterPasscode());
 

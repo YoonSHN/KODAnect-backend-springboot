@@ -1,19 +1,35 @@
 package kodanect.domain.recipient.entity;
 
+import kodanect.common.validation.recipientConditionalValidation;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.DynamicInsert;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Pattern;
+import javax.validation.constraints.Size;
 import java.time.LocalDateTime;
 
+@recipientConditionalValidation(
+        conditionalProperty = "organCode",
+        expectedValue = "ORGAN000",
+        requiredProperty = "organEtc",
+        message = "직접입력 선택 시 기타 장기를 입력해야 합니다."
+)
 @Data
 @Builder
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "tb25_430_recipient_letter")
+@DynamicInsert // insert 시 null이 아닌 필드만 쿼리에 포함
+@EntityListeners(AuditingEntityListener.class) // JPA Auditing 활성화
 public class RecipientEntity {
 
     private static final long serialVersionUID = 1L;
@@ -21,60 +37,93 @@ public class RecipientEntity {
     // 수혜자 편지 일련번호, AutoIncrement
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "LETTER_SEQ", nullable = false)
     private Integer letterSeq;
-    // 권역 코드
+    // 장기 구분 코드
+    @Column(name = "ORGAN_CODE", length = 10, nullable = false)
+    @NotBlank(message = "기증받은 장기를 선택해주세요.")
+    @Pattern(regexp = "^ORGAN(00[0-9]|01[0-4])$", message = "유효하지 않은 장기 코드입니다.")
     private String organCode;
     // 기타 장기
+    @Column(name = "ORGAN_ETC", length = 90) // 한글 30자 = 90바이트, 30자 제한
     private String organEtc;
     // 스토리 제목
-    @Column(name = "story_title")
+    @Column(name = "LETTER_TITLE", length = 150, nullable = false) // 한글 50자 = 150바이트, 50자 제한
+    @NotBlank(message = "제목은 필수 입력 항목입니다.")
+    @Size(max = 50, message = "제목은 50자 이하여야 합니다.") // 글자 수 제한
     private String letterTitle;
     // 수혜 연도
+    @Column(name = "RECIPIENT_YEAR", length = 4, nullable = false)
+    @NotBlank(message = "기증받은 년도는 필수 입력 항목입니다.")
+    @Pattern(regexp = "^(199[5-9]|20[0-2][0-9]|2030)$", message = "기증받은 년도는 1995년에서 2030년 사이의 값이어야 합니다.")
     private String recipientYear;
     // 편지 비밀번호 (Request 시 필요)
+    @Column(name = "LETTER_PASSCODE", length = 20, nullable = false)
+    @NotBlank(message = "비밀번호는 필수 입력 항목입니다.")
+    // 영문/숫자 8자 이상 (정규식 패턴)
+    @Pattern(regexp = "^(?=.*[a-zA-Z])(?=.*[0-9]).{8,}$", message = "비밀번호는 영문 숫자 8자 이상 이어야 합니다.")
     private String letterPasscode;
     // 편지 작성자
+    @Column(name = "LETTER_WRITER", length = 30) // 한글 10자 = 30바이트, 10자 제한
+    @Size(max = 30)
+    @NotBlank(message = "작성자는 필수 입력 항목입니다.")
     private String letterWriter;
     // 편지 익명여부
-    @Column(name = "anonymity_flag", length = 1)
+    @Column(name = "ANONYMITY_FLAG", length = 1, nullable = false)
+    @Pattern(regexp = "[YN]", message = "익명 여부는 'Y' 또는 'N'이어야 합니다.")
     private String anonymityFlag;
     // 조회 건수 (Request 시에는 0으로 초기화되거나 무시)
     @Builder.Default
+    @Column(name = "READ_COUNT")
     private int readCount = 0;
     // 편지 내용
     @Lob
-    @Column(name = "letter_contents", columnDefinition = "TEXT")
+    @Column(name = "LETTER_CONTENTS", columnDefinition = "TEXT", nullable = false)
+    @NotBlank(message = "내용은 필수 입력 항목입니다.")
     private String letterContents;
     // 이미지 파일 명
+    @Column(name = "FILE_NAME", length = 200)
+    @Size(max = 200, message = "파일명이 너무 깁니다. (최대 200자)")
     private String fileName;
     // 이미지 원본 파일 명
     private String orgFileName;
     // 생성 일시 (Request 시에는 클라이언트에서 보내지 않음)
-    @Column(nullable = false, updatable = false)
+    @CreatedDate
+    @Column(name = "WRITE_TIME", nullable = false, updatable = false)
     private LocalDateTime writeTime;
     // 생성자 아이디
+    @Column(name = "WRITER_ID", length = 50)
     private String writerId;
     // 수정 일시 (Request 시에는 클라이언트에서 보내지 않음)
+    @LastModifiedDate
+    @Column(name = "MODIFY_TIME")
     private LocalDateTime modifyTime;
     // 수정자 아이디
+    @Column(name = "MODIFIER_ID", length = 50)
     private String modifierId;
     // 삭제 여부 (Request 시에는 클라이언트에서 보내지 않음)
-    @Column(name = "del_flag", length = 1)
+    @Column(name = "DEL_FLAG", length = 1, nullable = false)
     @Builder.Default
     private String delFlag = "N";
 
     // 검색 키워드용
     @Transient
     private String searchKeyword;
+    // 검색 타입용
+    @Transient
+    private String searchType;
 
-    @PrePersist
-    public void prePersist() {
-        this.writeTime = LocalDateTime.now();
-        this.modifyTime = LocalDateTime.now();
+    // 비즈니스 로직을 위한 메서드
+    public void incrementReadCount() {
+        this.readCount = this.readCount + 1;
     }
 
-    @PreUpdate
-    public void preUpdate() {
-        this.modifyTime = LocalDateTime.now();
+    public void softDelete() {
+        this.delFlag = "Y";
+    }
+
+    // 비밀번호 일치 여부 확인 (서비스에서 사용)
+    public boolean checkPasscode(String inputPasscode) {
+        return this.letterPasscode != null && this.letterPasscode.equals(inputPasscode);
     }
 }

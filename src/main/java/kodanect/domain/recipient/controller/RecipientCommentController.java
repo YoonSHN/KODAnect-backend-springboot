@@ -10,7 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.NoSuchElementException;
+import javax.validation.Valid;
 
 @RestController
 @RequestMapping("/recipientLetters")
@@ -27,103 +27,56 @@ public class RecipientCommentController {
     //  댓글 작성
     @PostMapping("/{letterSeq}/comments")
     public ResponseEntity<RecipientCommentResponseDto> writeComment(@PathVariable("letterSeq") int letterSeq,
-                                                                    @RequestBody RecipientCommentEntity commentEntityRequest) {
+                                                                    @Valid @RequestBody RecipientCommentEntity commentEntityRequest) {
         logger.info("POST /recipientLetters/{}/comments called with comment: {}", letterSeq, commentEntityRequest);
-        try {
-            // 댓글을 작성할 게시물 정보를 RecipientCommentVO에 설정
-            // RecipientEntity 객체를 생성하여 letterSeq만 설정하고 RecipientCommentEntity의 letter 필드에 주입
-            RecipientEntity parentLetter = RecipientEntity.builder().letterSeq(letterSeq).build();
-            commentEntityRequest.setLetter(parentLetter);
 
-            RecipientCommentResponseDto savedComment = recipientCommentService.insertComment(commentEntityRequest);
-            logger.info("Comment successfully written with commentSeq: {}", savedComment.getCommentSeq());
-            return new ResponseEntity<>(savedComment, HttpStatus.CREATED); // 201 Created
-        }
-        catch (IllegalArgumentException e) {
-            logger.warn("Bad request for comment write: {}", e.getMessage());
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST); // 400 Bad Request (예: 게시물 없음)
-        }
-        catch (NoSuchElementException e) { // 서비스에서 NoSuchElementException을 던질 수 있음
-            logger.warn("Not Found for comment write: {}", e.getMessage());
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND); // 404 Not Found
-        }
-        catch (Exception e) {
-            logger.error("Error writing comment for letterSeq {}: {}", letterSeq, e.getMessage(), e);
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR); // 500 Internal Server Error
-        }
+        // 댓글을 작성할 게시물
+        // RecipientEntity 객체를 생성하여 letterSeq만 설정하고 RecipientCommentEntity의 letter 필드에 주입
+        RecipientEntity parentLetter = RecipientEntity.builder().letterSeq(letterSeq).build();
+        commentEntityRequest.setLetter(parentLetter);
+
+        // 서비스 메서드는 이제 throws Exception 선언이 없으므로 try-catch에서 일반 Exception은 제거
+        RecipientCommentResponseDto savedComment = recipientCommentService.insertComment(commentEntityRequest);
+        logger.info("Comment successfully written with commentSeq: {}", savedComment.getCommentSeq());
+        return new ResponseEntity<>(savedComment, HttpStatus.CREATED); // 201 Created
     }
 
     // 댓글 수정
     @PutMapping("/{letterSeq}/comments/{commentSeq}")
     public ResponseEntity<RecipientCommentResponseDto> updateComment(@PathVariable("letterSeq") int letterSeq,
-                                                            @PathVariable("commentSeq") int commentSeq,
-                                                            @RequestBody RecipientCommentEntity commentEntityRequest) {
-        logger.info("PUT /recipientLetters/{}/comments/{} called with commentVO: {}", letterSeq, commentSeq, commentEntityRequest);
-        try {
-            // URL의 commentSeq를 PathVariable에서 받아 Entity에 설정 (RequestBody에 없을 경우 대비)
-            commentEntityRequest.setCommentSeq(commentSeq);
+                                                                     @PathVariable("commentSeq") int commentSeq,
+                                                                     @Valid @RequestBody RecipientCommentEntity commentEntityRequest) {
+        logger.info("PUT /recipientLetters/{}/comments/{} called with commentEntity: {}", letterSeq, commentSeq, commentEntityRequest);
+        commentEntityRequest.setCommentSeq(commentSeq); // URL의 commentSeq를 PathVariable에서 받아 Entity에 설정
 
-            // 비밀번호는 RequestBody에서 직접 받으므로 별도 파라미터로 넘기기
-            String inputPassword = commentEntityRequest.getCommentPasscode();
+        // 비밀번호는 RequestBody에서 직접 받으므로 별도 파라미터로 넘기기
+        // (commentEntityRequest 내에 이미 있으므로 별도 추출 필요 없음, 서비스에서 사용)
+        String inputPassword = commentEntityRequest.getCommentPasscode();
 
-            if (commentEntityRequest.getContents() == null || commentEntityRequest.getCommentPasscode() == null) {
-                logger.warn("Missing required fields for comment update: contents or commentPasscode");
-                return new ResponseEntity<>(HttpStatus.BAD_REQUEST); // 400 Bad Request
-            }
+        // Bean Validation(@Valid)이 여기서 먼저 처리되므로, 수동으로 null/empty 체크는 불필요
+        // 단, 특정 필드만 업데이트 되는 부분이라면 (patch) 수동 체크가 필요할 수도 있음.
+        // 여기서는 PUT이므로 전체 필드를 교체한다고 가정.
 
-            RecipientCommentResponseDto updatedComment = recipientCommentService.updateComment(commentEntityRequest, inputPassword);
-            logger.info("Comment successfully updated for commentSeq: {}", updatedComment.getCommentSeq());
-            return new ResponseEntity<>(updatedComment, HttpStatus.OK); // 200 OK
-        }
-        catch (IllegalArgumentException e) {
-            logger.warn("Error updating comment {}: {}", commentSeq, e.getMessage());
-            // 비밀번호 불일치: 403 Forbidden, 댓글 없음: 404 Not Found
-            if (e.getMessage().contains("비밀번호가 일치하지 않습니다")) {
-                return new ResponseEntity<>(HttpStatus.FORBIDDEN); // 403 Forbidden
-            }
-            else if (e.getMessage().contains("댓글을 찾을 수 없거나 이미 삭제되었습니다")) {
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND); // 404 Not Found
-            }
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST); // 400 Bad Request
-        }
-        catch (Exception e) {
-            logger.error("Error updating commentSeq {}: {}", commentSeq, e.getMessage(), e);
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR); // 500 Internal Server Error
-        }
+        RecipientCommentResponseDto updatedComment = recipientCommentService.updateComment(commentEntityRequest, inputPassword);
+        logger.info("Comment successfully updated for commentSeq: {}", updatedComment.getCommentSeq());
+        return new ResponseEntity<>(updatedComment, HttpStatus.OK); // 200 OK
     }
+
 
     // 댓글 삭제
     @DeleteMapping("/{letterSeq}/comments/{commentSeq}")
     public ResponseEntity<Void> deleteComment(@PathVariable("letterSeq") int letterSeq,
                                               @PathVariable("commentSeq") int commentSeq,
-                                              @RequestBody RecipientCommentEntity commentEntityRequest) { // Entity를 요청으로 받음 (비밀번호 추출용)
+                                              @Valid @RequestBody RecipientCommentEntity commentEntityRequest) { // Entity를 요청으로 받음 (비밀번호 추출용)
         logger.info("DELETE /recipientLetters/{}/comments/{} called with commentEntityRequest: {}", letterSeq, commentSeq, commentEntityRequest);
-        try {
-            String commentPasscode = commentEntityRequest.getCommentPasscode();
+        String commentPasscode = commentEntityRequest.getCommentPasscode();
 
-            if (commentPasscode == null) {
-                logger.warn("Missing required field for comment delete: commentPasscode");
-                return new ResponseEntity<>(HttpStatus.BAD_REQUEST); // 400 Bad Request
-            }
+        // Bean Validation(@Valid)이 여기서 먼저 처리되므로, 수동으로 null 체크는 불필요
+        // if (commentPasscode == null) { ... }
 
-            recipientCommentService.deleteComment(commentSeq, commentPasscode);
-            logger.info("Comment successfully deleted (logically) for commentSeq: {}", commentSeq);
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT); // 204 No Content
-        }
-        catch (IllegalArgumentException e) {
-            logger.warn("Error deleting comment {}: {}", commentSeq, e.getMessage());
-            if (e.getMessage().contains("비밀번호가 일치하지 않습니다")) {
-                return new ResponseEntity<>(HttpStatus.FORBIDDEN); // 403 Forbidden
-            }
-            else if (e.getMessage().contains("댓글을 찾을 수 없거나 이미 삭제되었습니다")) {
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND); // 404 Not Found
-            }
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST); // 400 Bad Request
-        }
-        catch (Exception e) {
-            logger.error("Error deleting commentSeq {}: {}", commentSeq, e.getMessage(), e);
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR); // 500 Internal Server Error
-        }
+        recipientCommentService.deleteComment(commentSeq, commentPasscode);
+        logger.info("Comment successfully deleted (logically) for commentSeq: {}", commentSeq);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT); // 204 No Content
     }
 
 }
