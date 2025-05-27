@@ -69,12 +69,10 @@
 		<dependency>
 			<groupId>com.querydsl</groupId>
 			<artifactId>querydsl-jpa</artifactId>
-			<version>5.0.0</version>
 		</dependency>
 		<dependency>
 			<groupId>com.querydsl</groupId>
 			<artifactId>querydsl-apt</artifactId>
-			<version>5.0.0</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
@@ -203,12 +201,6 @@
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 				<configuration>
-					<excludes>
-						<exclude>
-							<groupId>org.projectlombok</groupId>
-							<artifactId>lombok</artifactId>
-						</exclude>
-					</excludes>
 				</configuration>
 			</plugin>
 
@@ -299,7 +291,18 @@
 				</executions>
 			</plugin>
 
-
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>exec-maven-plugin</artifactId>
+				<version>3.1.0</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>java</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 
 			<!-- Java Compiler Plugin -->
 			<plugin>
@@ -309,6 +312,29 @@
 				<configuration>
 					<source>17</source>
 					<target>17</target>
+					<generatedSourcesDirectory>${project.build.directory}/generated-sources/querydsl</generatedSourcesDirectory>
+					<annotationProcessorPaths>
+						<annotationProcessorPath>
+							<groupId>org.projectlombok</groupId>
+							<artifactId>lombok</artifactId>
+							<version>1.18.34</version>
+						</annotationProcessorPath>
+						<annotationProcessorPath>
+							<groupId>com.querydsl</groupId>
+							<artifactId>querydsl-apt</artifactId>
+							<version>5.0.0</version>
+						</annotationProcessorPath>
+						<annotationProcessorPath>
+							<groupId>javax.persistence</groupId>
+							<artifactId>javax.persistence-api</artifactId>
+							<version>2.2</version>
+						</annotationProcessorPath>
+					</annotationProcessorPaths>
+
+					<compilerArgs>
+						<arg>-processor</arg>
+						<arg>com.querydsl.apt.jpa.JPAAnnotationProcessor,lombok.launch.AnnotationProcessorHider$AnnotationProcessor</arg>
+					</compilerArgs>
 				</configuration>
 			</plugin>
 		</plugins>
