@@ -1,4 +1,4 @@
-package kodanect.common.exception;
+package kodanect.common.exception.config;
 
 import lombok.extern.slf4j.Slf4j;
 import org.egovframe.rte.fdl.cmmn.exception.handler.ExceptionHandler;
