@@ -34,23 +34,22 @@ pipeline {
         }
 
         stage('Checkstyle') {
-                steps {
-                    script {
-                        githubNotify context: 'checkstyle', status: 'PENDING', description: '체크스타일 검사 중...'
-                        catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-                            sh './mvnw checkstyle:check'
-                        }
-                        if (currentBuild.currentResult == 'FAILURE') {
-                            githubNotify context: 'checkstyle', status: 'FAILURE', description: '체크스타일 검사 실패'
-                            env.CI_FAILED = 'true'
-                            error('Checkstyle 실패')
-                        } else {
-                            githubNotify context: 'checkstyle', status: 'SUCCESS', description: '체크스타일 검사 성공'
-                        }
+            steps {
+                script {
+                    githubNotify context: 'checkstyle', status: 'PENDING', description: '체크스타일 검사 중...'
+                    catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                        sh './mvnw checkstyle:check'
+                    }
+                    if (currentBuild.currentResult == 'FAILURE') {
+                        githubNotify context: 'checkstyle', status: 'FAILURE', description: '체크스타일 검사 실패'
+                        env.CI_FAILED = 'true'
+                        error('Checkstyle 실패')
+                    } else {
+                        githubNotify context: 'checkstyle', status: 'SUCCESS', description: '체크스타일 검사 성공'
                     }
                 }
             }
-
+        }
 
         stage('Build') {
             steps {
@@ -129,9 +128,6 @@ pipeline {
             }
         }
 
-
-
-
         stage('Docker Build & Push') {
             when {
                 branch 'main'
@@ -146,7 +142,7 @@ pipeline {
                     catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
                         sh "docker build -t ${fullImage} ."
                         sh """
-                            echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                            echo "\$DOCKER_PASS" | docker login -u "\$DOCKER_USER" --password-stdin
                             docker push ${fullImage}
                         """
                     }
@@ -181,7 +177,7 @@ pipeline {
                         usernamePassword(credentialsId: 'server-ssh-login', usernameVariable: 'SSH_USER', passwordVariable: 'SSH_PASS')
                     ]) {
                         sh """
-                            cat > .env <<'EOF'
+                            cat > .env <<EOF
 DB_HOST=${DB_HOST}
 DB_PORT=${DB_PORT}
 DB_NAME=${DB_NAME}
@@ -192,12 +188,12 @@ DOCKER_USER=${DOCKER_USER}
 IMAGE_TAG=${imageTag}
 EOF
 
-                            sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no $SSH_USER@$SERVER_HOST 'mkdir -p /root/docker-compose-prod'
+                            sshpass -p "\$SSH_PASS" ssh -o StrictHostKeyChecking=no \$SSH_USER@\${SERVER_HOST} 'mkdir -p /root/docker-compose-prod'
 
-                            sshpass -p "$SSH_PASS" scp -o StrictHostKeyChecking=no .env $SSH_USER@$SERVER_HOST:/root/docker-compose-prod/.env
+                            sshpass -p "\$SSH_PASS" scp -o StrictHostKeyChecking=no .env \$SSH_USER@\${SERVER_HOST}:/root/docker-compose-prod/.env
 
-                            sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no $SSH_USER@$SERVER_HOST '
-                                echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                            sshpass -p "\$SSH_PASS" ssh -o StrictHostKeyChecking=no \$SSH_USER@\${SERVER_HOST} '
+                                echo "\$DOCKER_PASS" | docker login -u "\$DOCKER_USER" --password-stdin
 
                                 if [ ! -d /root/docker-compose-prod ]; then
                                     git clone https://github.com/FC-DEV3-Final-Project/KODAnect-backend-springboot.git /root/docker-compose-prod
@@ -255,7 +251,7 @@ EOF
 
         success {
             slackSend(
-                channel: '#ci-cd',
+                channel: '4_파이널프로젝트_1조_jenkins',
                 color: 'good',
                 token: env.SLACK_TOKEN,
                 message: "빌드 성공: ${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|바로가기>)"
@@ -264,7 +260,7 @@ EOF
 
         failure {
             slackSend(
-                channel: '#ci-cd',
+                channel: '4_파이널프로젝트_1조_jenkins',
                 color: 'danger',
                 token: env.SLACK_TOKEN,
                 message: "빌드 실패: ${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|바로가기>)"
