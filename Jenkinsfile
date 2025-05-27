@@ -231,7 +231,6 @@ EOF
             }
         }
 
-
         stage('Health Check') {
             steps {
                 script {
@@ -262,7 +261,7 @@ EOF
                 }
             }
         }
-
+    }
 
     post {
         always {
