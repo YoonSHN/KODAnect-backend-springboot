@@ -49,7 +49,7 @@ public class RecipientController {
     @GetMapping("/new")
     public ResponseEntity<Void> writeForm() {
         return ResponseEntity.ok().build(); // 200 OK
-    }
+
 
     // 게시판 등록
     @PostMapping //
