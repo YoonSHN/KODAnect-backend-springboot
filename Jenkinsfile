@@ -32,6 +32,25 @@ pipeline {
             }
         }
 
+        stage('Checkstyle') {
+                steps {
+                    script {
+                        githubNotify context: 'checkstyle', status: 'PENDING', description: '체크스타일 검사 중...'
+                        catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                            sh './mvnw checkstyle:check'
+                        }
+                        if (currentBuild.currentResult == 'FAILURE') {
+                            githubNotify context: 'checkstyle', status: 'FAILURE', description: '체크스타일 검사 실패'
+                            env.CI_FAILED = 'true'
+                            error('Checkstyle 실패')
+                        } else {
+                            githubNotify context: 'checkstyle', status: 'SUCCESS', description: '체크스타일 검사 성공'
+                        }
+                    }
+                }
+            }
+
+
         stage('Build') {
             steps {
                 script {
@@ -73,32 +92,44 @@ pipeline {
 
         stage('SonarCloud Analysis') {
             when {
-                branch 'main'
+                allOf {
+                    changeRequest()
+                    expression { env.CHANGE_TARGET == 'main' }
+                }
             }
             steps {
                 script {
                     githubNotify context: 'sonar', status: 'PENDING', description: 'SonarCloud 분석 중...'
                     withSonarQubeEnv('SonarCloud') {
-                        catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-                            sh '''
-                                ./mvnw sonar:sonar \
-                                -Dsonar.projectKey=kodanect \
-                                -Dsonar.organization=fc-dev3-final-project \
-                                -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
-                            '''
-                        }
+                        withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
+                            catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                                sh """
+                                    ./mvnw sonar:sonar \\
+                                      -Dsonar.projectKey=kodanect \\
+                                      -Dsonar.organization=fc-dev3-final-project \\
+                                      -Dsonar.token=${SONAR_TOKEN} \\
+                                      -Dsonar.pullrequest.key=${CHANGE_ID} \\
+                                      -Dsonar.pullrequest.branch=${CHANGE_BRANCH} \\
+                                      -Dsonar.pullrequest.base=${CHANGE_TARGET} \\
+                                      -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+                                """
+                            }
 
-                        if (currentBuild.currentResult == 'FAILURE') {
-                            githubNotify context: 'sonar', status: 'FAILURE', description: 'SonarCloud 분석 실패'
-                            env.CI_FAILED = 'true'
-                            error('Sonar 분석 실패')
-                        } else {
-                            githubNotify context: 'sonar', status: 'SUCCESS', description: 'SonarCloud 분석 성공'
+                            if (currentBuild.currentResult == 'FAILURE') {
+                                githubNotify context: 'sonar', status: 'FAILURE', description: 'SonarCloud 분석 실패'
+                                env.CI_FAILED = 'true'
+                                error('Sonar 분석 실패')
+                            } else {
+                                githubNotify context: 'sonar', status: 'SUCCESS', description: 'SonarCloud 분석 성공'
+                            }
                         }
                     }
                 }
             }
         }
+
+
+
 
         stage('Docker Build & Push') {
             when {
@@ -190,7 +221,7 @@ EOF
                             gh release create ${imageTag} \\
                               --repo FC-DEV3-Final-Project/KODAnect-backend-springboot \\
                               --title "Release ${imageTag}" \\
-                              --notes "🔖 Jenkins 자동 배포 릴리즈\\n- 이미지: ${fullImage}"
+                              --notes "이미지: ${fullImage}"
                         """
                     }
 
@@ -220,5 +251,22 @@ EOF
                 }
             }
         }
+
+        success {
+            slackSend(
+                channel: '#ci-cd',
+                color: 'good',
+                tokenCredentialId: 'slack-token',
+                message: "빌드 성공: ${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|바로가기>)"
+            )
+        }
+
+        failure {
+            slackSend(
+                channel: '#ci-cd',
+                color: 'danger',
+                tokenCredentialId: 'slack-token',
+                message: "빌드 실패: ${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|바로가기>)"
+            )
+        }
     }
-}
