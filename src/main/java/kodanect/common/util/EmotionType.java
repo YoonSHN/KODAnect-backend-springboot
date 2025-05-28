@@ -56,7 +56,7 @@ public enum EmotionType {
 
     public abstract void apply(Memorial memorial);
 
-    public static EmotionType from(String emotion) throws Exception {
+    public static EmotionType from(String emotion) throws InvalidEmotionTypeException {
         /* 문자열 검증 flower, love, see, miss, proud, hard, sad */
         if(emotion == null || emotion.isEmpty()){
             throw new InvalidEmotionTypeException();

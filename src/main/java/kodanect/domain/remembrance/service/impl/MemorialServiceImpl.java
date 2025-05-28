@@ -4,6 +4,7 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import kodanect.domain.remembrance.dto.*;
 import kodanect.domain.remembrance.entity.Memorial;
+import kodanect.domain.remembrance.exception.*;
 import kodanect.domain.remembrance.repository.MemorialRepository;
 import kodanect.domain.remembrance.service.MemorialReplyService;
 import kodanect.domain.remembrance.service.MemorialService;
@@ -49,7 +50,11 @@ public class MemorialServiceImpl implements MemorialService {
     }
 
     @Override
-    public void emotionCountUpdate(Integer donateSeq, String emotion) throws Exception {
+    public void emotionCountUpdate(Integer donateSeq, String emotion)
+            throws  InvalidEmotionTypeException,
+                    MemorialNotFoundException,
+                    InvalidDonateSeqException
+    {
         /* 이모지 카운트 수 업데이트 */
         /* 게시글 마다 락을 개별 쓰기 락 객체로 관리 */
         ReentrantReadWriteLock lock = getLock(donateSeq);
@@ -75,7 +80,14 @@ public class MemorialServiceImpl implements MemorialService {
 
     @Override
     public Page<MemorialListDto> getSearchMemorialList(
-            String page, String size, String startDate, String endDate, String searchWord) throws Exception {
+            String page, String size, String startDate, String endDate, String searchWord)
+            throws  MissingPaginationParameterException,
+                    InvalidPaginationRangeException,
+                    InvalidPaginationFormatException,
+                    MissingSearchDateParameterException,
+                    InvalidSearchDateFormatException,
+                    InvalidSearchDateRangeException
+    {
         /* 게시글 검색 조건 조회 */
 
         /* 날짜 조건 검증 */
@@ -99,7 +111,11 @@ public class MemorialServiceImpl implements MemorialService {
     }
 
     @Override
-    public Page<MemorialListDto> getMemorialList(String page, String size) throws Exception {
+    public Page<MemorialListDto> getMemorialList(String page, String size)
+            throws  MissingPaginationParameterException,
+                    InvalidPaginationRangeException,
+                    InvalidPaginationFormatException
+    {
         /* 게시글 리스트 조회 */
 
         /* 페이징 검증 */
@@ -113,7 +129,10 @@ public class MemorialServiceImpl implements MemorialService {
     }
 
     @Override
-    public MemorialDetailDto getMemorialByDonateSeq(Integer donateSeq) throws Exception {
+    public MemorialDetailDto getMemorialByDonateSeq(Integer donateSeq)
+            throws  MemorialNotFoundException,
+                    InvalidDonateSeqException
+    {
         /* 게시글 상세 조회 */
 
         /* 게시글 ID 검증 */

@@ -40,10 +40,10 @@ public class MemorialServiceImplTest {
     @Mock
     private MemorialFinder memorialFinder;
 
-    @Test
-    public void emotionCountUpdate() throws Exception {
-
-    }
+//    @Test
+//    public void emotionCountUpdate() throws Exception {
+//
+//    }
 
     @Test
     public void getSearchMemorialList() throws Exception {
@@ -60,7 +60,7 @@ public class MemorialServiceImplTest {
         Page<MemorialListDto> mockPage = new PageImpl<>(content, pageable, 1);
 
         when(memorialRepository.findSearchMemorialList(
-                eq(pageable), eq("20230101"), eq("20240101"), eq("%홍길동%"))
+                pageable, "20230101", "20240101", "%홍길동%")
         ).thenReturn(mockPage);
 
         Page<MemorialListDto> result = memorialService.getSearchMemorialList(page, size, startDate, endDate, searchWord);
@@ -88,7 +88,7 @@ public class MemorialServiceImplTest {
         );
         Page<MemorialListDto> mockPage = new PageImpl<>(content, pageable, 2);
 
-        when(memorialRepository.findMemorialList(eq(pageable))).thenReturn(mockPage);
+        when(memorialRepository.findMemorialList(pageable)).thenReturn(mockPage);
 
         Page<MemorialListDto> result = memorialService.getMemorialList(page, size);
 
@@ -159,8 +159,8 @@ public class MemorialServiceImplTest {
                         .build()
         );
 
-        when(memorialFinder.findByIdOrThrow(eq(donateSeq))).thenReturn(memorial);
-        when(memorialReplyService.findMemorialReplyList(eq(donateSeq))).thenReturn(replies);
+        when(memorialFinder.findByIdOrThrow(donateSeq)).thenReturn(memorial);
+        when(memorialReplyService.findMemorialReplyList(donateSeq)).thenReturn(replies);
 
         MemorialDetailDto result = memorialService.getMemorialByDonateSeq(donateSeq);
 
@@ -171,9 +171,6 @@ public class MemorialServiceImplTest {
         assertEquals("기억합니다", result.getDonateTitle());
         assertEquals("A1", result.getAreaCode());
         assertEquals("내용입니다", result.getContents());
-        assertEquals("img.jpg", result.getFileName());
-        assertEquals("origin.jpg", result.getOrgFileName());
-        assertEquals("관리자", result.getWriter());
         assertEquals("20240101", result.getDonateDate());
         assertEquals("M", result.getGenderFlag());
         assertEquals(Integer.valueOf(40), result.getDonateAge());

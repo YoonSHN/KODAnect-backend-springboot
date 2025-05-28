@@ -6,6 +6,10 @@ import kodanect.domain.remembrance.exception.*;
 
 public class ReplyValidator {
 
+    private ReplyValidator() {
+        throw new UnsupportedOperationException("Utility class");
+    }
+
     public static void validateReplyContent(MemorialReplyDto memorialReplyDto) throws MissingReplyContentException {
         /* 댓글 내용 검증 */
         if(memorialReplyDto.getReplyContents() == null || memorialReplyDto.getReplyContents().trim().isEmpty()) {
@@ -13,7 +17,11 @@ public class ReplyValidator {
         }
     }
 
-    public static void validateReplyWriteFields(MemorialReplyDto memorialReplyDto) throws Exception{
+    public static void validateReplyWriteFields(MemorialReplyDto memorialReplyDto)
+            throws  MissingReplyContentException,
+                    MissingReplyWriterException,
+                    MissingReplyPasswordException
+    {
         /* 댓글 내용 검증 */
         validateReplyContent(memorialReplyDto);
 
@@ -30,7 +38,12 @@ public class ReplyValidator {
 
     public static void validateReplyAuthority(
             Integer donateSeq, Integer replySeq,
-            MemorialReplyDto memorialReplyDto, MemorialReply reply) throws Exception{
+            MemorialReplyDto memorialReplyDto, MemorialReply reply)
+            throws  ReplyPostMismatchException,
+                    ReplyIdMismatchException,
+                    MissingReplyPasswordException,
+                    ReplyPasswordMismatchException
+    {
         /* 게시글 검증 */
         if(!donateSeq.equals(reply.getDonateSeq()) || !donateSeq.equals(memorialReplyDto.getDonateSeq())) {
             throw new ReplyPostMismatchException();

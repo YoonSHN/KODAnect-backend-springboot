@@ -6,7 +6,15 @@ import kodanect.domain.remembrance.exception.MissingPaginationParameterException
 
 public class PaginationValidator {
 
-    public static void validatePagination(String page, String size) throws Exception {
+    private PaginationValidator() {
+        throw new UnsupportedOperationException("Utility class");
+    }
+
+    public static void validatePagination(String page, String size)
+            throws  MissingPaginationParameterException,
+                    InvalidPaginationRangeException,
+                    InvalidPaginationFormatException
+    {
         /* 페이지 번호와 한 페이지에 보여질 게시물 수 검증 */
 
         if(page == null || size == null || page.trim().isEmpty() || size.trim().isEmpty()) {

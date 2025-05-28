@@ -6,9 +6,17 @@ import kodanect.domain.remembrance.exception.MissingSearchDateParameterException
 
 public class SearchValidator {
 
+    private SearchValidator() {
+        throw new UnsupportedOperationException("Utility class");
+    }
+
     private static final int DATE_LENGTH = 10;
 
-    public static void validateSearchDates(String startDate, String endDate) throws Exception{
+    public static void validateSearchDates(String startDate, String endDate)
+            throws  MissingSearchDateParameterException,
+                    InvalidSearchDateFormatException,
+                    InvalidSearchDateRangeException
+    {
         /* 날짜 검증 */
         if(startDate == null || endDate == null) {
             throw new MissingSearchDateParameterException();

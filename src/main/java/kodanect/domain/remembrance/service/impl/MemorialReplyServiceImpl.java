@@ -4,6 +4,7 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import kodanect.domain.remembrance.entity.MemorialReply;
 import kodanect.domain.remembrance.dto.MemorialReplyDto;
+import kodanect.domain.remembrance.exception.*;
 import kodanect.domain.remembrance.repository.MemorialReplyRepository;
 import kodanect.domain.remembrance.service.MemorialReplyService;
 import kodanect.common.util.MemorialFinder;
@@ -44,7 +45,13 @@ public class MemorialReplyServiceImpl implements MemorialReplyService {
     }
 
     @Override
-    public void createReply(Integer donateSeq, MemorialReplyDto memorialReplyDto) throws Exception {
+    public void createReply(Integer donateSeq, MemorialReplyDto memorialReplyDto)
+            throws  MissingReplyContentException,
+                    MissingReplyWriterException,
+                    MissingReplyPasswordException,
+                    InvalidDonateSeqException,
+                    MemorialNotFoundException
+    {
         /* 게시글 댓글 작성 */
         ReentrantReadWriteLock lock = getLock(donateSeq);
         lock.writeLock().lock();
@@ -74,7 +81,13 @@ public class MemorialReplyServiceImpl implements MemorialReplyService {
     }
 
     @Override
-    public void updateReply(Integer donateSeq, Integer replySeq, MemorialReplyDto memorialReplyDto) throws Exception {
+    public void updateReply(Integer donateSeq, Integer replySeq, MemorialReplyDto memorialReplyDto)
+            throws  InvalidDonateSeqException,
+                    MissingReplyContentException,
+                    MemorialReplyNotFoundException,
+                    MemorialNotFoundException,
+                    InvalidReplySeqException
+    {
         /* 게시글 댓글 수정 */
         ReentrantReadWriteLock lock = getLock(donateSeq);
         lock.writeLock().lock();
@@ -107,7 +120,16 @@ public class MemorialReplyServiceImpl implements MemorialReplyService {
     }
 
     @Override
-    public void deleteReply(Integer donateSeq, Integer replySeq, MemorialReplyDto memorialReplyDto) throws Exception {
+    public void deleteReply(Integer donateSeq, Integer replySeq, MemorialReplyDto memorialReplyDto)
+            throws  ReplyPostMismatchException,
+                    ReplyIdMismatchException,
+                    MissingReplyPasswordException,
+                    ReplyPasswordMismatchException,
+                    MemorialReplyNotFoundException,
+                    MemorialNotFoundException,
+                    InvalidReplySeqException,
+                    InvalidDonateSeqException
+    {
         /* 게시글 댓글 삭제 del_flag = 'Y' 설정 */
         ReentrantReadWriteLock lock = getLock(donateSeq);
         lock.writeLock().lock();
@@ -138,7 +160,10 @@ public class MemorialReplyServiceImpl implements MemorialReplyService {
     }
 
     @Override
-    public List<MemorialReplyDto> findMemorialReplyList(Integer donateSeq) throws Exception {
+    public List<MemorialReplyDto> findMemorialReplyList(Integer donateSeq)
+            throws  MemorialNotFoundException,
+                    InvalidDonateSeqException
+    {
         /* 게시글 댓글 리스트 조회 */
         ReentrantReadWriteLock lock = getLock(donateSeq);
         lock.readLock().lock();

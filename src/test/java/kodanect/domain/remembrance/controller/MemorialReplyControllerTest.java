@@ -22,7 +22,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(MemorialReplyController.class)
 @Import(EgovConfigCommon.class)
-public class MemorialReplyControllerTest {
+class MemorialReplyControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -53,7 +53,7 @@ public class MemorialReplyControllerTest {
 
     @Test
     @DisplayName("댓글 생성 성공")
-    public void createMemorialReply() throws Exception {
+    void createMemorialReply() throws Exception {
         doNothing().when(memorialReplyService).createReply(donateSeq, replyDto);
 
         mockMvc.perform(post("/remembrance/1/replies")
@@ -67,7 +67,7 @@ public class MemorialReplyControllerTest {
 
     @Test
     @DisplayName("댓글 수정 성공")
-    public void updateMemorialReply() throws Exception {
+    void updateMemorialReply() throws Exception {
         doNothing().when(memorialReplyService).updateReply(donateSeq, replySeq, replyDto);
 
         mockMvc.perform(put("/remembrance/1/replies/1")
@@ -81,7 +81,7 @@ public class MemorialReplyControllerTest {
 
     @Test
     @DisplayName("댓글 삭제 성공")
-    public void deleteMemorialReply() throws Exception {
+    void deleteMemorialReply() throws Exception {
         doNothing().when(memorialReplyService).deleteReply(donateSeq, replySeq, replyDto);
 
         mockMvc.perform(delete("/remembrance/1/replies/1")
