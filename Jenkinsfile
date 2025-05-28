@@ -5,6 +5,7 @@ pipeline {
         DOCKER_USER = credentials('docker-user')
         DOCKER_PASS = credentials('docker-pass')
         SERVER_HOST = credentials('server-host')
+        SLACK_TOKEN = credentials('slack-token')
         IMAGE_NAME = 'kodanect'
 
         CI_FAILED = 'false'
@@ -27,6 +28,24 @@ pipeline {
                         error('Checkout 실패')
                     } else {
                         githubNotify context: 'checkout', status: 'SUCCESS', description: '체크아웃 완료'
+                    }
+                }
+            }
+        }
+
+        stage('Checkstyle') {
+            steps {
+                script {
+                    githubNotify context: 'checkstyle', status: 'PENDING', description: '체크스타일 검사 중...'
+                    catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                        sh './mvnw checkstyle:check'
+                    }
+                    if (currentBuild.currentResult == 'FAILURE') {
+                        githubNotify context: 'checkstyle', status: 'FAILURE', description: '체크스타일 검사 실패'
+                        env.CI_FAILED = 'true'
+                        error('Checkstyle 실패')
+                    } else {
+                        githubNotify context: 'checkstyle', status: 'SUCCESS', description: '체크스타일 검사 성공'
                     }
                 }
             }
@@ -73,27 +92,36 @@ pipeline {
 
         stage('SonarCloud Analysis') {
             when {
-                branch 'main'
+                allOf {
+                    changeRequest()
+                    expression { env.CHANGE_TARGET == 'main' }
+                }
             }
             steps {
                 script {
                     githubNotify context: 'sonar', status: 'PENDING', description: 'SonarCloud 분석 중...'
                     withSonarQubeEnv('SonarCloud') {
-                        catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-                            sh '''
-                                ./mvnw sonar:sonar \
-                                -Dsonar.projectKey=kodanect \
-                                -Dsonar.organization=fc-dev3-final-project \
-                                -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
-                            '''
-                        }
+                        withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
+                            catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                                sh """
+                                    ./mvnw sonar:sonar \\
+                                      -Dsonar.projectKey=kodanect \\
+                                      -Dsonar.organization=fc-dev3-final-project \\
+                                      -Dsonar.token=${SONAR_TOKEN} \\
+                                      -Dsonar.pullrequest.key=${CHANGE_ID} \\
+                                      -Dsonar.pullrequest.branch=${CHANGE_BRANCH} \\
+                                      -Dsonar.pullrequest.base=${CHANGE_TARGET} \\
+                                      -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+                                """
+                            }
 
-                        if (currentBuild.currentResult == 'FAILURE') {
-                            githubNotify context: 'sonar', status: 'FAILURE', description: 'SonarCloud 분석 실패'
-                            env.CI_FAILED = 'true'
-                            error('Sonar 분석 실패')
-                        } else {
-                            githubNotify context: 'sonar', status: 'SUCCESS', description: 'SonarCloud 분석 성공'
+                            if (currentBuild.currentResult == 'FAILURE') {
+                                githubNotify context: 'sonar', status: 'FAILURE', description: 'SonarCloud 분석 실패'
+                                env.CI_FAILED = 'true'
+                                error('Sonar 분석 실패')
+                            } else {
+                                githubNotify context: 'sonar', status: 'SUCCESS', description: 'SonarCloud 분석 성공'
+                            }
                         }
                     }
                 }
@@ -114,7 +142,7 @@ pipeline {
                     catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
                         sh "docker build -t ${fullImage} ."
                         sh """
-                            echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                            echo "\$DOCKER_PASS" | docker login -u "\$DOCKER_USER" --password-stdin
                             docker push ${fullImage}
                         """
                     }
@@ -160,12 +188,12 @@ DOCKER_USER=${DOCKER_USER}
 IMAGE_TAG=${imageTag}
 EOF
 
-                            sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no $SSH_USER@$SERVER_HOST 'mkdir -p /root/docker-compose-prod'
+                            sshpass -p "\$SSH_PASS" ssh -o StrictHostKeyChecking=no \$SSH_USER@\${SERVER_HOST} 'mkdir -p /root/docker-compose-prod'
 
-                            sshpass -p "$SSH_PASS" scp -o StrictHostKeyChecking=no .env $SSH_USER@$SERVER_HOST:/root/docker-compose-prod/.env
+                            sshpass -p "\$SSH_PASS" scp -o StrictHostKeyChecking=no .env \$SSH_USER@\${SERVER_HOST}:/root/docker-compose-prod/.env
 
-                            sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no $SSH_USER@$SERVER_HOST '
-                                echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                            sshpass -p "\$SSH_PASS" ssh -o StrictHostKeyChecking=no \$SSH_USER@\${SERVER_HOST} '
+                                echo "\$DOCKER_PASS" | docker login -u "\$DOCKER_USER" --password-stdin
 
                                 if [ ! -d /root/docker-compose-prod ]; then
                                     git clone https://github.com/FC-DEV3-Final-Project/KODAnect-backend-springboot.git /root/docker-compose-prod
@@ -190,7 +218,7 @@ EOF
                             gh release create ${imageTag} \\
                               --repo FC-DEV3-Final-Project/KODAnect-backend-springboot \\
                               --title "Release ${imageTag}" \\
-                              --notes "🔖 Jenkins 자동 배포 릴리즈\\n- 이미지: ${fullImage}"
+                              --notes "이미지: ${fullImage}"
                         """
                     }
 
@@ -198,6 +226,37 @@ EOF
                         githubNotify context: 'deploy', status: 'FAILURE', description: '배포 실패'
                         env.CD_FAILED = 'true'
                         error('배포 실패')
+                    }
+                }
+            }
+        }
+
+        stage('Health Check') {
+            steps {
+                script {
+                    githubNotify context: 'healthcheck', status: 'PENDING', description: '헬스체크 중...'
+
+
+                    def healthCheckUrl = "http://10.8.110.14:8080/actuator/health"
+
+
+                    def retries = 3
+                    def success = false
+                    for (int i = 0; i < retries; i++) {
+                        def response = sh(script: "curl -s -o /dev/null -w '%{http_code}' ${healthCheckUrl}", returnStdout: true).trim()
+                        if (response == '200') {
+                            success = true
+                            break
+                        }
+                        sleep(5)
+                    }
+
+                    if (success) {
+                        githubNotify context: 'healthcheck', status: 'SUCCESS', description: '헬스체크 성공'
+                    } else {
+                        githubNotify context: 'healthcheck', status: 'FAILURE', description: '헬스체크 실패'
+                        env.CD_FAILED = 'true'
+                        error('Health check failed')
                     }
                 }
             }
@@ -218,7 +277,43 @@ EOF
                 } else {
                     githubNotify context: 'cd/kodanect', status: 'SUCCESS', description: 'CD 단계 성공'
                 }
+
+                if (env.CD_FAILED == 'true') {
+                    githubNotify context: 'cd/kodanect', status: 'FAILURE', description: '배포 실패'
+                } else {
+                    githubNotify context: 'cd/kodanect', status: 'SUCCESS', description: '배포 성공'
+                }
             }
+        }
+
+        success {
+            slackSend(
+                channel: '4_파이널프로젝트_1조_jenkins',
+                color: 'good',
+                token: env.SLACK_TOKEN,
+                message: "빌드 성공: ${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|바로가기>)"
+            )
+            slackSend(
+                channel: '4_파이널프로젝트_1조_jenkins',
+                color: 'good',
+                token: env.SLACK_TOKEN,
+                message: "배포 성공: ${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|바로가기>)"
+            )
+        }
+
+        failure {
+            slackSend(
+                channel: '4_파이널프로젝트_1조_jenkins',
+                color: 'danger',
+                token: env.SLACK_TOKEN,
+                message: "빌드 실패: ${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|바로가기>)"
+            )
+            slackSend(
+                channel: '4_파이널프로젝트_1조_jenkins',
+                color: 'danger',
+                token: env.SLACK_TOKEN,
+                message: "배포 실패: ${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|바로가기>)"
+            )
         }
     }
 }

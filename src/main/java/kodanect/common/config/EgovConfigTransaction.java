@@ -92,6 +92,7 @@ public class EgovConfigTransaction {
 		txMethods.put("process*", writeTx);
 		txMethods.put("apply*", writeTx);
 		txMethods.put("sync*", writeTx);
+		txMethods.put("increase*", writeTx);
 
 		txMethods.put("*", writeTx);
 

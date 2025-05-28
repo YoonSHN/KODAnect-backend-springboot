@@ -1,4 +1,4 @@
-package kodanect.common.exception;
+package kodanect.common.exception.config;
 
 import kodanect.common.response.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -24,8 +24,6 @@ import org.springframework.web.servlet.NoHandlerFoundException;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExcepHndlr {
-    private static final int HTTP_NOT_FOUND = 404;
-    private static final int INTERNAL_SERVER_ERROR = 500;
 
     /**
      * 404 예외 처리
@@ -36,7 +34,7 @@ public class GlobalExcepHndlr {
     public ResponseEntity<ApiResponse<Void>> handleNotFound() {
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
-                .body(ApiResponse.fail(HTTP_NOT_FOUND, "요청한 리소스를 찾을 수 없습니다."));
+                .body(ApiResponse.fail(HttpStatus.NOT_FOUND, "요청한 리소스를 찾을 수 없습니다."));
     }
 
     /**
@@ -48,7 +46,7 @@ public class GlobalExcepHndlr {
     public ResponseEntity<ApiResponse<Void>> handleInternalServerError() {
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.fail(INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다."));
+                .body(ApiResponse.fail(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다."));
     }
 
 }

@@ -5,4 +5,8 @@
 
 <suppressions>
     <suppress checks=".*" files=".*egovframework/.*"/>
+    <suppress checks=".*" files=".*application.*\.properties"/>
+    <suppress checks="MagicNumberCheck" files=".*domain/.*?/entity/.*"/>
+    <suppress checks="MagicNumberCheck" files=".*domain/.*/dto/.*"/>
 </suppressions>
+
