@@ -13,20 +13,16 @@ public interface MemorialRepository extends JpaRepository<Memorial, Integer> {
 
     @Query(
         value = """
-            SELECT new kodanect.domain.remembrance.dto.MemorialListDto(
-                 m.donateSeq, m.donorName, m.anonymityFlag,
-                 m.donateDate, m.genderFlag, m.donateAge, m.delFlag,
-                 COUNT(r)
-            )
-            FROM tb25_400_memorial m
-            LEFT JOIN tb25_401_memorial_reply r ON m.donateSeq = r.donateSeq
+            SELECT m.donateSeq, m.donorName, m.anonymityFlag, m.donateDate, m.genderFlag, m.donateAge, m.delFlag, COUNT(r)
+            FROM Memorial m
+            LEFT JOIN MemorialReply r ON m.donateSeq = r.donateSeq
             WHERE m.delFlag = 'N'
             GROUP BY m.donateSeq
             ORDER BY m.writeTime DESC
         """,
         countQuery = """
             SELECT COUNT(DISTINCT m.donateSeq)
-            FROM tb25_400_memorial m
+            FROM Memorial m
             WHERE m.delFlag = 'N'
         """
     )/* 기증자 추모관 게시글 리스트 조회 */
@@ -34,20 +30,16 @@ public interface MemorialRepository extends JpaRepository<Memorial, Integer> {
 
     @Query(
         value = """
-            SELECT new kodanect.domain.remembrance.dto.MemorialListDto(
-             m.donateSeq, m.donorName, m.anonymityFlag,
-             m.donateDate, m.genderFlag, m.donateAge, m.delFlag,
-             COUNT(r)
-            )
-            FROM tb25_400_memorial m
-            LEFT JOIN tb25_401_memorial_reply r ON m.donateSeq = r.donateSeq
+            SELECT m.donateSeq, m.donorName, m.anonymityFlag, m.donateDate, m.genderFlag, m.donateAge, m.delFlag, COUNT(r)
+            FROM Memorial m
+            LEFT JOIN MemorialReply r ON m.donateSeq = r.donateSeq
             WHERE m.donorName LIKE :searchWord AND m.donateDate BETWEEN :startDate AND :endDate AND m.delFlag = 'N'
             GROUP BY m.donateSeq
             ORDER BY m.writeTime DESC
         """,
         countQuery = """
             SELECT COUNT(DISTINCT m.donateSeq)
-            FROM tb25_400_memorial m
+            FROM Memorial m
             WHERE m.donorName LIKE :searchWord AND m.donateDate BETWEEN :startDate AND :endDate AND m.delFlag = 'N'
         """
     )/* 기증자 추모관 게시글 리스트 날짜 + 문자 조건 조회  */

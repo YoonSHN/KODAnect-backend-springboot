@@ -7,7 +7,8 @@ import java.time.LocalDateTime;
 
 import static javax.persistence.GenerationType.IDENTITY;
 
-@Entity(name = "tb25_400_memorial")
+@Entity(name = "Memorial")
+@Table(name = "tb25_400_memorial")
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor

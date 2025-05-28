@@ -86,7 +86,8 @@ public class MemorialReplyServiceImpl implements MemorialReplyService {
                     MissingReplyContentException,
                     MemorialReplyNotFoundException,
                     MemorialNotFoundException,
-                    InvalidReplySeqException
+                    InvalidReplySeqException,
+                    ReplyAlreadyDeleteException
     {
         /* 게시글 댓글 수정 */
         ReentrantReadWriteLock lock = getLock(donateSeq);
@@ -105,14 +106,13 @@ public class MemorialReplyServiceImpl implements MemorialReplyService {
             /* 댓글 조회 */
             MemorialReply reply = memorialReplyFinder.findByIdOrThrow(replySeq);
 
-            /* 댓글 번호, 비밀 번호, 게시판, 검증 */
+            /* 댓글 번호, 비밀 번호, 게시판, 삭제 여부 검증 */
             validateReplyAuthority(donateSeq, replySeq, memorialReplyDto, reply);
 
             /* 댓글 내용 검증 */
             validateReplyContent(memorialReplyDto);
 
-            reply.setReplyContents(memorialReplyDto.getReplyContents());
-            memorialReplyRepository.save(reply);
+            memorialReplyRepository.updateReplyContents(replySeq, memorialReplyDto.getReplyContents());
         }
         finally {
             lock.writeLock().unlock();
@@ -128,7 +128,8 @@ public class MemorialReplyServiceImpl implements MemorialReplyService {
                     MemorialReplyNotFoundException,
                     MemorialNotFoundException,
                     InvalidReplySeqException,
-                    InvalidDonateSeqException
+                    InvalidDonateSeqException,
+                    ReplyAlreadyDeleteException
     {
         /* 게시글 댓글 삭제 del_flag = 'Y' 설정 */
         ReentrantReadWriteLock lock = getLock(donateSeq);
@@ -147,7 +148,7 @@ public class MemorialReplyServiceImpl implements MemorialReplyService {
             /* 댓글 조회 */
             MemorialReply reply = memorialReplyFinder.findByIdOrThrow(replySeq);
 
-            /* 댓글 번호, 비밀 번호, 게시판, 검증 */
+            /* 댓글 번호, 비밀 번호, 게시판, 삭제 여부 검증 */
             validateReplyAuthority(donateSeq, replySeq, memorialReplyDto, reply);
 
             /* 소프트 삭제 */

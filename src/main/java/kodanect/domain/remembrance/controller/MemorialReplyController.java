@@ -47,7 +47,8 @@ public class MemorialReplyController {
                     MissingReplyContentException,
                     MemorialReplyNotFoundException,
                     MemorialNotFoundException,
-                    InvalidReplySeqException
+                    InvalidReplySeqException,
+                    ReplyAlreadyDeleteException
     {
         /* 게시글 댓글 수정 */
 
@@ -68,7 +69,8 @@ public class MemorialReplyController {
                     MemorialReplyNotFoundException,
                     MemorialNotFoundException,
                     InvalidReplySeqException,
-                    InvalidDonateSeqException
+                    InvalidDonateSeqException,
+                    ReplyAlreadyDeleteException
     {
         /* 게시글 댓글 삭제 - 소프트 삭제 */
 

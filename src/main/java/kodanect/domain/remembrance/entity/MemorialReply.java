@@ -5,7 +5,8 @@ import lombok.*;
 import javax.persistence.*;
 import java.time.LocalDateTime;
 
-@Entity(name = "tb25_401_memorial_reply")
+@Entity(name = "MemorialReply")
+@Table(name = "tb25_401_memorial_reply")
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor

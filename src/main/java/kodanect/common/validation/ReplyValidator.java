@@ -42,7 +42,8 @@ public class ReplyValidator {
             throws  ReplyPostMismatchException,
                     ReplyIdMismatchException,
                     MissingReplyPasswordException,
-                    ReplyPasswordMismatchException
+                    ReplyPasswordMismatchException,
+                    ReplyAlreadyDeleteException
     {
         /* 게시글 검증 */
         if(!donateSeq.equals(reply.getDonateSeq()) || !donateSeq.equals(memorialReplyDto.getDonateSeq())) {
@@ -52,6 +53,11 @@ public class ReplyValidator {
         /* 댓글 검증 */
         else if(!replySeq.equals(memorialReplyDto.getReplySeq())){
             throw new ReplyIdMismatchException();
+        }
+
+        /* 삭제 여부 검증 */
+        else if(!reply.getDelFlag().equals("N")){
+            throw new ReplyAlreadyDeleteException();
         }
 
         /* 비밀 번호 검증 */
