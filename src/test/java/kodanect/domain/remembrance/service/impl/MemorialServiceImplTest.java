@@ -40,11 +40,6 @@ public class MemorialServiceImplTest {
     @Mock
     private MemorialFinder memorialFinder;
 
-//    @Test
-//    public void emotionCountUpdate() throws Exception {
-//
-//    }
-
     @Test
     public void getSearchMemorialList() throws Exception {
         String page = "1";

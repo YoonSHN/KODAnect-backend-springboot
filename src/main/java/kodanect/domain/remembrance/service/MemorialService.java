@@ -23,7 +23,7 @@ public interface MemorialService {
     Page<MemorialListDto> getMemorialList(String page, String size)
             throws  MissingPaginationParameterException,
                     InvalidPaginationRangeException,
-                    InvalidPaginationFormatException ;
+                    InvalidPaginationFormatException;
     /* 게시글 상세 조회 */
     MemorialDetailDto getMemorialByDonateSeq(Integer donateSeq)
             throws  MemorialNotFoundException,

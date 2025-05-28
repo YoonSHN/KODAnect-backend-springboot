@@ -1,6 +1,7 @@
 package kodanect.domain.remembrance.controller;
 
 import kodanect.domain.remembrance.dto.MemorialReplyDto;
+import kodanect.domain.remembrance.exception.*;
 import kodanect.domain.remembrance.service.MemorialReplyService;
 import org.springframework.context.support.MessageSourceAccessor;
 import org.springframework.http.HttpStatus;
@@ -23,7 +24,13 @@ public class MemorialReplyController {
     @PostMapping
     public ResponseEntity<ApiResponse<String>> createMemorialReply(
             @PathVariable Integer donateSeq,
-            @RequestBody MemorialReplyDto memorialReplyDto) throws Exception{
+            @RequestBody MemorialReplyDto memorialReplyDto)
+            throws  MissingReplyContentException,
+                    MissingReplyWriterException,
+                    MissingReplyPasswordException,
+                    InvalidDonateSeqException,
+                    MemorialNotFoundException
+    {
         /* 게시글 댓글 작성 */
 
         String successMessage = messageSourceAccessor.getMessage("board.reply.create.success", new Object[] {});
@@ -35,7 +42,13 @@ public class MemorialReplyController {
     public ResponseEntity<ApiResponse<String>> updateMemorialReply(
             @PathVariable Integer donateSeq,
             @PathVariable Integer replySeq,
-            @RequestBody MemorialReplyDto memorialReplyDto) throws Exception {
+            @RequestBody MemorialReplyDto memorialReplyDto)
+            throws  InvalidDonateSeqException,
+                    MissingReplyContentException,
+                    MemorialReplyNotFoundException,
+                    MemorialNotFoundException,
+                    InvalidReplySeqException
+    {
         /* 게시글 댓글 수정 */
 
         String successMessage = messageSourceAccessor.getMessage("board.reply.update.success", new Object[] {});
@@ -47,7 +60,16 @@ public class MemorialReplyController {
     public ResponseEntity<ApiResponse<String>> deleteMemorialReply(
             @PathVariable Integer donateSeq,
             @PathVariable Integer replySeq,
-            @RequestBody MemorialReplyDto memorialReplyDto) throws Exception {
+            @RequestBody MemorialReplyDto memorialReplyDto)
+            throws  ReplyPostMismatchException,
+                    ReplyIdMismatchException,
+                    MissingReplyPasswordException,
+                    ReplyPasswordMismatchException,
+                    MemorialReplyNotFoundException,
+                    MemorialNotFoundException,
+                    InvalidReplySeqException,
+                    InvalidDonateSeqException
+    {
         /* 게시글 댓글 삭제 - 소프트 삭제 */
 
         String successMessage = messageSourceAccessor.getMessage("board.reply.delete.success", new Object[] {});
