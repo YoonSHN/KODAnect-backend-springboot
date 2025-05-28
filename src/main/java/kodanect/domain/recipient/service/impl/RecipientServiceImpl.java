@@ -3,7 +3,7 @@ package kodanect.domain.recipient.service.impl;
 import kodanect.common.exception.InvalidPasscodeException;
 import kodanect.common.exception.RecipientInvalidDataException;
 import kodanect.common.exception.RecipientNotFoundException;
-import kodanect.common.util.hCaptchaService;
+import kodanect.common.util.HcaptchaService;
 import kodanect.domain.recipient.dto.RecipientResponseDto;
 import kodanect.domain.recipient.entity.RecipientCommentEntity;
 import kodanect.domain.recipient.entity.RecipientEntity;
@@ -28,7 +28,7 @@ public class RecipientServiceImpl implements RecipientService {
 
     private final RecipientRepository recipientRepository;
     private final RecipientCommentRepository recipientCommentRepository;
-    private final hCaptchaService hcaptchaService; // hCaptchaService 주입
+    private final HcaptchaService hcaptchaService; // hCaptchaService 주입
 
     // 로거 선언
     private final Logger logger = LoggerFactory.getLogger(RecipientServiceImpl.class);
@@ -37,7 +37,7 @@ public class RecipientServiceImpl implements RecipientService {
     private final String ORGAN_CODE_DIRECT_INPUT = "ORGAN000";  // 직접입력 코드
     private final String ANONYMOUS_WRITER_VALUE = "익명";
 
-    public RecipientServiceImpl(RecipientRepository recipientRepository, RecipientCommentRepository recipientCommentRepository, hCaptchaService hcaptchaService) {
+    public RecipientServiceImpl(RecipientRepository recipientRepository, RecipientCommentRepository recipientCommentRepository, HcaptchaService hcaptchaService) {
         this.recipientRepository = recipientRepository;
         this.recipientCommentRepository = recipientCommentRepository;
         this.hcaptchaService = hcaptchaService; // hCaptchaService 초기화
@@ -166,7 +166,8 @@ public class RecipientServiceImpl implements RecipientService {
         String writerToSave = recipientEntityRequest.getLetterWriter();
         if ("Y".equalsIgnoreCase(recipientEntityRequest.getAnonymityFlag())) {
             writerToSave = ANONYMOUS_WRITER_VALUE;
-        } else {
+        }
+        else {
             // @Valid에서 검증된 값이 들어오므로 여기서는 추가 유효성 검사 불필요
             writerToSave = recipientEntityRequest.getLetterWriter();
         }
@@ -177,7 +178,8 @@ public class RecipientServiceImpl implements RecipientService {
         // 만약 @Valid가 아닌 서비스 내부에서 추가적인 비즈니스 로직 유효성 검사가 필요하다면 여기에 추가.
         if (!ORGAN_CODE_DIRECT_INPUT.equals(recipientEntityRequest.getOrganCode())) {
             recipientEntityRequest.setOrganEtc(null);
-        } else {
+        }
+        else {
             // ORGAN000인데 organEtc가 null이거나 비어있을 경우 (이전 NullPointerException의 다른 원인 가능성)
             // @Valid에 @NotBlank 또는 @NotNull이 RecipientEntity.organEtc 에 적용되어 있다면 이 로직은 필요 없음
             // 만약 @Valid로 처리되지 않는다면 아래 로직 추가

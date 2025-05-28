@@ -5,15 +5,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
-
-import java.util.List;
-import java.util.Map;
 
 @Service
-public class hCaptchaService {
+public class HcaptchaService {
 
-    private static final Logger logger = LoggerFactory.getLogger(hCaptchaService.class);
+    private static final Logger logger = LoggerFactory.getLogger(HcaptchaService.class);
     private static final String HCAPTCHA_VERIFY_URL = "https://hcaptcha.com/siteverify";
 
     @Value("${hcaptcha.secret-key}") // application.properties에서 시크릿 키를 주입받습니다.
@@ -21,7 +17,7 @@ public class hCaptchaService {
 
     private final RestTemplate restTemplate;
 
-    public hCaptchaService(RestTemplate restTemplate) {
+    public HcaptchaService(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
     }
 

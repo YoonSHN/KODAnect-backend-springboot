@@ -1,8 +1,6 @@
 package kodanect.domain.recipient.controller;
 
-import kodanect.common.exception.RecipientInvalidDataException;
 import kodanect.common.response.ApiResponse;
-import kodanect.common.response.PageApiResponse;
 import kodanect.domain.recipient.dto.RecipientResponseDto;
 import kodanect.domain.recipient.entity.RecipientEntity;
 import kodanect.domain.recipient.service.RecipientService;
@@ -16,7 +14,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import java.util.NoSuchElementException;
 
 @RestController
 @RequestMapping("/recipientLetters")

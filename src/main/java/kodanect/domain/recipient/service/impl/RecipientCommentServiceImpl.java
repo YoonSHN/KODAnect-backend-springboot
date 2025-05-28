@@ -31,7 +31,7 @@ public class RecipientCommentServiceImpl implements RecipientCommentService {
 
     private final Logger logger = LoggerFactory.getLogger(RecipientCommentServiceImpl.class); // 로거 선언
     // 비밀번호 영숫자 8자 이상
-    private static final String COMMENT_PASSCODE_PATTERN = "^(?=.*[a-zA-Z])(?=.*[0-9]).{8,}$";
+    private final String COMMENT_PASSCODE_PATTERN = "^(?=.*[a-zA-Z])(?=.*[0-9]).{8,}$";
 
     // 게시물 삭제 여부를 확인하는 헬퍼 메서드
     private RecipientEntity getActiveRecipient(Integer letterSeq) {
@@ -177,6 +177,4 @@ public class RecipientCommentServiceImpl implements RecipientCommentService {
         // 3. 비밀번호 일치 여부 반환
         return existingComment.getCommentPasscode().equals(inputPassword);
     }
-
-
 }

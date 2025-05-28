@@ -10,7 +10,7 @@ import javax.validation.ConstraintValidatorContext;
  * ConditionalValidation 애노테이션에 대한 유효성 검사 로직 구현.
  * 특정 필드의 값이 특정 값일 때, 다른 필드가 비어있지 않은지 검사합니다.
  */
-public class recipientConditionalValidator implements ConstraintValidator<recipientConditionalValidation, Object> {
+public class RecipientConditionalValidator implements ConstraintValidator<RecipientConditionalValidation, Object> {
 
     private String conditionalProperty;
     private String expectedValue;
@@ -18,7 +18,7 @@ public class recipientConditionalValidator implements ConstraintValidator<recipi
     private String message;
 
     @Override
-    public void initialize(recipientConditionalValidation constraintAnnotation) {
+    public void initialize(RecipientConditionalValidation constraintAnnotation) {
         this.conditionalProperty = constraintAnnotation.conditionalProperty();
         this.expectedValue = constraintAnnotation.expectedValue();
         this.requiredProperty = constraintAnnotation.requiredProperty();

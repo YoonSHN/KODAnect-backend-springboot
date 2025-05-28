@@ -1,6 +1,6 @@
 package kodanect.domain.recipient.entity;
 
-import kodanect.common.validation.recipientConditionalValidation;
+import kodanect.common.validation.RecipientConditionalValidation;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -14,7 +14,7 @@ import javax.persistence.*;
 import javax.validation.constraints.*;
 import java.time.LocalDateTime;
 
-@recipientConditionalValidation(
+@RecipientConditionalValidation(
         conditionalProperty = "organCode",
         expectedValue = "ORGAN000",
         requiredProperty = "organEtc",
