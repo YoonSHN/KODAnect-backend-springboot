@@ -4,26 +4,22 @@ import kodanect.common.response.ApiResponse;
 import kodanect.domain.remembrance.dto.MemorialDetailDto;
 import kodanect.domain.remembrance.dto.MemorialListDto;
 import kodanect.domain.remembrance.service.MemorialService;
-import org.springframework.context.MessageSource;
+import org.springframework.context.support.MessageSourceAccessor;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Locale;
 
 @RestController
 @RequestMapping("/remembrance")
 public class MemorialController {
 
-    /* 상수 */
-    private final int SUCCESS_RESPONSE_CODE = 200;
-
     private final MemorialService memorialService;
-    private final MessageSource messageSource;
+    private final MessageSourceAccessor messageSourceAccessor;
 
-    public MemorialController(MemorialService memorialService, MessageSource messageSource){
+    public MemorialController(MemorialService memorialService, MessageSourceAccessor messageSourceAccessor){
         this.memorialService = memorialService;
-        this.messageSource = messageSource;
+        this.messageSourceAccessor = messageSourceAccessor;
     }
 
     @GetMapping
@@ -32,9 +28,9 @@ public class MemorialController {
             @RequestParam(defaultValue = "20") String size) throws Exception{
         /* 게시글 리스트 조회 */
 
-        String successMessage = messageSource.getMessage("board.read.success", null, Locale.getDefault());
+        String successMessage = messageSourceAccessor.getMessage("board.read.success", new Object[] {});
         Page<MemorialListDto> memorial = memorialService.getMemorialList(page, size);
-        return ResponseEntity.ok(ApiResponse.success(SUCCESS_RESPONSE_CODE, successMessage,memorial));
+        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, successMessage,memorial));
     }
 
     @GetMapping("/{donateSeq}")
@@ -42,9 +38,9 @@ public class MemorialController {
             @PathVariable Integer donateSeq) throws Exception{
         /* 게시글 상세 조회 */
 
-        String successMessage = messageSource.getMessage("board.read.success", null, Locale.getDefault());
+        String successMessage = messageSourceAccessor.getMessage("board.read.success", new Object[] {});
         MemorialDetailDto memorial = memorialService.getMemorialByDonateSeq(donateSeq);
-        return ResponseEntity.ok(ApiResponse.success(SUCCESS_RESPONSE_CODE, successMessage, memorial));
+        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, successMessage, memorial));
     }
 
     @GetMapping("/search")
@@ -56,9 +52,9 @@ public class MemorialController {
             @RequestParam(defaultValue = "20") String size) throws Exception{
         /* 게시글 검색 조건 조회 */
 
-        String successMessage = messageSource.getMessage("board.search.read.success", null, Locale.getDefault());
+        String successMessage = messageSourceAccessor.getMessage("board.search.read.success", new Object[] {});
         Page<MemorialListDto> memorial = memorialService.getSearchMemorialList(page, size, startDate, endDate, searchWord);
-        return ResponseEntity.ok(ApiResponse.success(SUCCESS_RESPONSE_CODE, successMessage, memorial));
+        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, successMessage, memorial));
     }
 
     @PatchMapping("/{donateSeq}/{emotion}")
@@ -68,9 +64,9 @@ public class MemorialController {
         /* 이모지 카운트 수 업데이트 */
         /* flower, love, see, miss, proud, hard, sad */
 
-        String successMessage = messageSource.getMessage("board.emotion.update.success", null, Locale.getDefault());
+        String successMessage = messageSourceAccessor.getMessage("board.emotion.update.success", new Object[] {});
         memorialService.emotionCountUpdate(donateSeq, emotion);
-        return ResponseEntity.ok(ApiResponse.success(SUCCESS_RESPONSE_CODE, successMessage));
+        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, successMessage));
     }
 }
 

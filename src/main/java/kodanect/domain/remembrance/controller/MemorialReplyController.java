@@ -2,26 +2,22 @@ package kodanect.domain.remembrance.controller;
 
 import kodanect.domain.remembrance.dto.MemorialReplyDto;
 import kodanect.domain.remembrance.service.MemorialReplyService;
-import org.springframework.context.MessageSource;
+import org.springframework.context.support.MessageSourceAccessor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import kodanect.common.response.ApiResponse;
-
-import java.util.Locale;
 
 @RestController
 @RequestMapping("/remembrance/{donateSeq}/replies")
 public class MemorialReplyController {
 
-    /* 상수 */
-    private final int SUCCESS_RESPONSE_CODE = 200;
-
     private final MemorialReplyService memorialReplyService;
-    private final MessageSource messageSource;
+    private final MessageSourceAccessor messageSourceAccessor;
 
-    public MemorialReplyController(MemorialReplyService memorialReplyService, MessageSource messageSource){
+    public MemorialReplyController(MemorialReplyService memorialReplyService, MessageSourceAccessor messageSourceAccessor){
         this.memorialReplyService = memorialReplyService;
-        this.messageSource = messageSource;
+        this.messageSourceAccessor = messageSourceAccessor;
     }
 
     @PostMapping
@@ -30,9 +26,9 @@ public class MemorialReplyController {
             @RequestBody MemorialReplyDto memorialReplyDto) throws Exception{
         /* 게시글 댓글 작성 */
 
-        String successMessage = messageSource.getMessage("board.reply.create.success", null, Locale.getDefault());
+        String successMessage = messageSourceAccessor.getMessage("board.reply.create.success", new Object[] {});
         memorialReplyService.createReply(donateSeq, memorialReplyDto);
-        return ResponseEntity.ok(ApiResponse.success(SUCCESS_RESPONSE_CODE, successMessage));
+        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, successMessage));
     }
 
     @PutMapping("/{replySeq}")
@@ -42,9 +38,9 @@ public class MemorialReplyController {
             @RequestBody MemorialReplyDto memorialReplyDto) throws Exception {
         /* 게시글 댓글 수정 */
 
-        String successMessage = messageSource.getMessage("board.reply.update.success", null, Locale.getDefault());
+        String successMessage = messageSourceAccessor.getMessage("board.reply.update.success", new Object[] {});
         memorialReplyService.updateReply(donateSeq, replySeq, memorialReplyDto);
-        return ResponseEntity.ok(ApiResponse.success(SUCCESS_RESPONSE_CODE, successMessage));
+        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, successMessage));
     }
 
     @DeleteMapping("/{replySeq}")
@@ -54,8 +50,8 @@ public class MemorialReplyController {
             @RequestBody MemorialReplyDto memorialReplyDto) throws Exception {
         /* 게시글 댓글 삭제 - 소프트 삭제 */
 
-        String successMessage = messageSource.getMessage("board.reply.delete.success", null, Locale.getDefault());
+        String successMessage = messageSourceAccessor.getMessage("board.reply.delete.success", new Object[] {});
         memorialReplyService.deleteReply(donateSeq, replySeq, memorialReplyDto);
-        return ResponseEntity.ok(ApiResponse.success(SUCCESS_RESPONSE_CODE, successMessage));
+        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, successMessage));
     }
 }
