@@ -1,0 +1,25 @@
+package kodanect.domain.remembrance.repository;
+
+import kodanect.domain.remembrance.entity.MemorialReply;
+import kodanect.domain.remembrance.dto.MemorialReplyDto;
+import org.springframework.data.repository.query.Param;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+
+import java.util.List;
+
+public interface MemorialReplyRepository extends JpaRepository<MemorialReply, Integer> {
+
+
+    @Query(
+        value = """
+            SELECT new kodanect.domain.remembrance.dto.MemorialReplyDto(
+                r.replySeq, r.donateSeq, r.replyWriter, r.replyPassword, r.replyContents, r.replyWriteTime, r.replyWriterId, r.replyModifyTime, r.replyModifierId, r.delFlag
+            )
+            FROM tb25_401_memorial_reply r
+            WHERE r.donateSeq = :donateSeq AND r.delFlag = 'N'
+            ORDER BY r.replyWriteTime DESC
+        """)
+        /* 댓글 리스트 전부 조회 */
+    List<MemorialReplyDto> findMemorialReplyList(@Param("donateSeq") int donateSeq);
+}
