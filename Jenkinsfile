@@ -100,6 +100,7 @@ pipeline {
             steps {
                 script {
                     githubNotify context: 'sonar', status: 'PENDING', description: 'SonarCloud 분석 중...'
+
                     withSonarQubeEnv('SonarCloud') {
                         withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
                             catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
@@ -120,13 +121,23 @@ pipeline {
                                 env.CI_FAILED = 'true'
                                 error('Sonar 분석 실패')
                             } else {
-                                githubNotify context: 'sonar', status: 'SUCCESS', description: 'SonarCloud 분석 성공'
+                                timeout(time: 5, unit: 'MINUTES') {
+                                    def qualityGate = waitForQualityGate()
+                                    if (qualityGate.status != 'OK') {
+                                        githubNotify context: 'sonar', status: 'FAILURE', description: "품질 게이트 실패: ${qualityGate.status}"
+                                        env.CI_FAILED = 'true'
+                                        error("SonarCloud 품질 게이트 실패: ${qualityGate.status}")
+                                    } else {
+                                        githubNotify context: 'sonar', status: 'SUCCESS', description: 'SonarCloud 품질 게이트 통과'
+                                    }
+                                }
                             }
                         }
                     }
                 }
             }
         }
+
 
         stage('Docker Build & Push') {
             when {
@@ -232,6 +243,9 @@ EOF
         }
 
         stage('Health Check') {
+            when {
+                branch 'main'
+            }
             steps {
                 script {
                     githubNotify context: 'healthcheck', status: 'PENDING', description: '헬스체크 중...'
@@ -264,56 +278,46 @@ EOF
     }
 
     post {
-        always {
+        success {
             script {
-                if (env.CI_FAILED == 'true') {
-                    githubNotify context: 'ci/kodanect', status: 'FAILURE', description: 'CI 단계 실패'
-                } else {
-                    githubNotify context: 'ci/kodanect', status: 'SUCCESS', description: 'CI 단계 성공'
-                }
-
-                if (env.CD_FAILED == 'true') {
-                    githubNotify context: 'cd/kodanect', status: 'FAILURE', description: 'CD 단계 실패'
-                } else {
-                    githubNotify context: 'cd/kodanect', status: 'SUCCESS', description: 'CD 단계 성공'
-                }
-
-                if (env.CD_FAILED == 'true') {
-                    githubNotify context: 'cd/kodanect', status: 'FAILURE', description: '배포 실패'
-                } else {
-                    githubNotify context: 'cd/kodanect', status: 'SUCCESS', description: '배포 성공'
+                if (env.CHANGE_ID || env.BRANCH_NAME == 'main') {
+                    slackSend(
+                        channel: '4_파이널프로젝트_1조_jenkins',
+                        color: 'good',
+                        token: env.SLACK_TOKEN,
+                        message: "빌드 성공: ${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|바로가기>)"
+                    )
+                    if (env.BRANCH_NAME == 'main') {
+                        slackSend(
+                            channel: '4_파이널프로젝트_1조_jenkins',
+                            color: 'good',
+                            token: env.SLACK_TOKEN,
+                            message: "배포 성공: ${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|바로가기>)"
+                        )
+                    }
                 }
             }
         }
 
-        success {
-            slackSend(
-                channel: '4_파이널프로젝트_1조_jenkins',
-                color: 'good',
-                token: env.SLACK_TOKEN,
-                message: "빌드 성공: ${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|바로가기>)"
-            )
-            slackSend(
-                channel: '4_파이널프로젝트_1조_jenkins',
-                color: 'good',
-                token: env.SLACK_TOKEN,
-                message: "배포 성공: ${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|바로가기>)"
-            )
-        }
-
         failure {
-            slackSend(
-                channel: '4_파이널프로젝트_1조_jenkins',
-                color: 'danger',
-                token: env.SLACK_TOKEN,
-                message: "빌드 실패: ${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|바로가기>)"
-            )
-            slackSend(
-                channel: '4_파이널프로젝트_1조_jenkins',
-                color: 'danger',
-                token: env.SLACK_TOKEN,
-                message: "배포 실패: ${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|바로가기>)"
-            )
+            script {
+                if (env.CHANGE_ID || env.BRANCH_NAME == 'main') {
+                    slackSend(
+                        channel: '4_파이널프로젝트_1조_jenkins',
+                        color: 'danger',
+                        token: env.SLACK_TOKEN,
+                        message: "빌드 실패: ${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|바로가기>)"
+                    )
+                    if (env.BRANCH_NAME == 'main') {
+                        slackSend(
+                            channel: '4_파이널프로젝트_1조_jenkins',
+                            color: 'danger',
+                            token: env.SLACK_TOKEN,
+                            message: "배포 실패: ${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|바로가기>)"
+                        )
+                    }
+                }
+            }
         }
     }
 }
