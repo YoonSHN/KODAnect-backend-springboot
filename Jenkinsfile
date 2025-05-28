@@ -92,10 +92,8 @@ pipeline {
 
         stage('SonarCloud Analysis') {
             when {
-                allOf {
-                    changeRequest()
-                    expression { env.CHANGE_TARGET == 'main' }
-                }
+                branch 'dev'
+                branch 'main'
             }
             steps {
                 script {
