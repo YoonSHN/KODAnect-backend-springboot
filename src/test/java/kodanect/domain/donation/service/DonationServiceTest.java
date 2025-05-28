@@ -8,7 +8,7 @@ import kodanect.domain.donation.dto.response.AreaCode;
 import kodanect.domain.donation.dto.response.DonationStoryDetailDto;
 import kodanect.domain.donation.dto.response.DonationStoryListDto;
 import kodanect.domain.donation.dto.response.DonationStoryWriteFormDto;
-import kodanect.domain.donation.entity.entity.DonationStory;
+import kodanect.domain.donation.entity.DonationStory;
 import kodanect.domain.donation.repository.DonationRepository;
 import kodanect.domain.donation.service.impl.DonationService;
 import org.junit.Test;

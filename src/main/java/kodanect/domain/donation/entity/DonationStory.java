@@ -1,4 +1,4 @@
-package kodanect.domain.donation.entity.entity;
+package kodanect.domain.donation.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 

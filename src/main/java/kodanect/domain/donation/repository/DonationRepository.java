@@ -2,7 +2,7 @@ package kodanect.domain.donation.repository;
 
 
 
-import kodanect.domain.donation.entity.entity.DonationStory;
+import kodanect.domain.donation.entity.DonationStory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

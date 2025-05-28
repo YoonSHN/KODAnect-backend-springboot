@@ -1,13 +1,15 @@
 package kodanect.domain.donation.service;
 
-import koda.dto.request.DonationCommentCreateRequestDto;
-import koda.dto.request.DonationStoryCommentModifyRequestDto;
-import koda.dto.request.VerifyCommentPasscodeDto;
-import koda.dto.response.AreaCode;
-import koda.entity.DonationStory;
-import koda.entity.DonationStoryComment;
-import koda.repository.DonationCommentRepository;
-import koda.repository.DonationRepository;
+
+import kodanect.domain.donation.dto.request.DonationCommentCreateRequestDto;
+import kodanect.domain.donation.dto.request.DonationStoryCommentModifyRequestDto;
+import kodanect.domain.donation.dto.request.VerifyCommentPasscodeDto;
+import kodanect.domain.donation.dto.response.AreaCode;
+import kodanect.domain.donation.entity.DonationStory;
+import kodanect.domain.donation.entity.DonationStoryComment;
+import kodanect.domain.donation.repository.DonationCommentRepository;
+import kodanect.domain.donation.repository.DonationRepository;
+import kodanect.domain.donation.service.impl.DonationCommentService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -20,7 +22,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 

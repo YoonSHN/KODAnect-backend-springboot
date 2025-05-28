@@ -9,7 +9,7 @@ import kodanect.domain.donation.dto.response.AreaCode;
 import kodanect.domain.donation.dto.response.DonationStoryDetailDto;
 import kodanect.domain.donation.dto.response.DonationStoryListDto;
 import kodanect.domain.donation.dto.response.DonationStoryWriteFormDto;
-import kodanect.domain.donation.entity.entity.DonationStory;
+import kodanect.domain.donation.entity.DonationStory;
 import kodanect.domain.donation.repository.DonationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;

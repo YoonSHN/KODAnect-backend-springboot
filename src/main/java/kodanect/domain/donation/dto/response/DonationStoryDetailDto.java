@@ -2,7 +2,7 @@ package kodanect.domain.donation.dto.response;
 
 
 
-import kodanect.domain.donation.entity.entity.DonationStory;
+import kodanect.domain.donation.entity.DonationStory;
 import lombok.Builder;
 import lombok.Getter;
 

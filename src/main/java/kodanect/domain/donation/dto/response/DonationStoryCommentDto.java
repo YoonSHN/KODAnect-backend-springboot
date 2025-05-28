@@ -1,7 +1,7 @@
 package kodanect.domain.donation.dto.response;
 
 
-import kodanect.domain.donation.entity.entity.DonationStoryComment;
+import kodanect.domain.donation.entity.DonationStoryComment;
 import lombok.Builder;
 import lombok.Getter;
 
