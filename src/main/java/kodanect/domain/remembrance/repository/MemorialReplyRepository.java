@@ -13,7 +13,9 @@ public interface MemorialReplyRepository extends JpaRepository<MemorialReply, In
 
     @Query(
         value = """
-            SELECT r.replySeq, r.donateSeq, r.replyWriter, r.replyPassword, r.replyContents, r.replyWriteTime, r.replyWriterId, r.replyModifyTime, r.replyModifierId, r.delFlag
+            SELECT new kodanect.domain.remembrance.dto.MemorialReplyDto
+                    (r.replySeq, r.donateSeq, r.replyWriter, r.replyPassword, r.replyContents,
+                     r.replyWriteTime, r.replyWriterId, r.replyModifyTime, r.replyModifierId, r.delFlag)
             FROM MemorialReply r
             WHERE r.donateSeq = :donateSeq AND r.delFlag = 'N'
             ORDER BY r.replyWriteTime DESC

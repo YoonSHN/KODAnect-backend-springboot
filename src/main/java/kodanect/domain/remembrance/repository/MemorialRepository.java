@@ -13,7 +13,8 @@ public interface MemorialRepository extends JpaRepository<Memorial, Integer> {
 
     @Query(
         value = """
-            SELECT m.donateSeq, m.donorName, m.anonymityFlag, m.donateDate, m.genderFlag, m.donateAge, m.delFlag, COUNT(r)
+            SELECT new kodanect.domain.remembrance.dto.MemorialListDto
+                    (m.donateSeq, m.donorName, m.anonymityFlag, m.donateDate,m.genderFlag, m.donateAge, m.delFlag, COUNT(r))
             FROM Memorial m
             LEFT JOIN MemorialReply r ON m.donateSeq = r.donateSeq
             WHERE m.delFlag = 'N'
@@ -30,7 +31,8 @@ public interface MemorialRepository extends JpaRepository<Memorial, Integer> {
 
     @Query(
         value = """
-            SELECT m.donateSeq, m.donorName, m.anonymityFlag, m.donateDate, m.genderFlag, m.donateAge, m.delFlag, COUNT(r)
+            SELECT new kodanect.domain.remembrance.dto.MemorialListDto
+                    (m.donateSeq, m.donorName, m.anonymityFlag, m.donateDate, m.genderFlag, m.donateAge, m.delFlag, COUNT(r))
             FROM Memorial m
             LEFT JOIN MemorialReply r ON m.donateSeq = r.donateSeq
             WHERE m.donorName LIKE :searchWord AND m.donateDate BETWEEN :startDate AND :endDate AND m.delFlag = 'N'
