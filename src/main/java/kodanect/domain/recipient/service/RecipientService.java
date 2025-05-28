@@ -1,6 +1,7 @@
 package kodanect.domain.recipient.service;
 
 import kodanect.domain.recipient.dto.RecipientResponseDto;
+import kodanect.domain.recipient.dto.RecipientSearchCondition;
 import kodanect.domain.recipient.entity.RecipientEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -12,11 +13,11 @@ public interface RecipientService {
     boolean verifyLetterPassword(Integer letterSeq, String letterPasscode);
 
     // 게시물 수정
-    RecipientResponseDto updateRecipient(RecipientEntity recipientEntityRequest, Integer letterSeq, String requestPasscode);
+    RecipientResponseDto updateRecipient(RecipientEntity recipientEntityRequest, Integer letterSeq, String requestPasscode, String captchaToken);
 
     // 게시물 삭제
     // 조건 : 등록된 게시물의 비밀번호와 일치하는 경우
-    void deleteRecipient(Integer letterSeq, String letterPasscode);
+    void deleteRecipient(Integer letterSeq, String letterPasscode, String captchaToken);
 
     // 게시물 등록
     // 조건 : letter_writer 한영자 10자 제한, letter_passcode 영숫자 8자 이상, 캡챠 인증
@@ -26,11 +27,11 @@ public interface RecipientService {
     RecipientResponseDto selectRecipient(int letterSeq);
 
     // 페이징 처리된 게시물 목록 조회 (댓글 수 포함)
-    Page<RecipientResponseDto> selectRecipientListPaged(RecipientEntity searchCondition, Pageable pageable);
+    Page<RecipientResponseDto> selectRecipientListPaged(RecipientSearchCondition searchCondition, Pageable pageable);
 
     // 제목, 내용, 전체 검색
-    List<RecipientResponseDto> selectRecipientList(RecipientEntity searchCondition);
+    List<RecipientResponseDto> selectRecipientList(RecipientSearchCondition searchCondition);
 
     // 제목, 내용, 전체 검색 결과 수
-    int selectRecipientListTotCnt(RecipientEntity searchCondition);
+    int selectRecipientListTotCnt(RecipientSearchCondition searchCondition);
 }

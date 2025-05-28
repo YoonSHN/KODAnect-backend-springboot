@@ -1,0 +1,92 @@
+package kodanect.domain.recipient.dto;
+
+import kodanect.common.validation.RecipientConditionalValidation;
+import kodanect.domain.recipient.entity.RecipientEntity; // DTO에서 Entity로 변환하기 위해 임포트
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import javax.validation.constraints.*;
+// 게시물 생성 및 수정 요청에 사용될 DTO
+@RecipientConditionalValidation(
+        conditionalProperty = "organCode",
+        expectedValue = "ORGAN000",
+        requiredProperty = "organEtc",
+        message = "직접입력 선택 시 기타 장기를 입력해야 합니다."
+)
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class RecipientRequestDto {
+
+    // 장기 구분 코드
+    @Pattern(regexp = "^ORGAN(00[0-9]|01[0-4])$", message = "유효하지 않은 장기 코드입니다.")
+    private String organCode;
+
+    // 기타 장기 (조건부 유효성 검사는 @RecipientConditionalValidation 에서 담당)
+    @Size(max = 30, message = "기타 장기는 30자(한글) 이하여야 합니다.")
+    private String organEtc;
+
+    // 스토리 제목
+    @NotBlank(message = "제목은 필수 입력 항목입니다.")
+    @Size(max = 50, message = "제목은 50자 이하여야 합니다.")
+    private String letterTitle;
+
+    // 수혜 연도
+    @Pattern(regexp = "^\\d{4}$", message = "기증받은 년도는 4자리 숫자여야 합니다.")
+    @Min(value = 1995, message = "기증받은 년도는 1995년에서 2030년 사이의 값이어야 합니다.")
+    @Max(value = 2030, message = "기증받은 년도는 1995년에서 2030년 사이의 값이어야 합니다.")
+    private String recipientYear;
+
+    // 편지 비밀번호 (새로운 비밀번호를 입력할 때만 사용)
+    // 등록 시에는 필수로 필요하고, 수정 시에는 변경될 수 있습니다.
+    // 수정 시 비밀번호 검증은 별도의 @RequestParam 또는 @RequestBody로 받아서 처리합니다.
+    @NotBlank(message = "비밀번호는 필수 입력 항목입니다.") // 등록 시 유효성 검사
+    @Pattern(regexp = "^(?=.*[a-zA-Z])(?=.*[0-9]).{8,}$", message = "비밀번호는 영문 숫자 8자 이상 이어야 합니다.")
+    private String letterPasscode;
+
+    // 편지 작성자
+    @Size(max = 10, message = "작성자는 10자(한글) 이하여야 합니다.")
+    @NotBlank(message = "작성자는 필수 입력 항목입니다.")
+    private String letterWriter;
+
+    // 편지 익명여부
+    @Pattern(regexp = "[YN]", message = "익명 여부는 'Y' 또는 'N'이어야 합니다.")
+    private String anonymityFlag;
+
+    // 편지 내용
+    @NotBlank(message = "내용은 필수 입력 항목입니다.")
+    private String letterContents;
+
+    // 이미지 파일 명
+    @Size(max = 600, message = "파일명이 너무 깁니다. (최대 600자)")
+    private String fileName;
+
+    // 이미지 원본 파일 명
+    @Size(max = 600, message = "원본 파일명이 너무 깁니다. (최대 600자)")
+    private String orgFileName;
+
+    // --- CAPTCHA 인증 토큰 추가 (클라이언트로부터 받음) ---
+    @NotBlank(message = "캡챠 토큰은 필수입니다.")
+    private String captchaToken;
+
+    // RequestDto를 Entity로 변환하는 헬퍼 메서드 (등록 시)
+    public RecipientEntity toEntity() {
+        return RecipientEntity.builder()
+                .organCode(this.organCode)
+                .organEtc(this.organEtc)
+                .letterTitle(this.letterTitle)
+                .recipientYear(this.recipientYear)
+                .letterPasscode(this.letterPasscode) // 등록 시 비밀번호
+                .letterWriter(this.letterWriter)
+                .anonymityFlag(this.anonymityFlag)
+                .letterContents(this.letterContents)
+                .fileName(this.fileName)
+                .orgFileName(this.orgFileName)
+                // writerId, modifierId, delFlag, readCount 등은 서비스 계층에서 처리
+                .build();
+    }
+}

@@ -5,6 +5,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.http.ResponseEntity;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import com.fasterxml.jackson.databind.JsonNode;
 
 @Service
 public class HcaptchaService {
@@ -15,6 +19,10 @@ public class HcaptchaService {
     @Value("${hcaptcha.secret-key}") // application.properties에서 시크릿 키를 주입받습니다.
     private String secretKey;
 
+    // 개발 모드 플래그 추가 (application.properties 또는 application-dev.properties에 설정)
+    @Value("${hcaptcha.bypass-enabled:true}") // 기본값은 false (우회 안 함)
+    private boolean bypassEnabled;
+
     private final RestTemplate restTemplate;
 
     public HcaptchaService(RestTemplate restTemplate) {
@@ -22,47 +30,47 @@ public class HcaptchaService {
     }
 
     public boolean verifyCaptcha(String captchaToken) {
+        // 개발/테스트용 우회 모드
+        if (bypassEnabled) {
+            logger.warn("===== 경고: hCaptcha 인증이 현재 설정에 따라 우회되었습니다! =====");
+            return true;
+        }
 
-        // !!!!! 개발/테스트용 임시 코드 시작 !!!!!
-        // 실제 hCaptcha 인증 없이 항상 true를 반환하도록 합니다.
-        logger.warn("===== 경고: hCaptcha 인증이 현재 테스트 목적으로 우회되었습니다! =====");
-        logger.warn("===== 이 코드는 프로덕션 환경에 배포되면 안 됩니다! =====");
-        return true;
-        // !!!!! 개발/테스트용 임시 코드 끝 !!!!!
-
-        /*
+        // 실제 hCaptcha 토큰 유효성 검사 시작
         if (captchaToken == null || captchaToken.trim().isEmpty()) {
             logger.warn("hCaptcha 토큰이 비어있거나 null입니다.");
             return false;
         }
 
-        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(HCAPTCHA_VERIFY_URL)
-                .queryParam("secret", secretKey)
-                .queryParam("response", captchaToken);
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("response", captchaToken);
+        params.add("secret", secretKey);
 
         try {
-            // hCaptcha API 호출
-            // 응답은 Map 형태로 파싱
-            Map<String, Object> response = restTemplate.postForObject(builder.toUriString(), null, Map.class);
+            ResponseEntity<JsonNode> response = restTemplate.postForEntity(HCAPTCHA_VERIFY_URL, params, JsonNode.class);
 
-            if (response == null) {
-                logger.error("hCaptcha 응답이 null입니다.");
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                JsonNode responseBody = response.getBody();
+                boolean success = responseBody.get("success").asBoolean();
+
+                if (!success) {
+                    JsonNode errorCodes = responseBody.get("error-codes");
+                    if (errorCodes != null && errorCodes.isArray()) {
+                        for (JsonNode errorCode : errorCodes) {
+                            logger.warn("hCaptcha 인증 실패 오류 코드: {}", errorCode.asText());
+                        }
+                    }
+                }
+                return success;
+            }
+            else {
+                logger.error("hCaptcha API 호출 실패: 상태 코드 {}", response.getStatusCode());
                 return false;
             }
-
-            Boolean success = (Boolean) response.get("success");
-            if (success != null && success) {
-                logger.info("hCaptcha 인증 성공.");
-                return true;
-            } else {
-                List<String> errorCodes = (List<String>) response.get("error-codes");
-                logger.warn("hCaptcha 인증 실패. 오류 코드: {}", errorCodes);
-                return false;
-            }
-        } catch (Exception e) {
-            logger.error("hCaptcha API 호출 중 오류 발생: {}", e.getMessage(), e);
+        }
+        catch (Exception e) {
+            logger.error("hCaptcha 인증 중 예외 발생: {}", e.getMessage(), e);
             return false;
         }
-         */
     }
 }

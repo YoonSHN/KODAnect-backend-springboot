@@ -1,5 +1,10 @@
-package kodanect.common.exception;
+package kodanect.common.exception.config;
 
+import kodanect.common.exception.CommentNotFoundException;
+import kodanect.common.exception.InvalidPasscodeException;
+import kodanect.common.exception.RecipientInvalidDataException;
+import kodanect.common.exception.RecipientNotFoundException;
+import kodanect.common.exception.custom.InvalidIntegerConversionException;
 import kodanect.common.response.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -102,6 +107,18 @@ public class GlobalExcepHndlr {
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ApiResponse.fail(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다."));
+    }
+
+    /**
+     * Integer 변환 실패 등 숫자 관련 잘못된 입력 처리 (400 Bad Request)
+     * InvalidIntegerConversionException
+     */
+    @ExceptionHandler(InvalidIntegerConversionException.class)
+    public ResponseEntity<ApiResponse<String>> handleInvalidIntegerConversionException(InvalidIntegerConversionException ex) {
+        log.warn("Bad Request (400): Integer 변환 실패 - {}", ex.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.fail(HttpStatus.BAD_REQUEST, ex.getMessage()));
     }
 
 }

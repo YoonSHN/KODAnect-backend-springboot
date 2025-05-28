@@ -3,8 +3,10 @@ package kodanect.domain.recipient.service.impl;
 import kodanect.common.exception.InvalidPasscodeException;
 import kodanect.common.exception.RecipientInvalidDataException;
 import kodanect.common.exception.RecipientNotFoundException;
+import kodanect.common.exception.custom.InvalidIntegerConversionException;
 import kodanect.common.util.HcaptchaService;
 import kodanect.domain.recipient.dto.RecipientResponseDto;
+import kodanect.domain.recipient.dto.RecipientSearchCondition;
 import kodanect.domain.recipient.entity.RecipientCommentEntity;
 import kodanect.domain.recipient.entity.RecipientEntity;
 import kodanect.domain.recipient.repository.RecipientCommentRepository;
@@ -25,6 +27,11 @@ import java.util.stream.Collectors;
 
 @Service("recipientService")
 public class RecipientServiceImpl implements RecipientService {
+    // 상수 정의
+    private static final String ORGAN_CODE_DIRECT_INPUT = "ORGAN000";  // 직접입력 코드
+    private static final String ANONYMOUS_WRITER_VALUE = "익명";
+    private static final String CAPTCHA_FAILED_MESSAGE = "캡차 인증에 실패했습니다. 다시 시도해주세요.";
+    private static final String RECIPIENT_NOT_FOUND_MESSAGE = "해당 게시물이 존재하지 않거나 이미 삭제되었습니다.";
 
     private final RecipientRepository recipientRepository;
     private final RecipientCommentRepository recipientCommentRepository;
@@ -33,9 +40,6 @@ public class RecipientServiceImpl implements RecipientService {
     // 로거 선언
     private final Logger logger = LoggerFactory.getLogger(RecipientServiceImpl.class);
 
-    // 상수 정의
-    private final String ORGAN_CODE_DIRECT_INPUT = "ORGAN000";  // 직접입력 코드
-    private final String ANONYMOUS_WRITER_VALUE = "익명";
 
     public RecipientServiceImpl(RecipientRepository recipientRepository, RecipientCommentRepository recipientCommentRepository, HcaptchaService hcaptchaService) {
         this.recipientRepository = recipientRepository;
@@ -50,7 +54,7 @@ public class RecipientServiceImpl implements RecipientService {
         // 게시물 조회 (삭제되지 않은 게시물만 조회)
         RecipientEntity recipientEntityold = recipientRepository.findById(letterSeq)
                 .filter(entity -> "N".equalsIgnoreCase(entity.getDelFlag())) // 삭제되지 않은 게시물만 필터링
-                .orElseThrow(() -> new RecipientNotFoundException("해당 게시물이 존재하지 않거나 이미 삭제되었습니다."));
+                .orElseThrow(() -> new RecipientNotFoundException(RECIPIENT_NOT_FOUND_MESSAGE));
 
         // 비밀번호 불일치 (엔티티의 checkPasscode 메서드 활용)
         if (!recipientEntityold.checkPasscode(letterPasscode)) {
@@ -61,11 +65,18 @@ public class RecipientServiceImpl implements RecipientService {
 
     // 게시물 수정
     @Override
-    public RecipientResponseDto updateRecipient(RecipientEntity recipientEntityRequest, Integer letterSeq, String requestPasscode) {
+    public RecipientResponseDto updateRecipient(RecipientEntity recipientEntityRequest, Integer letterSeq, String requestPasscode, String captchaToken) {
+        // --- 0. hCaptcha 인증 검증 추가 ---
+        if (!hcaptchaService.verifyCaptcha(captchaToken)) {
+            logger.warn("hCaptcha 인증 실패: 유효하지 않은 캡차 토큰입니다. (수정)");
+            throw new RecipientInvalidDataException(CAPTCHA_FAILED_MESSAGE);
+        }
+        logger.info("hCaptcha 인증 성공. 게시물 수정 진행.");
+
         // 게시물 조회 (삭제되지 않은 게시물만 조회)
         RecipientEntity recipientEntityold = recipientRepository.findById(letterSeq)
                 .filter(entity -> "N".equalsIgnoreCase(entity.getDelFlag()))
-                .orElseThrow(() -> new RecipientNotFoundException("해당 게시물이 존재하지 않거나 이미 삭제되었습니다."));
+                .orElseThrow(() -> new RecipientNotFoundException(RECIPIENT_NOT_FOUND_MESSAGE));
 
         // 비밀번호 검증 (verifyLetterPassword 메서드 활용)
         verifyLetterPassword(letterSeq, requestPasscode); // 비밀번호 불일치 시 예외 발생
@@ -90,25 +101,48 @@ public class RecipientServiceImpl implements RecipientService {
             recipientEntityold.setLetterPasscode(recipientEntityRequest.getLetterPasscode());
         }
         recipientEntityold.setAnonymityFlag(recipientEntityRequest.getAnonymityFlag());
-        recipientEntityold.setLetterContents(recipientEntityRequest.getLetterContents());
+
+        // 내용(HTML) 필터링
+        String originalContents = recipientEntityRequest.getLetterContents();
+        if (originalContents == null || originalContents.trim().isEmpty()) {
+            logger.warn("게시물 내용이 비어있거나 null입니다.");
+            throw new RecipientInvalidDataException("게시물 내용은 필수 입력 항목입니다.");
+        }
+        Safelist safelist = Safelist.relaxed();
+        String cleanContents = Jsoup.clean(originalContents, safelist);
+        String pureTextContents = Jsoup.parse(cleanContents).text();
+        if (pureTextContents.trim().isEmpty()) {
+            logger.warn("게시물 수정 실패: 필터링 후 내용이 비어있음");
+            throw new RecipientInvalidDataException("게시물 내용은 필수 입력 항목입니다. (HTML 태그 필터링 후)");
+        }
+        recipientEntityold.setLetterContents(cleanContents.trim());
+
         recipientEntityold.setFileName(recipientEntityRequest.getFileName());
         recipientEntityold.setOrgFileName(recipientEntityRequest.getOrgFileName());
         recipientEntityold.setModifierId(recipientEntityRequest.getModifierId()); // 수정자 ID 업데이트
 
         RecipientEntity updatedEntity = recipientRepository.save(recipientEntityold); // 변경사항 저장
-
+        logger.info("게시물 성공적으로 수정됨: letterSeq={}", updatedEntity.getLetterSeq());
         return RecipientResponseDto.fromEntity(updatedEntity); // DTO로 변환하여 반환
     }
 
     // 게시물 삭제
     // 조건 : 등록된 게시물의 비밀번호와 일치하는 경우
     @Override
-    public void deleteRecipient(Integer letterSeq, String letterPasscode) {
+    public void deleteRecipient(Integer letterSeq, String letterPasscode, String captchaToken) {
+        logger.info("게시물 삭제 시도: letterSeq={}", letterSeq);
+
+        // --- 0. hCaptcha 인증 검증 추가 ---
+        if (!hcaptchaService.verifyCaptcha(captchaToken)) {
+            logger.warn("hCaptcha 인증 실패: 유효하지 않은 캡차 토큰입니다. (삭제)");
+            throw new RecipientInvalidDataException(CAPTCHA_FAILED_MESSAGE);
+        }
+        logger.info("hCaptcha 인증 성공. 게시물 삭제 진행.");
 
         // 게시물 조회 (삭제되지 않은 게시물만 조회)
         RecipientEntity recipientEntityold = recipientRepository.findById(letterSeq)
                 .filter(entity -> "N".equalsIgnoreCase(entity.getDelFlag()))
-                .orElseThrow(() -> new RecipientNotFoundException("해당 게시물이 존재하지 않거나 이미 삭제되었습니다."));
+                .orElseThrow(() -> new RecipientNotFoundException(RECIPIENT_NOT_FOUND_MESSAGE));
 
         // 게시물 비번이 없거나 or 비밀번호 불일치
         if (!recipientEntityold.checkPasscode(letterPasscode)) { // 엔티티의 checkPasscode 활용
@@ -121,7 +155,7 @@ public class RecipientServiceImpl implements RecipientService {
 
         // 3. 해당 게시물의 모든 댓글 소프트 삭제
         List<RecipientCommentEntity> commentsToSoftDelete =
-                recipientCommentRepository.findByLetterLetterSeqAndDelFlagOrderByWriteTimeAsc(letterSeq, "N");
+                recipientCommentRepository.findByLetterSeqAndDelFlagOrderByWriteTimeAsc(letterSeq, "N");
 
         if (commentsToSoftDelete != null && !commentsToSoftDelete.isEmpty()) {
             for (RecipientCommentEntity comment : commentsToSoftDelete) {
@@ -129,6 +163,7 @@ public class RecipientServiceImpl implements RecipientService {
                 recipientCommentRepository.save(comment);
             }
         }
+        logger.info("게시물 성공적으로 삭제됨: letterSeq={}", letterSeq);
     }
 
     // 게시물 등록
@@ -174,15 +209,11 @@ public class RecipientServiceImpl implements RecipientService {
         recipientEntityRequest.setLetterWriter(writerToSave);
 
         // 3. organCode가 "ORGAN000" (직접입력) 일 경우 organEtc 설정, 아니면 null
-        // @Valid에서NotBlank 등의 유효성 검사가 organEtc에 적용되어 있어야 함.
-        // 만약 @Valid가 아닌 서비스 내부에서 추가적인 비즈니스 로직 유효성 검사가 필요하다면 여기에 추가.
         if (!ORGAN_CODE_DIRECT_INPUT.equals(recipientEntityRequest.getOrganCode())) {
             recipientEntityRequest.setOrganEtc(null);
         }
         else {
             // ORGAN000인데 organEtc가 null이거나 비어있을 경우 (이전 NullPointerException의 다른 원인 가능성)
-            // @Valid에 @NotBlank 또는 @NotNull이 RecipientEntity.organEtc 에 적용되어 있다면 이 로직은 필요 없음
-            // 만약 @Valid로 처리되지 않는다면 아래 로직 추가
             if (recipientEntityRequest.getOrganEtc() == null || recipientEntityRequest.getOrganEtc().trim().isEmpty()) {
                 logger.warn("ORGAN000 선택 시 organEtc는 필수 입력 항목입니다.");
                 throw new RecipientInvalidDataException("ORGAN000 선택 시 organEtc는 필수 입력 항목입니다.");
@@ -201,7 +232,7 @@ public class RecipientServiceImpl implements RecipientService {
         // 1. 해당 게시물 조회 (삭제되지 않은 게시물만 조회하도록 필터링)
         RecipientEntity recipientEntity = recipientRepository.findById(letterSeq)
                 .filter(entity -> "N".equalsIgnoreCase(entity.getDelFlag()))
-                .orElseThrow(() -> new RecipientNotFoundException("해당 게시물이 존재하지 않거나 이미 삭제되었습니다."));
+                .orElseThrow(() -> new RecipientNotFoundException(RECIPIENT_NOT_FOUND_MESSAGE));
 
         // 2. 조회수 증가
         recipientEntity.incrementReadCount();
@@ -219,7 +250,7 @@ public class RecipientServiceImpl implements RecipientService {
 
     // 페이징 처리된 게시물 목록 조회 (댓글 수 포함)
     @Override
-    public Page<RecipientResponseDto> selectRecipientListPaged(RecipientEntity searchCondition, Pageable pageable){
+    public Page<RecipientResponseDto> selectRecipientListPaged(RecipientSearchCondition searchCondition, Pageable pageable){
 
         // 1. 조건에 맞는 RecipientVO 목록 조회 (페이징 및 정렬 적용)
         Specification<RecipientEntity> spec = getRecipientSpecification(searchCondition);
@@ -244,18 +275,16 @@ public class RecipientServiceImpl implements RecipientService {
         }
 
         // 3. RecipientEntity를 RecipientResponseDto로 변환하고 commentCount 필드를 채우기
-        Page<RecipientResponseDto> responseDtoPage = recipientPage.map(entity -> {
+        return recipientPage.map(entity -> {
             RecipientResponseDto dto = RecipientResponseDto.fromEntity(entity);
             dto.setCommentCount(commentCountMap.getOrDefault(entity.getLetterSeq(), 0));
             return dto;
         });
-
-        return responseDtoPage;
     }
 
     // 제목, 내용, 전체 검색
     @Override
-    public List<RecipientResponseDto> selectRecipientList(RecipientEntity searchCondition) {
+    public List<RecipientResponseDto> selectRecipientList(RecipientSearchCondition searchCondition) {
         Specification<RecipientEntity> spec = getRecipientSpecification(searchCondition);
         List<RecipientEntity> recipientList = recipientRepository.findAll(spec);
 
@@ -269,12 +298,12 @@ public class RecipientServiceImpl implements RecipientService {
                     dto.setCommentCount(commentCountMap.getOrDefault(entity.getLetterSeq(), 0));
                     return dto;
                 })
-                .collect(Collectors.toList());
+                .toList(); // Stream.toList() 사용
     }
 
     // 제목, 내용, 전체 검색 결과 수
     @Override
-    public int selectRecipientListTotCnt(RecipientEntity searchCondition) {
+    public int selectRecipientListTotCnt(RecipientSearchCondition searchCondition) {
         Specification<RecipientEntity> spec = getRecipientSpecification(searchCondition);
         return (int) recipientRepository.count(spec);
     }
@@ -299,23 +328,43 @@ public class RecipientServiceImpl implements RecipientService {
 
     // 다양한 타입(Object)에서 안전하게 Integer 추출
     private Integer extractAsInteger(Object obj, String fieldName) {
+        if (obj == null) {
+            logger.warn("Null value encountered for field '{}'", fieldName);
+            return null; // 또는 throw new InvalidIntegerConversionException(...)
+        }
+
         try {
-            if (obj instanceof Number) {
-                return ((Number) obj).intValue();
+            if (obj instanceof Number number) {
+                return number.intValue();
             }
-            else if (obj instanceof String) {
-                return Integer.parseInt((String) obj);
+
+            if (obj instanceof String str) {
+                str = str.trim();
+                if (str.isEmpty()) {
+                    throw new InvalidIntegerConversionException("Empty or blank string cannot be converted to Integer for field: " + fieldName);
+                }
+                return Integer.parseInt(str);
             }
+
+            throw new InvalidIntegerConversionException(
+                    "Unsupported type for Integer conversion. Field: " + fieldName + ", Type: " + obj.getClass().getName()
+            );
+        }
+        catch (NumberFormatException e) {
+            logger.error("Invalid number format for field '{}': {}", fieldName, obj, e);
+            throw new InvalidIntegerConversionException("Invalid number format for field: " + fieldName + ", value: " + obj, e);
+        }
+        catch (InvalidIntegerConversionException e) {
+            throw e;
         }
         catch (Exception e) {
-            logger.error("Error converting {} to Integer: value = {}, type = {}", fieldName, obj, obj.getClass().getName(), e);
-            throw new RuntimeException("Invalid value for " + fieldName + ": " + obj, e);
+            logger.error("Unexpected error converting {} to Integer. Value = {}, Type = {}", fieldName, obj, obj.getClass().getName(), e);
+            throw new InvalidIntegerConversionException("Unexpected error during conversion of " + fieldName, e);
         }
-        throw new ClassCastException("Unsupported type for " + fieldName + ": " + obj.getClass().getName());
     }
 
     // Spring Data JPA Specification을 활용한 동적 쿼리 생성 메서드 (이전과 동일)
-    private Specification<RecipientEntity> getRecipientSpecification(RecipientEntity searchCondition) {
+    private Specification<RecipientEntity> getRecipientSpecification(RecipientSearchCondition searchCondition) {
         return (root, query, cb) -> {
             List<javax.persistence.criteria.Predicate> predicates = new ArrayList<>();
 
@@ -350,17 +399,6 @@ public class RecipientServiceImpl implements RecipientService {
                         break;
                 }
             }
-
-            // organCode 필터링
-            if (StringUtils.hasText(searchCondition.getOrganCode())) {
-                predicates.add(cb.equal(root.get("organCode"), searchCondition.getOrganCode()));
-            }
-
-            // recipientYear 필터링
-            if (StringUtils.hasText(searchCondition.getRecipientYear())) {
-                predicates.add(cb.equal(root.get("recipientYear"), searchCondition.getRecipientYear()));
-            }
-
             return cb.and(predicates.toArray(new javax.persistence.criteria.Predicate[0]));
         };
     }
