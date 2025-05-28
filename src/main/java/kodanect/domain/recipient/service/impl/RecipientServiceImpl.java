@@ -199,7 +199,7 @@ public class RecipientServiceImpl implements RecipientService {
         // 1. 해당 게시물 조회 (삭제되지 않은 게시물만 조회하도록 필터링)
         RecipientEntity recipientEntity = recipientRepository.findById(letterSeq)
                 .filter(entity -> "N".equalsIgnoreCase(entity.getDelFlag()))
-                .orElseThrow(() -> new NoSuchElementException("해당 게시물이 존재하지 않거나 이미 삭제되었습니다."));
+                .orElseThrow(() -> new RecipientNotFoundException("해당 게시물이 존재하지 않거나 이미 삭제되었습니다."));
 
         // 2. 조회수 증가
         recipientEntity.incrementReadCount();

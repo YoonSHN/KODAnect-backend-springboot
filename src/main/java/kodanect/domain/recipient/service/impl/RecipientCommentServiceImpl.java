@@ -33,11 +33,23 @@ public class RecipientCommentServiceImpl implements RecipientCommentService {
     // 비밀번호 영숫자 8자 이상
     private static final String COMMENT_PASSCODE_PATTERN = "^(?=.*[a-zA-Z])(?=.*[0-9]).{8,}$";
 
+    // 게시물 삭제 여부를 확인하는 헬퍼 메서드
+    private RecipientEntity getActiveRecipient(Integer letterSeq) {
+        return recipientRepository.findById(letterSeq)
+                .filter(entity -> "N".equalsIgnoreCase(entity.getDelFlag())) // 삭제되지 않은 게시물만 필터링
+                .orElseThrow(() -> new RecipientNotFoundException("게시물을 찾을 수 없거나 이미 삭제된 게시물입니다: " + letterSeq));
+    }
+
     // 특정 게시물의 댓글 조회
     @Override
     public List<RecipientCommentResponseDto> selectRecipientCommentByLetterSeq(int letterSeq) {
         logger.info("Selecting comments for letterSeq: {}", letterSeq);
-        // 삭제되지 않은 댓글만 조회하고, 작성시간 기준 오름차순으로 정렬
+
+        // 1. 해당 게시물이 삭제되지 않았는지 확인
+        // 게시물이 없거나 삭제되었다면 RecipientNotFoundException 발생
+        getActiveRecipient(letterSeq);
+
+        // 2. 삭제되지 않은 댓글만 조회하고, 작성시간 기준 오름차순으로 정렬
         List<RecipientCommentEntity> comments = recipientCommentRepository.findByLetterLetterSeqAndDelFlagOrderByWriteTimeAsc(letterSeq, "N"); // "N"으로 비교
 
         return comments.stream()
@@ -56,24 +68,20 @@ public class RecipientCommentServiceImpl implements RecipientCommentService {
         // 로그 출력
         logger.info("Inserting comment for letterSeq: {}", letterSeq);
 
-        RecipientEntity recipientEntity = recipientRepository.findById(letterSeq)
-                .orElseThrow(() -> new RecipientNotFoundException("게시물을 찾을 수 없습니다: " + letterSeq));
+        // 2. 해당 게시물이 삭제되지 않았는지 확인 (게시물 존재 여부 및 삭제 여부 동시 확인)
+        // 게시물이 없거나 삭제되었다면 RecipientNotFoundException 발생
+        RecipientEntity recipientEntity = getActiveRecipient(letterSeq);
 
-        if ("Y".equalsIgnoreCase(recipientEntity.getDelFlag())) { // delflag가 'Y'이면 삭제된 게시물
-            logger.warn("댓글 작성 실패: 삭제된 게시물에 댓글을 달 수 없습니다. letterSeq: {}", letterSeq);
-            throw new RecipientInvalidDataException("삭제된 게시물에는 댓글을 달 수 없습니다.");
-        }
-
-        // 2. 댓글 저장을 위한 부모레터 세팅
+        // 3. 댓글 저장을 위한 부모레터 세팅
         commentEntityRequest.setLetter(recipientEntity); // JPA 연관관계 설정을 위해 실제 엔티티 참조
 
-        // 3. 댓글 비밀번호 유효성 검사 (필수 입력, 영문 숫자 8자 이상)
+        // 4. 댓글 비밀번호 유효성 검사 (필수 입력, 영문 숫자 8자 이상)
         if (commentEntityRequest.getCommentPasscode() == null || !commentEntityRequest.getCommentPasscode().matches(COMMENT_PASSCODE_PATTERN)) {
             logger.warn("댓글 작성 실패: 비밀번호 유효성 검사 실패");
             throw new RecipientInvalidDataException("비밀번호는 영문 숫자 8자 이상 이어야 합니다.");
         }
 
-        // 4. 댓글 내용 유효성 검사 (필수 입력, HTML 필터링, 길이 제한)
+        // 5. 댓글 내용 유효성 검사 (필수 입력, HTML 필터링, 길이 제한)
         if (commentEntityRequest.getContents() == null || commentEntityRequest.getContents().trim().isEmpty()) {
             logger.warn("댓글 작성 실패: 내용이 비어있음");
             throw new RecipientInvalidDataException("댓글 내용은 필수 입력 항목입니다.");
@@ -91,6 +99,7 @@ public class RecipientCommentServiceImpl implements RecipientCommentService {
 
         RecipientCommentEntity savedComment = recipientCommentRepository.save(commentEntityRequest);
         logger.info("Comment inserted with commentSeq: {}", savedComment.getCommentSeq());
+
         return RecipientCommentResponseDto.fromEntity(savedComment);    // 저장된 Entity를 Response DTO로 변환하여 반환
     }
 
@@ -99,17 +108,21 @@ public class RecipientCommentServiceImpl implements RecipientCommentService {
     public RecipientCommentResponseDto updateComment(RecipientCommentEntity commentEntityRequest, String inputPassword) {
         logger.info("Attempting to update commentSeq: {}", commentEntityRequest.getCommentSeq());
 
-        // 삭제되지 않은 기존 댓글 조회
+        // 1. 삭제되지 않은 기존 댓글 조회
         RecipientCommentEntity existingComment = recipientCommentRepository.findByCommentSeqAndDelFlag(commentEntityRequest.getCommentSeq(), "N")
                 .orElseThrow(() -> new CommentNotFoundException("댓글을 찾을 수 없거나 이미 삭제되었습니다."));
 
-        // 비밀번호 검증
+        // 2. 해당 댓글이 속한 게시물이 삭제되지 않았는지 확인
+        // 게시물이 없거나 삭제되었다면 RecipientNotFoundException 발생
+        getActiveRecipient(existingComment.getLetter().getLetterSeq());
+
+        // 3. 비밀번호 검증
         if (!existingComment.getCommentPasscode().equals(inputPassword)) {
             logger.warn("Password mismatch for commentSeq: {}", commentEntityRequest.getCommentSeq());
             throw new InvalidPasscodeException("비밀번호가 일치하지 않습니다.");
         }
 
-        // 수정 필드 업데이트 및 HTML 필터링
+        // 4. 수정 필드 업데이트 및 HTML 필터링
         String cleanContents = Jsoup.clean(commentEntityRequest.getContents(), Safelist.none().addTags("br"));
         if (cleanContents.trim().isEmpty()) {
             logger.warn("댓글 수정 실패: 필터링 후 내용이 비어있음");
@@ -127,16 +140,22 @@ public class RecipientCommentServiceImpl implements RecipientCommentService {
     @Override
     public void deleteComment(int commentSeq, String inputPassword) {
         logger.info("Attempting to delete commentSeq: {}", commentSeq);
+
+        // 1. 기존 댓글 조회 (삭제되지 않은 댓글만 조회)
         RecipientCommentEntity existingComment = recipientCommentRepository.findByCommentSeqAndDelFlag(commentSeq,"N")
                 .orElseThrow(() -> new CommentNotFoundException("댓글을 찾을 수 없거나 이미 삭제되었습니다."));
 
-        // 비밀번호 검증
+        // 2. 해당 댓글이 속한 게시물이 삭제되지 않았는지 확인
+        // 게시물이 없거나 삭제되었다면 RecipientNotFoundException 발생
+        getActiveRecipient(existingComment.getLetter().getLetterSeq());
+
+        // 3. 비밀번호 검증
         if (!existingComment.getCommentPasscode().equals(inputPassword)) {
             logger.warn("Password mismatch for commentSeq: {}", commentSeq);
             throw new InvalidPasscodeException("비밀번호가 일치하지 않습니다.");
         }
 
-        // 논리적 삭제 (delFlag를 "Y"로 설정)
+        // 4. 논리적 삭제 (delFlag를 "Y"로 설정)
         existingComment.setDelFlag("Y");
         existingComment.setModifierId(existingComment.getCommentWriter());
         recipientCommentRepository.save(existingComment);   // 변경된 상태 저장
@@ -147,11 +166,16 @@ public class RecipientCommentServiceImpl implements RecipientCommentService {
     @Override
     public boolean verifyCommentPassword(int commentSeq, String inputPassword) {
         logger.info("Verifying password for commentSeq: {}", commentSeq);
-        // commentSeq로 댓글을 찾고, 삭제되지 않았는지 확인하며 비밀번호 일치 여부 반환
-        return recipientCommentRepository.findByCommentSeqAndDelFlag(commentSeq, "N")
-                .filter(comment -> "N".equalsIgnoreCase(comment.getDelFlag())) // 삭제되지 않은 댓글만
-                .map(comment -> comment.getCommentPasscode().equals(inputPassword))
-                .orElse(false); // 댓글이 없거나 삭제되었거나 비밀번호 불일치 시 false
+        /// 1. 기존 댓글 조회 (삭제되지 않은 댓글만 조회)
+        RecipientCommentEntity existingComment = recipientCommentRepository.findByCommentSeqAndDelFlag(commentSeq, "N")
+                .orElseThrow(() -> new CommentNotFoundException("댓글을 찾을 수 없거나 이미 삭제되었습니다."));
+
+        // 2. 해당 댓글이 속한 게시물이 삭제되지 않았는지 확인
+        // 게시물이 없거나 삭제되었다면 RecipientNotFoundException 발생
+        getActiveRecipient(existingComment.getLetter().getLetterSeq()); // <-- 이 부분이 게시물 삭제 여부 확인
+
+        // 3. 비밀번호 일치 여부 반환
+        return existingComment.getCommentPasscode().equals(inputPassword);
     }
 
 

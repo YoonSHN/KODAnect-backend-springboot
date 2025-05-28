@@ -1,5 +1,6 @@
 package kodanect.domain.recipient.controller;
 
+import kodanect.common.response.ApiResponse;
 import kodanect.domain.recipient.dto.RecipientCommentResponseDto;
 import kodanect.domain.recipient.entity.RecipientCommentEntity;
 import kodanect.domain.recipient.entity.RecipientEntity;
@@ -65,18 +66,17 @@ public class RecipientCommentController {
 
     // 댓글 삭제
     @DeleteMapping("/{letterSeq}/comments/{commentSeq}")
-    public ResponseEntity<Void> deleteComment(@PathVariable("letterSeq") int letterSeq,
-                                              @PathVariable("commentSeq") int commentSeq,
-                                              @Valid @RequestBody RecipientCommentEntity commentEntityRequest) { // Entity를 요청으로 받음 (비밀번호 추출용)
+    public ResponseEntity<ApiResponse<Void>> deleteComment(@PathVariable("letterSeq") int letterSeq,
+                                                           @PathVariable("commentSeq") int commentSeq,
+                                                           @RequestBody RecipientCommentEntity commentEntityRequest) { // Entity를 요청으로 받음 (비밀번호 추출용)
         logger.info("DELETE /recipientLetters/{}/comments/{} called with commentEntityRequest: {}", letterSeq, commentSeq, commentEntityRequest);
         String commentPasscode = commentEntityRequest.getCommentPasscode();
 
         // Bean Validation(@Valid)이 여기서 먼저 처리되므로, 수동으로 null 체크는 불필요
-        // if (commentPasscode == null) { ... }
-
         recipientCommentService.deleteComment(commentSeq, commentPasscode);
         logger.info("Comment successfully deleted (logically) for commentSeq: {}", commentSeq);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT); // 204 No Content
+        return ResponseEntity.status(HttpStatus.OK) // 200 OK
+                .body(ApiResponse.success(HttpStatus.OK, "편지 댓글이 성공적으로 삭제되었습니다."));
     }
 
 }

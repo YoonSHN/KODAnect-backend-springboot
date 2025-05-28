@@ -27,10 +27,6 @@ import java.util.stream.Collectors;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExcepHndlr {
-    private static final int HTTP_BAD_REQUEST = 400;
-    private static final int HTTP_FORBIDDEN = 403;
-    private static final int HTTP_NOT_FOUND = 404;
-    private static final int HTTP_INTERNAL_SERVER_ERROR = 500;
 
     /**
      * 404 예외 처리
@@ -42,7 +38,7 @@ public class GlobalExcepHndlr {
         log.warn("404 Not Found: Requested resource not found.");
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
-                .body(ApiResponse.fail(HTTP_NOT_FOUND, "요청한 리소스를 찾을 수 없습니다."));
+                .body(ApiResponse.fail(HttpStatus.NOT_FOUND, "요청한 리소스를 찾을 수 없습니다."));
     }
 
     /**
@@ -58,7 +54,7 @@ public class GlobalExcepHndlr {
         log.warn("Validation Error (400 Bad Request): {}", errorMessage);
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.fail(HTTP_BAD_REQUEST, "유효성 검사 실패: " + errorMessage));
+                .body(ApiResponse.fail(HttpStatus.BAD_REQUEST, "유효성 검사 실패: " + errorMessage));
     }
 
     /**
@@ -70,7 +66,7 @@ public class GlobalExcepHndlr {
         log.warn("Resource Not Found (404 Not Found): {}", ex.getMessage());
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
-                .body(ApiResponse.fail(HTTP_NOT_FOUND, ex.getMessage()));
+                .body(ApiResponse.fail(HttpStatus.NOT_FOUND, ex.getMessage()));
     }
 
     /**
@@ -81,8 +77,8 @@ public class GlobalExcepHndlr {
     public ResponseEntity<ApiResponse<String>> handleInvalidPasscodeException(InvalidPasscodeException ex) {
         log.warn("Access Forbidden (403 Forbidden): {}", ex.getMessage());
         return ResponseEntity
-                .status(HttpStatus.FORBIDDEN)
-                .body(ApiResponse.fail(HTTP_FORBIDDEN, ex.getMessage()));
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(ApiResponse.fail(HttpStatus.UNAUTHORIZED, ex.getMessage()));
     }
 
     /**
@@ -94,7 +90,7 @@ public class GlobalExcepHndlr {
         log.warn("Bad Request (400 Bad Request): {}", ex.getMessage());
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.fail(HTTP_BAD_REQUEST, ex.getMessage()));
+                .body(ApiResponse.fail(HttpStatus.BAD_REQUEST, ex.getMessage()));
     }
 
     /**
@@ -105,7 +101,7 @@ public class GlobalExcepHndlr {
     public ResponseEntity<ApiResponse<Void>> handleInternalServerError() {
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.fail(HTTP_INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다."));
+                .body(ApiResponse.fail(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다."));
     }
 
 }
