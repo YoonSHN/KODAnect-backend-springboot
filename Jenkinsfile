@@ -100,6 +100,7 @@ pipeline {
             steps {
                 script {
                     githubNotify context: 'sonar', status: 'PENDING', description: 'SonarCloud 분석 중...'
+
                     withSonarQubeEnv('SonarCloud') {
                         withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
                             catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
@@ -120,13 +121,23 @@ pipeline {
                                 env.CI_FAILED = 'true'
                                 error('Sonar 분석 실패')
                             } else {
-                                githubNotify context: 'sonar', status: 'SUCCESS', description: 'SonarCloud 분석 성공'
+                                timeout(time: 5, unit: 'MINUTES') {
+                                    def qualityGate = waitForQualityGate()
+                                    if (qualityGate.status != 'OK') {
+                                        githubNotify context: 'sonar', status: 'FAILURE', description: "품질 게이트 실패: ${qualityGate.status}"
+                                        env.CI_FAILED = 'true'
+                                        error("SonarCloud 품질 게이트 실패: ${qualityGate.status}")
+                                    } else {
+                                        githubNotify context: 'sonar', status: 'SUCCESS', description: 'SonarCloud 품질 게이트 통과'
+                                    }
+                                }
                             }
                         }
                     }
                 }
             }
         }
+
 
         stage('Docker Build & Push') {
             when {
@@ -232,6 +243,9 @@ EOF
         }
 
         stage('Health Check') {
+            when {
+                branch 'main'
+            }
             steps {
                 script {
                     githubNotify context: 'healthcheck', status: 'PENDING', description: '헬스체크 중...'
