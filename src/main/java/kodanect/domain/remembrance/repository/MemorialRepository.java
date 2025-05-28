@@ -5,6 +5,7 @@ import kodanect.domain.remembrance.dto.MemorialListDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -55,4 +56,32 @@ public interface MemorialRepository extends JpaRepository<Memorial, Integer> {
             @Param("startDate") String startDate,
             @Param("endDate") String endDate,
             @Param("searchWord") String searchWord);
+
+    @Modifying
+    @Query(value = "UPDATE tb25_400_memorial m SET m.flower_count = m.flower_count + 1 WHERE m.donate_seq = :donateSeq", nativeQuery = true)
+    void incrementFlower(@Param("donateSeq") Integer donateSeq);
+
+    @Modifying
+    @Query(value = "UPDATE tb25_400_memorial m SET m.love_count = m.love_count + 1 WHERE m.donate_seq = :donateSeq", nativeQuery = true)
+    void incrementLove(@Param("donateSeq") Integer donateSeq);
+
+    @Modifying
+    @Query(value = "UPDATE tb25_400_memorial m SET m.see_count = m.see_count + 1 WHERE m.donate_seq = :donateSeq", nativeQuery = true)
+    void incrementSee(@Param("donateSeq") Integer donateSeq);
+
+    @Modifying
+    @Query(value = "UPDATE tb25_400_memorial m SET m.miss_count = m.miss_count + 1 WHERE m.donate_seq = :donateSeq", nativeQuery = true)
+    void incrementMiss(@Param("donateSeq") Integer donateSeq);
+
+    @Modifying
+    @Query(value = "UPDATE tb25_400_memorial m SET m.proud_count = m.proud_count + 1 WHERE m.donate_seq = :donateSeq", nativeQuery = true)
+    void incrementProud(@Param("donateSeq") Integer donateSeq);
+
+    @Modifying
+    @Query(value = "UPDATE tb25_400_memorial m SET m.hard_count = m.hard_count + 1 WHERE m.donate_seq = :donateSeq", nativeQuery = true)
+    void incrementHard(@Param("donateSeq") Integer donateSeq);
+
+    @Modifying
+    @Query(value = "UPDATE tb25_400_memorial m SET m.sad_count = m.sad_count + 1 WHERE m.donate_seq = :donateSeq", nativeQuery = true)
+    void incrementSad(@Param("donateSeq") Integer donateSeq);
 }

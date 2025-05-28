@@ -1,60 +1,60 @@
 package kodanect.common.util;
 
-import kodanect.domain.remembrance.entity.Memorial;
 import kodanect.domain.remembrance.exception.InvalidEmotionTypeException;
+import kodanect.domain.remembrance.repository.MemorialRepository;
 
 public enum EmotionType {
     FLOWER{
         @Override
-        public void apply(Memorial memorial) {
+        public void apply(MemorialRepository repository, Integer donateSeq) {
             /* 헌화 카운트 수 업데이트 */
-            memorial.setFlowerCount(memorial.getFlowerCount() + 1);
+            repository.incrementFlower(donateSeq);
         }
     },
     LOVE{
         @Override
-        public void apply(Memorial memorial) {
+        public void apply(MemorialRepository repository, Integer donateSeq) {
             /* 사랑해요 카운트 수 업데이트 */
-            memorial.setLoveCount(memorial.getLoveCount() + 1);
+            repository.incrementLove(donateSeq);
         }
     },
     SEE{
         @Override
-        public void apply(Memorial memorial) {
+        public void apply(MemorialRepository repository, Integer donateSeq) {
             /* 보고싶어요 카운트 수 업데이트 */
-            memorial.setSeeCount(memorial.getSeeCount() + 1);
+            repository.incrementSee(donateSeq);
         }
     },
     MISS{
         @Override
-        public void apply(Memorial memorial) {
+        public void apply(MemorialRepository repository, Integer donateSeq) {
             /* 그리워요 카운트 수 업데이트 */
-            memorial.setMissCount(memorial.getMissCount() + 1);
+            repository.incrementMiss(donateSeq);
         }
     },
     PROUD{
         @Override
-        public void apply(Memorial memorial) {
+        public void apply(MemorialRepository repository, Integer donateSeq) {
             /* 자랑스러워요 카운트 수 업데이트 */
-            memorial.setProudCount(memorial.getProudCount() + 1);
+            repository.incrementProud(donateSeq);
         }
     },
     HARD{
         @Override
-        public void apply(Memorial memorial) {
+        public void apply(MemorialRepository repository, Integer donateSeq) {
             /* 힘들어요 카운트 수 업데이트 */
-            memorial.setHardCount(memorial.getHardCount() + 1);
+            repository.incrementHard(donateSeq);
         }
     },
     SAD{
         @Override
-        public void apply(Memorial memorial) {
+        public void apply(MemorialRepository repository, Integer donateSeq) {
             /* 슬퍼요 카운트 수 업데이트 */
-            memorial.setSadCount(memorial.getSadCount() + 1);
+            repository.incrementSad(donateSeq);
         }
     };
 
-    public abstract void apply(Memorial memorial);
+    public abstract void apply(MemorialRepository repository, Integer donateSeq);
 
     public static EmotionType from(String emotion) throws InvalidEmotionTypeException {
         /* 문자열 검증 flower, love, see, miss, proud, hard, sad */

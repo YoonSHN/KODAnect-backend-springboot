@@ -65,13 +65,11 @@ public class MemorialServiceImpl implements MemorialService {
             validateDonateSeq(donateSeq);
 
             /* 게시글 조회 */
-            Memorial memorial = memorialFinder.findByIdOrThrow(donateSeq);
+            memorialFinder.findByIdOrThrow(donateSeq);
 
             /* 이모지 검증 */
             EmotionType emotionType = EmotionType.from(emotion);
-            emotionType.apply(memorial);
-
-            memorialRepository.save(memorial);
+            emotionType.apply(memorialRepository, donateSeq);
         }
         finally {
             lock.writeLock().unlock();
