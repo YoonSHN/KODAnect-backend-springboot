@@ -6,8 +6,11 @@ import static kodanect.common.exception.config.MessageKeys.ARTICLE_NOT_FOUND;
 
 public class ArticleNotFoundException extends AbstractCustomException {
 
+    private final Integer articleSeq;
+
     public ArticleNotFoundException(Integer articleSeq) {
         super(ARTICLE_NOT_FOUND);
+        this.articleSeq = articleSeq;
     }
 
     public String getMessageKey() {
@@ -15,7 +18,7 @@ public class ArticleNotFoundException extends AbstractCustomException {
     }
 
     public Object[] getArguments() {
-        return new Object[0];
+        return new Object[articleSeq];
     }
 
     @Override

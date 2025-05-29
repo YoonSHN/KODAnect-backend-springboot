@@ -5,11 +5,10 @@ import org.springframework.http.HttpStatus;
 import static kodanect.common.exception.config.MessageKeys.FILE_NOT_FOUND;
 
 public class FileMissingException extends AbstractCustomException {
-
     private final String fileName;
 
     public FileMissingException(String fileName) {
-        super("파일이 존재하지 않거나 읽을 수 없습니다: " + fileName);
+        super(FILE_NOT_FOUND);
         this.fileName = fileName;
     }
 
@@ -20,7 +19,7 @@ public class FileMissingException extends AbstractCustomException {
 
     @Override
     public Object[] getArguments() {
-        return new Object[]{fileName};
+        return new Object[] { fileName };
     }
 
     @Override
@@ -28,3 +27,4 @@ public class FileMissingException extends AbstractCustomException {
         return HttpStatus.NOT_FOUND;
     }
 }
+

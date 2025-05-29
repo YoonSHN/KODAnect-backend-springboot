@@ -4,7 +4,7 @@ import org.springframework.http.HttpStatus;
 
 public abstract class AbstractCustomException extends RuntimeException {
 
-    public AbstractCustomException(String message) {
+    protected AbstractCustomException(String message) {
         super(message);
     }
 

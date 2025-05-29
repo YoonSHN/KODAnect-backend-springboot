@@ -101,7 +101,7 @@ public class ArticleControllerTest {
                 .contents("상세 내용")
                 .build();
 
-        when(articleService.getArticle(eq("7"), eq(1))).thenReturn(detailDto);
+        when(articleService.getArticle("7", 1)).thenReturn(detailDto);
 
         mockMvc.perform(get("/newKoda/notices/1")
                         .param("optionStr", "1"))

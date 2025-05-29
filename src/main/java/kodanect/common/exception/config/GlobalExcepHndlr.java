@@ -109,7 +109,7 @@ public class GlobalExcepHndlr {
      * 처리되지 않은 메세지키 미응답시 500 응답 반환
      */
     @ExceptionHandler(NoSuchMessageException.class)
-    public ResponseEntity<ApiResponse<?>> handleNoMessage(NoSuchMessageException e) {
+    public ResponseEntity<ApiResponse<Void>> handleNoMessage(NoSuchMessageException e) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ApiResponse.fail(HttpStatus.INTERNAL_SERVER_ERROR, "메시지 키 없음"));
     }

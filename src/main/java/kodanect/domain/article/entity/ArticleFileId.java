@@ -17,8 +17,7 @@ import java.io.Serializable;
 public class ArticleFileId implements Serializable {
 
     @Column(name = "board_code", nullable = false, length = 20)
-    private String board_code;
-
+    private String boardCode;
 
     @Column(name = "article_seq", nullable = false)
     private Integer articleSeq;

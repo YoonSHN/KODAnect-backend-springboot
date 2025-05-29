@@ -163,7 +163,7 @@ public class ArticleController {
 
             Resource resource = new UrlResource(filePath.toUri());
             if (!resource.exists() || !resource.isReadable()) {
-                log.warn("파일 없음 또는 읽기 불가: {}", filePath);
+                log.warn("파일이 존재하지 않거나 읽을 수 없습니다.");
                 String message = messageSourceAccessor.getMessage(FILE_NOT_FOUND);
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.fail(HttpStatus.NOT_FOUND, message));
             }
@@ -173,7 +173,7 @@ public class ArticleController {
                 contentType = MediaType.APPLICATION_OCTET_STREAM_VALUE;
             }
 
-            String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8).replaceAll("\\+", "%20");
+            String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8).replace("\\+", "%20");
 
             return ResponseEntity.ok()
                     .contentType(MediaType.parseMediaType(contentType))
@@ -236,9 +236,9 @@ public class ArticleController {
 
             Resource resource = new UrlResource(filePath.toUri());
             if (!resource.exists() || !resource.isReadable()) {
-                log.warn("파일 없음 또는 읽기 불가: {}", filePath);
+                log.warn("파일이 존재하지 않거나 읽을 수 없습니다.");
                 FileMissingException ex = new FileMissingException(fileName);
-                String message = messageSourceAccessor.getMessage(ex.getMessageKey(), ex.getArguments());
+                String message = messageSourceAccessor.getMessage(FILE_NOT_FOUND);
                 return ResponseEntity
                         .status(ex.getStatus())
                         .body(ApiResponse.fail(ex.getStatus(), message));
@@ -251,7 +251,7 @@ public class ArticleController {
 
 
             String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8)
-                    .replaceAll("\\+", "%20");
+                    .replace("\\+", "%20");
 
             return ResponseEntity.ok()
                     .contentType(MediaType.parseMediaType(contentType))
