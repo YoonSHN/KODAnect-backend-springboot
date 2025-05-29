@@ -54,10 +54,10 @@ public class RecipientCommentServiceImpl implements RecipientCommentService {
 
         // 1. 해당 게시물이 삭제되지 않았는지 확인
         // 게시물이 없거나 삭제되었다면 RecipientNotFoundException 발생
-        getActiveRecipient(letterSeq);
+        RecipientEntity activeRecipient = getActiveRecipient(letterSeq);
 
         // 2. 삭제되지 않은 댓글만 조회하고, 작성시간 기준 오름차순으로 정렬
-        List<RecipientCommentEntity> comments = recipientCommentRepository.findByLetterSeqAndDelFlagOrderByWriteTimeAsc(letterSeq, "N"); // "N"으로 비교
+        List<RecipientCommentEntity> comments = recipientCommentRepository.findByLetterSeqAndDelFlagOrderByWriteTimeAsc(activeRecipient, "N"); // "N"으로 비교
 
         return comments.stream()
                 .map(RecipientCommentResponseDto::fromEntity) // Entity를 Response DTO로 변환
@@ -72,7 +72,7 @@ public class RecipientCommentServiceImpl implements RecipientCommentService {
 
         // 1. hCaptcha 인증
         if (!hcaptchaService.verifyCaptcha(captchaToken)) {
-            logger.warn("hCaptcha 인증 실패: 유효하지 않은 캡차 토큰입니다.");
+            logger.warn(CAPTCHA_FAILED_MESSAGE );
             throw new RecipientInvalidDataException(CAPTCHA_FAILED_MESSAGE);
         }
         logger.info("hCaptcha 인증 성공. 댓글 등록 진행.");
@@ -111,7 +111,7 @@ public class RecipientCommentServiceImpl implements RecipientCommentService {
 
         // hCaptcha 인증
         if (!hcaptchaService.verifyCaptcha(captchaToken)) {
-            logger.warn("hCaptcha 인증 실패: 유효하지 않은 캡차 토큰입니다.");
+            logger.warn(CAPTCHA_FAILED_MESSAGE );
             throw new RecipientInvalidDataException(CAPTCHA_FAILED_MESSAGE);
         }
         logger.info("hCaptcha 인증 성공. 댓글 수정 진행.");
@@ -152,7 +152,7 @@ public class RecipientCommentServiceImpl implements RecipientCommentService {
 
         // hCaptcha 인증
         if (!hcaptchaService.verifyCaptcha(captchaToken)) {
-            logger.warn("hCaptcha 인증 실패: 유효하지 않은 캡차 토큰입니다.");
+            logger.warn(CAPTCHA_FAILED_MESSAGE );
             throw new RecipientInvalidDataException(CAPTCHA_FAILED_MESSAGE);
         }
         logger.info("hCaptcha 인증 성공. 댓글 삭제 진행.");

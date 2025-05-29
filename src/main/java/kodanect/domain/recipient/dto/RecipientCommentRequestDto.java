@@ -26,7 +26,7 @@ public class RecipientCommentRequestDto {
     private String commentWriter;
 
     @NotBlank(message = "비밀번호는 필수 입력 항목입니다.")
-    @Pattern(regexp = "^(?=.*[a-zA-Z])(?=.*[0-9]).{8,}$", message = "비밀번호는 영문 숫자 8자 이상 이어야 합니다.")
+    @Pattern(regexp = "^(?=.*[a-zA-Z])(?=.*\\d).{8,}$", message = "비밀번호는 영문 숫자 8자 이상 이어야 합니다.")
     @Size(max = 60, message = "비밀번호는 최대 60자(바이트) 이하여야 합니다.") // DB varchar(60)에 맞춰 조정
     private String commentPasscode;
 
@@ -43,12 +43,12 @@ public class RecipientCommentRequestDto {
         // RecipientEntity는 여기서는 FK로만 사용되므로, 직접 생성하지 않고 letterSeq만 설정합니다.
         // 실제 저장 시에는 서비스 계층에서 letterSeq를 이용해 RecipientEntity를 조회하여 set해야 합니다.
         // 현재는 편의상 letterSeq를 가지는 RecipientEntity 객체만 만듭니다.
-        RecipientEntity letterSeq = RecipientEntity.builder()
+        RecipientEntity recipientEntity = RecipientEntity.builder()
                 .letterSeq(this.letterSeq)
                 .build();
 
         return RecipientCommentEntity.builder()
-                .letterSeq(letterSeq) // 임시 RecipientEntity 객체 설정, 실제 검증은 서비스에서
+                .letterSeq(recipientEntity) // 임시 RecipientEntity 객체 설정, 실제 검증은 서비스에서
                 .commentWriter(this.commentWriter)
                 .commentPasscode(this.commentPasscode)
                 .commentContents(this.commentContents)

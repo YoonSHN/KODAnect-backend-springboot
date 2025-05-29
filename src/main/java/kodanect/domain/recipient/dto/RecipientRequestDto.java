@@ -23,7 +23,7 @@ import javax.validation.constraints.*;
 public class RecipientRequestDto {
 
     // 장기 구분 코드
-    @Pattern(regexp = "^ORGAN(00[0-9]|01[0-4])$", message = "유효하지 않은 장기 코드입니다.")
+    @Pattern(regexp = "^ORGAN(00\\d|01[0-4])$", message = "유효하지 않은 장기 코드입니다.")
     private String organCode;
 
     // 기타 장기 (조건부 유효성 검사는 @RecipientConditionalValidation 에서 담당)
@@ -45,7 +45,7 @@ public class RecipientRequestDto {
     // 등록 시에는 필수로 필요하고, 수정 시에는 변경될 수 있습니다.
     // 수정 시 비밀번호 검증은 별도의 @RequestParam 또는 @RequestBody로 받아서 처리합니다.
     @NotBlank(message = "비밀번호는 필수 입력 항목입니다.") // 등록 시 유효성 검사
-    @Pattern(regexp = "^(?=.*[a-zA-Z])(?=.*[0-9]).{8,}$", message = "비밀번호는 영문 숫자 8자 이상 이어야 합니다.")
+    @Pattern(regexp = "^(?=.*[a-zA-Z])(?=.*\\d).{8,}$", message = "비밀번호는 영문 숫자 8자 이상 이어야 합니다.")
     private String letterPasscode;
 
     // 편지 작성자

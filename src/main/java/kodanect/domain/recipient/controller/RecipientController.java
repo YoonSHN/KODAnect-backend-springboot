@@ -33,7 +33,7 @@ public class RecipientController {
     // 게시판 조회 (페이지, 검색 포함)
     @GetMapping
     public ResponseEntity<ApiResponse<Page<RecipientResponseDto>>> search(RecipientSearchCondition searchCondition, Pageable pageable){
-        logger.info("게시물 목록 조회 요청: 검색 조건={}, 페이징={}", searchCondition, pageable);
+
         Page<RecipientResponseDto> recipientPage = recipientService.selectRecipientListPaged(searchCondition,pageable);
         return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, "수혜자 편지 목록 가져오기 성공", recipientPage));
     }

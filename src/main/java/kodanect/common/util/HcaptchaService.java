@@ -30,47 +30,58 @@ public class HcaptchaService {
     }
 
     public boolean verifyCaptcha(String captchaToken) {
-        // 개발/테스트용 우회 모드
         if (bypassEnabled) {
             logger.warn("===== 경고: hCaptcha 인증이 현재 설정에 따라 우회되었습니다! =====");
             return true;
         }
 
-        // 실제 hCaptcha 토큰 유효성 검사 시작
         if (captchaToken == null || captchaToken.trim().isEmpty()) {
             logger.warn("hCaptcha 토큰이 비어있거나 null입니다.");
             return false;
         }
 
+        try {
+            JsonNode responseBody = requestCaptchaVerification(captchaToken);
+
+            if (responseBody == null) {
+                logger.error("hCaptcha API 응답이 null입니다.");
+                return false;
+            }
+
+            boolean success = responseBody.path("success").asBoolean(false);
+            if (!success) {
+                logErrorCodes(responseBody);
+            }
+
+            return success;
+
+        } catch (Exception e) {
+            logger.error("hCaptcha 인증 중 예외 발생: {}", e.getMessage(), e);
+            return false;
+        }
+    }
+
+    private JsonNode requestCaptchaVerification(String captchaToken) {
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("response", captchaToken);
         params.add("secret", secretKey);
 
-        try {
-            ResponseEntity<JsonNode> response = restTemplate.postForEntity(HCAPTCHA_VERIFY_URL, params, JsonNode.class);
+        ResponseEntity<JsonNode> response = restTemplate.postForEntity(HCAPTCHA_VERIFY_URL, params, JsonNode.class);
 
-            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                JsonNode responseBody = response.getBody();
-                boolean success = responseBody.get("success").asBoolean();
-
-                if (!success) {
-                    JsonNode errorCodes = responseBody.get("error-codes");
-                    if (errorCodes != null && errorCodes.isArray()) {
-                        for (JsonNode errorCode : errorCodes) {
-                            logger.warn("hCaptcha 인증 실패 오류 코드: {}", errorCode.asText());
-                        }
-                    }
-                }
-                return success;
-            }
-            else {
-                logger.error("hCaptcha API 호출 실패: 상태 코드 {}", response.getStatusCode());
-                return false;
-            }
+        if (response.getStatusCode().is2xxSuccessful()) {
+            return response.getBody();
         }
-        catch (Exception e) {
-            logger.error("hCaptcha 인증 중 예외 발생: {}", e.getMessage(), e);
-            return false;
+
+        logger.error("hCaptcha API 호출 실패: 상태 코드 {}", response.getStatusCode());
+        return null;
+    }
+
+    private void logErrorCodes(JsonNode responseBody) {
+        JsonNode errorCodes = responseBody.get("error-codes");
+        if (errorCodes != null && errorCodes.isArray()) {
+            for (JsonNode errorCode : errorCodes) {
+                logger.warn("hCaptcha 인증 실패 오류 코드: {}", errorCode.asText());
+            }
         }
     }
 }

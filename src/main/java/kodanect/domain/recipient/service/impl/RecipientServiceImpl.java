@@ -155,7 +155,7 @@ public class RecipientServiceImpl implements RecipientService {
 
         // 3. 해당 게시물의 모든 댓글 소프트 삭제
         List<RecipientCommentEntity> commentsToSoftDelete =
-                recipientCommentRepository.findByLetterSeqAndDelFlagOrderByWriteTimeAsc(letterSeq, "N");
+                recipientCommentRepository.findByLetterSeqAndDelFlagOrderByWriteTimeAsc(recipientEntityold, "N");
 
         if (commentsToSoftDelete != null && !commentsToSoftDelete.isEmpty()) {
             for (RecipientCommentEntity comment : commentsToSoftDelete) {
@@ -173,7 +173,7 @@ public class RecipientServiceImpl implements RecipientService {
         // --- 0. hCaptcha 인증 검증 추가 ---
         if (!hcaptchaService.verifyCaptcha(captchaToken)) {
             logger.warn("hCaptcha 인증 실패: 유효하지 않은 캡차 토큰입니다.");
-            throw new RecipientInvalidDataException("캡차 인증에 실패했습니다. 다시 시도해주세요.");
+            throw new RecipientInvalidDataException(CAPTCHA_FAILED_MESSAGE);
         }
         logger.info("hCaptcha 인증 성공. 게시물 등록 진행.");
 
