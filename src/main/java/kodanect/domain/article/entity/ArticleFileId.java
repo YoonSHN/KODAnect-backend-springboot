@@ -16,11 +16,12 @@ import java.io.Serializable;
 @Getter
 public class ArticleFileId implements Serializable {
 
-    @Column(name = "article_seq", nullable = false)
-    private Integer articleSeq;
-
     @Column(name = "board_code", nullable = false, length = 20)
     private String board_code;
+
+
+    @Column(name = "article_seq", nullable = false)
+    private Integer articleSeq;
 
     @Column(name = "file_seq")
     private Integer fileSeq;

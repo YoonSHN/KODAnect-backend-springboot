@@ -91,11 +91,6 @@ pipeline {
         }
 
         stage('SonarCloud Analysis') {
-            when {
-                    expression {
-                        return env.CHANGE_ID != null && env.CHANGE_TARGET == 'main'
-                    }
-                }
             steps {
                 script {
                     githubNotify context: 'sonar', status: 'PENDING', description: 'SonarCloud 분석 중...'
@@ -103,19 +98,22 @@ pipeline {
                     withSonarQubeEnv('SonarCloud') {
                         withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
                             catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-                                def sonarCmd = "./mvnw sonar:sonar" +
-                                    " -Dsonar.projectKey=kodanect" +
-                                    " -Dsonar.organization=fc-dev3-final-project" +
-                                    " -Dsonar.token=${SONAR_TOKEN}" +
-                                    " -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml"
+                                def sonarCmd = """./mvnw sonar:sonar \\
+                                  -Dsonar.projectKey=kodanect \\
+                                  -Dsonar.organization=fc-dev3-final-project \\
+                                  -Dsonar.token=${SONAR_TOKEN} \\
+                                  -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+                                """
 
-                                if (env.CHANGE_ID?.trim()) {
-                                    sonarCmd += " -Dsonar.pullrequest.key=${CHANGE_ID}" +
-                                                " -Dsonar.pullrequest.branch=${CHANGE_BRANCH}" +
-                                                " -Dsonar.pullrequest.base=${CHANGE_TARGET}"
+                                if (env.CHANGE_ID) {
+                                    sonarCmd += """ \\
+                                  -Dsonar.pullrequest.key=${CHANGE_ID} \\
+                                  -Dsonar.pullrequest.branch=${CHANGE_BRANCH} \\
+                                  -Dsonar.pullrequest.base=${CHANGE_TARGET}
+                                    """
                                 }
 
-                                sh "${sonarCmd}"
+                                sh sonarCmd
                             }
 
                             if (currentBuild.currentResult == 'FAILURE') {
@@ -303,7 +301,7 @@ EOF
 
         failure {
             script {
-                if (env.CHANGE_ID !=null || env.BRANCH_NAME?.trim() == 'main') {
+                if (env.CHANGE_ID !=null || env.BRANCH_NAME?.trim == 'main') {
                     slackSend(
                         channel: '4_파이널프로젝트_1조_jenkins',
                         color: 'danger',

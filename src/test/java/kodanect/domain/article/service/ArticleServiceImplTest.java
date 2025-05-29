@@ -51,11 +51,11 @@ public class ArticleServiceImplTest {
                 1
         );
 
-        when(articleRepository.searchArticles(eq(List.of("7")), any(), any(Pageable.class)))
+        when(articleRepository.searchArticles(eq(List.of("7")), any() ,any(), any(Pageable.class)))
                 .thenReturn(articlePage);
 
         // when
-        Page<ArticleDTO> result = articleService.getArticles(List.of("7"), "공지", PageRequest.of(0, 10));
+        Page<ArticleDTO> result = articleService.getArticles(List.of("7"), "제목","공지", PageRequest.of(0, 10));
 
         // then
         assertNotNull(result);
@@ -83,11 +83,11 @@ public class ArticleServiceImplTest {
                 1
         );
 
-        when(articleRepository.searchArticles(eq(List.of("27")), isNull(), any(Pageable.class)))
+        when(articleRepository.searchArticles(eq(List.of("27")), isNull(),isNull(), any(Pageable.class)))
                 .thenReturn(articlePage);
 
         // when
-        Page<ArticleDTO> result = articleService.getArticles(List.of("27"), null, PageRequest.of(0, 10));
+        Page<ArticleDTO> result = articleService.getArticles(List.of("27"), null ,null, PageRequest.of(0, 10));
 
         // then
         assertEquals(1, result.getTotalElements());
@@ -112,11 +112,11 @@ public class ArticleServiceImplTest {
 
         Page<Article> mockPage = new PageImpl<>(List.of(article), PageRequest.of(0, 10), 1);
 
-        when(articleRepository.searchArticles(eq(expectedBoardCodes), isNull(), any(Pageable.class)))
+        when(articleRepository.searchArticles(eq(expectedBoardCodes),  isNull(),isNull(), any(Pageable.class)))
                 .thenReturn(mockPage);
 
         // when
-        Page<ArticleDTO> result = articleService.getArticles(expectedBoardCodes, null, PageRequest.of(0, 10));
+        Page<ArticleDTO> result = articleService.getArticles(expectedBoardCodes, null,null, PageRequest.of(0, 10));
 
         // then
         assertEquals(1, result.getTotalElements());
@@ -136,7 +136,7 @@ public class ArticleServiceImplTest {
                 .writerId("관리자")
                 .build();
 
-        when(articleRepository.findByIdBoardCodeAndIdArticleSeq("7", 1))
+        when(articleRepository.findWithFilesByBoardCodeAndArticleSeq("7", 1))
                 .thenReturn(Optional.of(article));
 
         // when
@@ -151,7 +151,7 @@ public class ArticleServiceImplTest {
     @Test(expected = ArticleNotFoundException.class)
     public void getArticle_notExistArticle_throwException() {
         // given
-        when(articleRepository.findByIdBoardCodeAndIdArticleSeq("7", 999))
+        when(articleRepository.findWithFilesByBoardCodeAndArticleSeq("7", 999))
                 .thenReturn(Optional.empty());
 
         // when
@@ -162,7 +162,7 @@ public class ArticleServiceImplTest {
     public void getArticle_shouldReturnFiles() {
         // given
         ArticleFile file = ArticleFile.builder()
-                .id(new ArticleFileId(1, "7", 1))
+                .id(new ArticleFileId("1", 7, 1))
                 .fileName("abc123.pdf")
                 .orgFileName("첨부파일.pdf")
                 .filePathName("/upload/7/1/abc123.pdf")
@@ -180,7 +180,7 @@ public class ArticleServiceImplTest {
                 .files(List.of(file))
                 .build();
 
-        when(articleRepository.findByIdBoardCodeAndIdArticleSeq("7", 1))
+        when(articleRepository.findWithFilesByBoardCodeAndArticleSeq("7", 1))
                 .thenReturn(Optional.of(article));
 
         // when

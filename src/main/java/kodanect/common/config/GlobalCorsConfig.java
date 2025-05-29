@@ -30,3 +30,5 @@ public class GlobalCorsConfig implements WebMvcConfigurer {
     }
 
 }
+
+

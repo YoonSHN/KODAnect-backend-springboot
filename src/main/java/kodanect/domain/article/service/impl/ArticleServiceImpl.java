@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -28,8 +29,8 @@ public class ArticleServiceImpl implements ArticleService {
      * @return 페이징 ArticleDTO 리스트
      */
     @Override
-    public Page<ArticleDTO> getArticles(List<String> boardCodes, String keyword, Pageable pageable) {
-        Page<Article> articles = articleRepository.searchArticles(boardCodes, keyword, pageable);
+    public Page<ArticleDTO> getArticles(List<String> boardCodes, String searchField, String keyword, Pageable pageable) {
+        Page<Article> articles = articleRepository.searchArticles(boardCodes, searchField,keyword, pageable);
         if (articles == null) {
             return Page.empty(pageable);
         }
@@ -43,13 +44,14 @@ public class ArticleServiceImpl implements ArticleService {
      * @param articleSeq 게시글 순번
      * @return ArticleDetailDto (존재하지 않으면 예외 발생)
      */
+    @Transactional
     @Override
     public ArticleDetailDto getArticle(String boardCode, Integer articleSeq) {
 
         articleRepository.increaseHitCount(boardCode, articleSeq);
 
-        Article article = articleRepository.findByIdBoardCodeAndIdArticleSeq(boardCode, articleSeq)
-                .orElseThrow(ArticleNotFoundException::new);
+        Article article = articleRepository.findWithFilesByBoardCodeAndArticleSeq(boardCode, articleSeq)
+                .orElseThrow(() -> new ArticleNotFoundException(articleSeq));
 
 
         return ArticleDetailDto.fromArticleDetailDto(article);

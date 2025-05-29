@@ -1,6 +1,7 @@
 package kodanect.domain.article.entity;
 
 import lombok.*;
+import org.hibernate.annotations.Where;
 
 import javax.persistence.*;
 import java.time.LocalDate;
@@ -77,5 +78,6 @@ public class Article {
 
     @Builder.Default
     @OneToMany(mappedBy = "article", cascade = CascadeType.ALL)
+    @Where(clause = "del_flag = 'N'")
     private List<ArticleFile> files = new ArrayList<>();
 }

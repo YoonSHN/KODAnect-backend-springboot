@@ -54,6 +54,7 @@ public class ArticleControllerTest {
     public void testGetArticles() throws Exception {
         when(articleService.getArticles(
                 Collections.singletonList("notice"),
+                eq("all"),
                 null,
                 PageRequest.of(0, 20)))
                 .thenReturn(new PageImpl<>(Collections.singletonList(new ArticleDTO())));
@@ -66,6 +67,26 @@ public class ArticleControllerTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("게시글 목록 조회에 성공했습니다."));
     }
+
+    @Test
+    public void testGetOtherBoardArticles() throws Exception {
+        String boardCode = "";
+
+        when(articleService.getArticles(
+                eq(Collections.singletonList("")),
+                eq("all"),
+                eq(null),
+                eq(PageRequest.of(0, 20))))
+                .thenReturn(new PageImpl<>(Collections.singletonList(new ArticleDTO())));
+
+        mockMvc.perform(get("/newKoda/" + boardCode)
+                        .param("page", "0")
+                        .param("size", "20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("게시글 목록 조회에 성공했습니다."));
+    }
+
 
     @Test
     public void testGetArticleDetail() throws Exception {

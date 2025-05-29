@@ -53,5 +53,12 @@ public class ArticleFile {
     @Column(name = "modifier_id", length = 60, nullable = false)
     private String modifierId;
 
+    // 테스트 케이스 용도 삭제 API는 현재 미구현
+    public void markDeleted(String writerId) {
+        this.delFlag = "Y";
+        this.modifyTime = LocalDateTime.now();
+        this.modifierId = modifierId;
+    }
+
 
 }

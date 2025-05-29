@@ -8,7 +8,7 @@ import java.util.List;
 
 public interface ArticleRepositoryCustom {
 
-    Page<Article> searchArticles(List<String> boardCodes, String keyword, Pageable pageable);
+    Page<Article> searchArticles(List<String> boardCodes, String searchField, String keyword, Pageable pageable);
 
     void increaseHitCount(String boardCode, int articleSeq);
 }

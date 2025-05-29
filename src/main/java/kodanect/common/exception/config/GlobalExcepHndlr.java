@@ -3,6 +3,7 @@ package kodanect.common.exception.config;
 import kodanect.common.response.ApiResponse;
 import kodanect.domain.remembrance.exception.*;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.NoSuchMessageException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -100,6 +101,17 @@ public class GlobalExcepHndlr {
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ApiResponse.fail(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다."));
+    }
+
+    /**
+     * 500 예외 처리
+     *
+     * 처리되지 않은 메세지키 미응답시 500 응답 반환
+     */
+    @ExceptionHandler(NoSuchMessageException.class)
+    public ResponseEntity<ApiResponse<?>> handleNoMessage(NoSuchMessageException e) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponse.fail(HttpStatus.INTERNAL_SERVER_ERROR, "메시지 키 없음"));
     }
 
 }

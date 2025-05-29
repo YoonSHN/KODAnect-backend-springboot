@@ -1,6 +1,10 @@
 package kodanect.domain.article.controller;
 
 import kodanect.common.config.GlobalsProperties;
+import kodanect.common.exception.custom.ArticleNotFoundException;
+import kodanect.common.exception.custom.FileAccessViolationException;
+import kodanect.common.exception.custom.FileMissingException;
+import kodanect.common.exception.custom.InvalidBoardCodeException;
 import kodanect.common.response.ApiResponse;
 import kodanect.domain.article.dto.ArticleDTO;
 import kodanect.domain.article.dto.ArticleDetailDto;
@@ -20,7 +24,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
+
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -38,10 +42,10 @@ import static kodanect.common.exception.config.MessageKeys.FILE_DOWNLOAD_ERROR;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/newKoda/")
+@RequestMapping("/newKoda")
 public class ArticleController {
 
-    public static final int DEFAULT_NOTICLE_PAGE_SIZE = 20;
+    public static final int DEFAULT_ARTICLE_PAGE_SIZE = 20;
 
     private final GlobalsProperties globalsProperties;
 
@@ -60,14 +64,130 @@ public class ArticleController {
     @GetMapping("/notices")
     public ResponseEntity<ApiResponse<Page<ArticleDTO>>> getArticles(
             @RequestParam(defaultValue = "all") BoardOption optionStr,
+            @RequestParam(required = false, defaultValue = "all") String searchField,
             @RequestParam(required = false) String search,
-            @PageableDefault(size = DEFAULT_NOTICLE_PAGE_SIZE, sort = "writeTime", direction = Sort.Direction.DESC) Pageable pageable
+            @PageableDefault(size = DEFAULT_ARTICLE_PAGE_SIZE, sort = "writeTime", direction = Sort.Direction.DESC) Pageable pageable
     ) {
         List<String> boardCodes = optionStr.resolveBoardCodes();
-        Page<ArticleDTO> result = service.getArticles(boardCodes, search, pageable);
+        Page<ArticleDTO> result = service.getArticles(boardCodes, searchField, search, pageable);
         String message = messageSourceAccessor.getMessage(ARTICLE_LIST_SUCCESS);
         return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, message, result));
     }
+
+    /**
+     * 게시판별 게시글 목록 조회 (공지/채용 외)
+     *
+     * @param boardCode URI 경로로 전달된 게시판 코드명
+     * @param search 게시글 검색어 (제목/내용 기준)
+     * @param pageable 페이징 정보 (기본: 페이지당 최신순)
+     * @return 게시글 목록을 포함한 표준 API 응답
+     * @throws IllegalArgumentException 존재하지 않는 코드 일경우
+     */
+    @GetMapping("/{boardCode}")
+    public ResponseEntity<ApiResponse<Page<ArticleDTO>>> getOtherBoardArticles(
+            @PathVariable String boardCode,
+            @RequestParam(required = false, defaultValue = "all") String searchField,
+            @RequestParam(required = false) String search,
+            @PageableDefault(size = DEFAULT_ARTICLE_PAGE_SIZE, sort = "writeTime", direction = Sort.Direction.DESC) Pageable pageable
+    ) {
+        List<String> boardCodes;
+
+        if (BoardOption.isValid(boardCode)) {
+            boardCodes = BoardOption.fromParam(boardCode).resolveBoardCodes();
+        } else {
+            boardCodes = List.of(boardCode);
+        }
+
+        Page<ArticleDTO> result = service.getArticles(boardCodes, searchField, search, pageable);
+        String message = messageSourceAccessor.getMessage(ARTICLE_LIST_SUCCESS);
+        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, message, result));
+    }
+
+    /**
+     * 일반 게시판의 특정 게시글 상세 조회
+     *
+     * @param boardCode 게시판 코드 (문자열)
+     * @param articleSeq 게시글 ID
+     * @return 게시글 상세 데이터
+     */
+    @GetMapping("/{boardCode}/{articleSeq}")
+    public ResponseEntity<ApiResponse<ArticleDetailDto>> getOtherBoardArticle(
+            @PathVariable String boardCode,
+            @PathVariable Integer articleSeq
+    ) {
+        if (!BoardOption.isValid(boardCode)) {
+            log.warn("잘못된 게시판 코드 요청: {}", boardCode);
+            throw new InvalidBoardCodeException(boardCode);
+        }
+        String dbBoardCode = BoardOption.fromParam(boardCode).getBoardCode();
+        ArticleDetailDto article = service.getArticle(dbBoardCode, articleSeq);
+        if (article == null) {
+            log.warn("게시글 없음: boardCode={}, articleSeq={}", dbBoardCode, articleSeq);
+            throw new ArticleNotFoundException(articleSeq);
+        }
+
+        String message = messageSourceAccessor.getMessage(ARTICLE_DETAIL_SUCCESS);
+        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, message, article));
+
+    }
+
+    /**
+     * 일반 게시판 게시글 첨부파일 다운로드
+     *
+     * @param boardCode 게시판 코드
+     * @param articleSeq 게시글 ID
+     * @param fileName 다운로드할 파일 이름
+     * @return 파일 리소스 or 오류 응답
+     */
+    @GetMapping("/{boardCode}/{articleSeq}/files/{fileName}")
+    public ResponseEntity<?> downloadOtherBoardFile(
+            @PathVariable String boardCode,
+            @PathVariable Integer articleSeq,
+            @PathVariable String fileName
+    ) {
+        try {
+            if (!BoardOption.isValid(boardCode)) {
+                log.warn("잘못된 게시판 코드 요청: {}", boardCode);
+                throw new InvalidBoardCodeException(boardCode);
+
+            }
+
+            String dbBoardCode = BoardOption.fromParam(boardCode).getBoardCode();
+
+            Path basePath = Paths.get(globalsProperties.getFileStorePath(), dbBoardCode, articleSeq.toString()).toAbsolutePath().normalize();
+            Path filePath = basePath.resolve(fileName).normalize();
+
+            if (!filePath.startsWith(basePath)) {
+                throw new FileAccessViolationException(filePath.toString());
+            }
+
+            Resource resource = new UrlResource(filePath.toUri());
+            if (!resource.exists() || !resource.isReadable()) {
+                log.warn("파일 없음 또는 읽기 불가: {}", filePath);
+                String message = messageSourceAccessor.getMessage(FILE_NOT_FOUND);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.fail(HttpStatus.NOT_FOUND, message));
+            }
+
+            String contentType = Files.probeContentType(filePath);
+            if (contentType == null) {
+                contentType = MediaType.APPLICATION_OCTET_STREAM_VALUE;
+            }
+
+            String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8).replaceAll("\\+", "%20");
+
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(contentType))
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + encodedFileName)
+                    .body(resource);
+
+        } catch (Exception e) {
+            log.error("파일 다운로드 오류 발생:", e);
+            String message = messageSourceAccessor.getMessage(FILE_DOWNLOAD_ERROR);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.fail(HttpStatus.INTERNAL_SERVER_ERROR, message));
+        }
+    }
+
 
     /**
      * 게시글 상세 조회
@@ -109,22 +229,26 @@ public class ArticleController {
             Path basePath = Paths.get(globalsProperties.getFileStorePath(), boardCode, articleSeq.toString()).toAbsolutePath().normalize();
             Path filePath = basePath.resolve(fileName).normalize();
 
-            // 경로 탈출 방지
             if (!filePath.startsWith(basePath)) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "잘못된 접근입니다.");
+                log.warn("경로 접근 위반: {}", filePath);
+                throw new FileAccessViolationException(filePath.toString());
             }
 
             Resource resource = new UrlResource(filePath.toUri());
             if (!resource.exists() || !resource.isReadable()) {
-                String message = messageSourceAccessor.getMessage(FILE_NOT_FOUND);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(ApiResponse.fail(HttpStatus.NOT_FOUND, message));
+                log.warn("파일 없음 또는 읽기 불가: {}", filePath);
+                FileMissingException ex = new FileMissingException(fileName);
+                String message = messageSourceAccessor.getMessage(ex.getMessageKey(), ex.getArguments());
+                return ResponseEntity
+                        .status(ex.getStatus())
+                        .body(ApiResponse.fail(ex.getStatus(), message));
             }
 
             String contentType = Files.probeContentType(filePath);
             if (contentType == null) {
                 contentType = MediaType.APPLICATION_OCTET_STREAM_VALUE;
             }
+
 
             String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8)
                     .replaceAll("\\+", "%20");
@@ -136,7 +260,7 @@ public class ArticleController {
 
         }
         catch (Exception e) {
-            log.error("파일 다운로드 오류 발생: {}", e.getMessage());
+            log.error("파일 다운로드 오류 발생: {}", e);
             String message = messageSourceAccessor.getMessage(FILE_DOWNLOAD_ERROR);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.fail(HttpStatus.INTERNAL_SERVER_ERROR, message));
