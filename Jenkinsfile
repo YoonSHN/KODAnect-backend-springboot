@@ -91,6 +91,11 @@ pipeline {
         }
 
         stage('SonarCloud Analysis') {
+            when {
+                    expression {
+                        return env.CHANGE_ID != null && env.CHANGE_TARGET == 'main'
+                    }
+                }
             steps {
                 script {
                     githubNotify context: 'sonar', status: 'PENDING', description: 'SonarCloud 분석 중...'
