@@ -1,4 +1,4 @@
-package kodanect.common.exception;
+package kodanect.domain.recipient.exception;
 
 // CommentNotFoundException.java
 public class CommentNotFoundException extends RuntimeException {

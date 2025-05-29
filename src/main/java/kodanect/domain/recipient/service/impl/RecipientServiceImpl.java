@@ -1,8 +1,8 @@
 package kodanect.domain.recipient.service.impl;
 
-import kodanect.common.exception.InvalidPasscodeException;
-import kodanect.common.exception.RecipientInvalidDataException;
-import kodanect.common.exception.RecipientNotFoundException;
+import kodanect.domain.recipient.exception.InvalidPasscodeException;
+import kodanect.domain.recipient.exception.RecipientInvalidDataException;
+import kodanect.domain.recipient.exception.RecipientNotFoundException;
 import kodanect.common.exception.custom.InvalidIntegerConversionException;
 import kodanect.common.util.HcaptchaService;
 import kodanect.domain.recipient.dto.RecipientResponseDto;
@@ -230,7 +230,7 @@ public class RecipientServiceImpl implements RecipientService {
     @Override
     public RecipientResponseDto selectRecipient(int letterSeq) {
         // 1. 해당 게시물 조회 (삭제되지 않은 게시물만 조회하도록 필터링)
-        RecipientEntity recipientEntity = recipientRepository.findById(letterSeq)
+        RecipientEntity recipientEntity = recipientRepository.findByIdWithComments(letterSeq)
                 .filter(entity -> "N".equalsIgnoreCase(entity.getDelFlag()))
                 .orElseThrow(() -> new RecipientNotFoundException(RECIPIENT_NOT_FOUND_MESSAGE));
 
@@ -242,8 +242,10 @@ public class RecipientServiceImpl implements RecipientService {
         RecipientResponseDto responseDto = RecipientResponseDto.fromEntity(recipientEntity);
 
         // 4. 댓글 수 설정 (RecipientResponseDto에만 존재)
-        int commentCount = Optional.ofNullable(recipientRepository.countCommentsByLetterSeq(letterSeq)).orElse(0);
-        responseDto.setCommentCount(commentCount);
+        long actualCommentCount = recipientEntity.getComments().stream()
+                .filter(comment -> "N".equalsIgnoreCase(comment.getDelFlag())) // 삭제되지 않은 댓글만 카운트
+                .count();
+        responseDto.setCommentCount((int) actualCommentCount);
 
         return responseDto;
     }

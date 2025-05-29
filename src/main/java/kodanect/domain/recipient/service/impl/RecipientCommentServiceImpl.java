@@ -1,9 +1,9 @@
 package kodanect.domain.recipient.service.impl;
 
-import kodanect.common.exception.CommentNotFoundException;
-import kodanect.common.exception.RecipientInvalidDataException;
-import kodanect.common.exception.InvalidPasscodeException;
-import kodanect.common.exception.RecipientNotFoundException;
+import kodanect.domain.recipient.exception.CommentNotFoundException;
+import kodanect.domain.recipient.exception.RecipientInvalidDataException;
+import kodanect.domain.recipient.exception.InvalidPasscodeException;
+import kodanect.domain.recipient.exception.RecipientNotFoundException;
 import kodanect.common.util.HcaptchaService;
 import kodanect.domain.recipient.dto.RecipientCommentRequestDto;
 import kodanect.domain.recipient.dto.RecipientCommentResponseDto;

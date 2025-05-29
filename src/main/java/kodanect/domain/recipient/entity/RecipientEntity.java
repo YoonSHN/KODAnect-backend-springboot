@@ -11,6 +11,8 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @Builder
@@ -107,6 +109,11 @@ public class RecipientEntity {
     @Transient
     private String searchType;
 
+    // 게시물과 댓글의 연관 관계 매핑
+    @OneToMany(mappedBy = "letterSeq", fetch = FetchType.LAZY) // mappedBy는 RecipientCommentEntity의 필드명
+    @OrderBy("writeTime ASC") // 댓글을 작성 시간 오름차순으로 정렬
+    private List<RecipientCommentEntity> comments = new ArrayList<>(); // NullPointerException 방지를 위해 초기화
+
     // 비즈니스 로직을 위한 메서드 (유지)
     public void incrementReadCount() {
         this.readCount = this.readCount + 1;
@@ -114,6 +121,10 @@ public class RecipientEntity {
 
     public void softDelete() {
         this.delFlag = "Y";
+        // 게시물 삭제 시, 연결된 댓글도 함께 소프트 삭제
+        if (this.comments != null) {
+            this.comments.forEach(RecipientCommentEntity::softDelete);
+        }
     }
 
     // 비밀번호 일치 여부 확인 (서비스에서 사용) (유지)

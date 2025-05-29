@@ -1,4 +1,4 @@
-package kodanect.common.exception;
+package kodanect.domain.recipient.exception;
 
 public class RecipientNotFoundException extends RuntimeException {
     public RecipientNotFoundException(String message) {

@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface RecipientRepository extends JpaRepository<RecipientEntity, Integer>, JpaSpecificationExecutor<RecipientEntity> {
@@ -23,4 +24,8 @@ public interface RecipientRepository extends JpaRepository<RecipientEntity, Inte
                     "FROM tb25_431_recipient_letter_comment c " +
                     "WHERE c.letter_seq = :letterSeq AND c.del_flag = 'N'", nativeQuery = true) // <-- del_flag 조건 추가
     Integer countCommentsByLetterSeq(@Param("letterSeq") int letterSeq);
+
+    // 게시물 조회 시 연관된 댓글을 LEFT JOIN FETCH로 한 번에 가져오기
+    @Query("SELECT r FROM RecipientEntity r LEFT JOIN FETCH r.comments c WHERE r.letterSeq = :letterSeq AND r.delFlag = 'N' AND (c IS NULL OR c.delFlag = 'N')")
+    Optional<RecipientEntity> findByIdWithComments(@Param("letterSeq") Integer letterSeq);
 }
