@@ -255,6 +255,7 @@
 						<configuration>
 							<excludes>
 								<exclude>**/dto/**</exclude>
+								<exclude>**/common/**</exclude>
 								<exclude>**/config/**</exclude>
 								<exclude>**/*Application*</exclude>
 								<exclude>**/Swagger*.*</exclude>
