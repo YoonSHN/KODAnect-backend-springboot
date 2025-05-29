@@ -301,7 +301,7 @@ EOF
 
         failure {
             script {
-                if (env.CHANGE_ID !=null || env.BRANCH_NAME?.trim == 'main') {
+                if (env.CHANGE_ID !=null || env.BRANCH_NAME?.trim() == 'main') {
                     slackSend(
                         channel: '4_파이널프로젝트_1조_jenkins',
                         color: 'danger',
