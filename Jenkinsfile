@@ -98,22 +98,19 @@ pipeline {
                     withSonarQubeEnv('SonarCloud') {
                         withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
                             catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-                                def sonarCmd = """./mvnw sonar:sonar \\
-                                  -Dsonar.projectKey=kodanect \\
-                                  -Dsonar.organization=fc-dev3-final-project \\
-                                  -Dsonar.token=${SONAR_TOKEN} \\
-                                  -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
-                                """
+                                def sonarCmd = "./mvnw sonar:sonar" +
+                                    " -Dsonar.projectKey=kodanect" +
+                                    " -Dsonar.organization=fc-dev3-final-project" +
+                                    " -Dsonar.token=${SONAR_TOKEN}" +
+                                    " -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml"
 
-                                if (env.CHANGE_ID) {
-                                    sonarCmd += """ \\
-                                  -Dsonar.pullrequest.key=${CHANGE_ID} \\
-                                  -Dsonar.pullrequest.branch=${CHANGE_BRANCH} \\
-                                  -Dsonar.pullrequest.base=${CHANGE_TARGET}
-                                    """
+                                if (env.CHANGE_ID?.trim()) {
+                                    sonarCmd += " -Dsonar.pullrequest.key=${CHANGE_ID}" +
+                                                " -Dsonar.pullrequest.branch=${CHANGE_BRANCH}" +
+                                                " -Dsonar.pullrequest.base=${CHANGE_TARGET}"
                                 }
 
-                                sh sonarCmd
+                                sh "${sonarCmd}"
                             }
 
                             if (currentBuild.currentResult == 'FAILURE') {
