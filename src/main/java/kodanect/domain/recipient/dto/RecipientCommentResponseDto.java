@@ -25,7 +25,7 @@ public class RecipientCommentResponseDto {
     // Entity -> DTO 변환 메서드 (정적 팩토리 메서드)
     public static RecipientCommentResponseDto fromEntity(RecipientCommentEntity entity) {
         if (entity.getDelFlag() != null && entity.getDelFlag().equalsIgnoreCase("Y")) {
-            return null; // 또는 다른 방식으로 처리 (예: "삭제된 댓글입니다." 메시지)
+            return null;
         }
         return RecipientCommentResponseDto.builder()
                 .commentSeq(entity.getCommentSeq())

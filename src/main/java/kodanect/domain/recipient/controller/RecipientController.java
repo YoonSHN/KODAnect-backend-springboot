@@ -1,20 +1,16 @@
 package kodanect.domain.recipient.controller;
 
 import kodanect.common.response.ApiResponse;
-import kodanect.domain.recipient.dto.RecipientDeleteRequestDto;
-import kodanect.domain.recipient.dto.RecipientRequestDto;
-import kodanect.domain.recipient.dto.RecipientResponseDto;
-import kodanect.domain.recipient.dto.RecipientSearchCondition;
+import kodanect.domain.recipient.dto.*;
 import kodanect.domain.recipient.service.RecipientService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -30,12 +26,15 @@ public class RecipientController {
         this.recipientService = recipientService;
     }
 
-    // 게시판 조회 (페이지, 검색 포함)
+    // 게시물 목록 조회
     @GetMapping
-    public ResponseEntity<ApiResponse<Page<RecipientResponseDto>>> search(RecipientSearchCondition searchCondition, Pageable pageable){
-
-        Page<RecipientResponseDto> recipientPage = recipientService.selectRecipientListPaged(searchCondition,pageable);
-        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, "수혜자 편지 목록 가져오기 성공", recipientPage));
+    public ResponseEntity<ApiResponse<List<RecipientListResponseDto>>> getRecipientList(
+            RecipientSearchCondition searchCondition,
+            @RequestParam(required = false) Integer lastId, // 첫 조회 시 null, 더보기 시 마지막 게시물 ID
+            @RequestParam(defaultValue = "20") int size     // 한 번에 가져올 개수
+    ) {
+        List<RecipientListResponseDto> list = recipientService.selectRecipientList(searchCondition, lastId, size);
+        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK,"게시물 목록 조회 성공", list));
     }
 
     // 게시판 등록 페이지 요청 (단순 200 응답)
@@ -46,13 +45,10 @@ public class RecipientController {
 
     // 게시판 등록
     @PostMapping
-    public ResponseEntity<ApiResponse<RecipientResponseDto>> write(@Valid @RequestBody RecipientRequestDto recipientRequestDto) {
+    public ResponseEntity<ApiResponse<RecipientDetailResponseDto>> write(@Valid @RequestBody RecipientRequestDto recipientRequestDto) {
         logger.info("게시물 등록 요청: title={}", recipientRequestDto.getLetterTitle());
-        // RecipientEntity 객체에서 captchaToken을 추출하여 서비스로 전달
-        RecipientResponseDto createdRecipient = recipientService.insertRecipient(
-                recipientRequestDto.toEntity(), // DTO를 Entity로 변환
-                recipientRequestDto.getCaptchaToken() // RecipientRequestDto에서 captchaToken 추출
-        );
+        // 서비스에 RecipientRequestDto 자체를 전달
+        RecipientDetailResponseDto createdRecipient = recipientService.insertRecipient(recipientRequestDto); // 서비스 시그니처 변경 필요
         // 성공 시 RecipientResponseDto 객체를 본문에 담아 반환
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(HttpStatus.CREATED, "게시물이 성공적으로 등록되었습니다.", createdRecipient)); // 201 Created
@@ -60,16 +56,16 @@ public class RecipientController {
 
     // 특정 게시판 조회
     @GetMapping("/{letterSeq}")
-    public ResponseEntity<ApiResponse<RecipientResponseDto>> view(@PathVariable("letterSeq") int letterSeq){
+    public ResponseEntity<ApiResponse<RecipientDetailResponseDto>> view(@PathVariable("letterSeq") int letterSeq){
         logger.info("게시물 상세 조회 요청: letterSeq={}", letterSeq);
-        RecipientResponseDto recipientDto = recipientService.selectRecipient(letterSeq);
+        RecipientDetailResponseDto recipientDto = recipientService.selectRecipient(letterSeq);
         return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, "게시물 조회 성공", recipientDto)); // 200 OK
     }
 
     // 게시물 수정을 위한 비밀번호 인증
     @PostMapping("/{letterSeq}/verifyPwd")
     public ResponseEntity<ApiResponse<Boolean>> verifyPassword(@PathVariable("letterSeq") int letterSeq,
-                                                            @RequestBody Map<String, String> requestBody) {
+                                                               @RequestBody Map<String, String> requestBody) {
         String letterPasscode = requestBody.get("letterPasscode");
         logger.info("게시물 비밀번호 확인 요청: letterSeq={}", letterSeq);
 
@@ -79,15 +75,15 @@ public class RecipientController {
 
     // 게시물 수정
     @PatchMapping("/{letterSeq}")
-    public ResponseEntity<ApiResponse<RecipientResponseDto>> edit(@PathVariable("letterSeq") int letterSeq,
-                                                                  @Valid @RequestBody RecipientRequestDto recipientRequestDto) {
+    public ResponseEntity<ApiResponse<RecipientDetailResponseDto>> edit(@PathVariable("letterSeq") int letterSeq,
+                                                                        @Valid @RequestBody RecipientRequestDto recipientRequestDto) {
         logger.info("게시물 수정 요청: letterSeq={}, title={}", letterSeq, recipientRequestDto.getLetterTitle());
-        // 비밀번호와 캡차 토큰을 서비스로 전달
-        RecipientResponseDto updatedRecipient = recipientService.updateRecipient(
-                recipientRequestDto.toEntity(), // 업데이트할 내용이 담긴 RecipientEntity (DTO에서 변환)
-                letterSeq,                      // PathVariable에서 받은 게시물 시퀀스
-                recipientRequestDto.getLetterPasscode(), // 요청 비밀번호
-                recipientRequestDto.getCaptchaToken()    // 캡차 토큰 전달
+        // 서비스에 RecipientRequestDto 자체와 letterSeq, requestPasscode를 전달
+        // 서비스 시그니처 변경 필요: updateRecipient(Integer letterSeq, String requestPasscode, RecipientRequestDto requestDto)
+        RecipientDetailResponseDto updatedRecipient = recipientService.updateRecipient(
+                letterSeq,
+                recipientRequestDto.getLetterPasscode(), // 요청 비밀번호는 DTO에서 가져옴
+                recipientRequestDto // DTO 자체를 서비스로 전달 (캡차 토큰 포함)
         );
         return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, "게시물이 성공적으로 수정되었습니다.", updatedRecipient));
     }
@@ -104,5 +100,16 @@ public class RecipientController {
                 requestDto.getCaptchaToken()
         );
         return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, "게시물이 성공적으로 삭제되었습니다."));
+    }
+
+    // 특정 게시물의 "더보기" 댓글 조회 API
+    @GetMapping("/{letterSeq}/comments")
+    public ResponseEntity<ApiResponse<List<RecipientCommentResponseDto>>> getPaginatedCommentsForRecipient(
+            @PathVariable("letterSeq") int letterSeq,
+            @RequestParam(required = false) Integer lastCommentId, // 마지막으로 조회된 댓글의 ID
+            @RequestParam(defaultValue = "3") int size) { // 한 번에 가져올 댓글 개수 (기본값 3개)
+        logger.info("페이징된 댓글 조회 요청: letterSeq={}, lastCommentId={}, size={}", letterSeq, lastCommentId, size);
+        List<RecipientCommentResponseDto> comments = recipientService.selectPaginatedCommentsForRecipient(letterSeq, lastCommentId, size);
+        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, "댓글 목록 조회 성공", comments));
     }
 }

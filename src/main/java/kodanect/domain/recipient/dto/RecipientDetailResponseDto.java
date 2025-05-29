@@ -8,13 +8,12 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class RecipientResponseDto {
+public class RecipientDetailResponseDto {
 
     private Integer letterSeq;
     private String organCode;
@@ -33,11 +32,11 @@ public class RecipientResponseDto {
     private String modifierId;
     private String delFlag; // char 타입으로 유지
     private int commentCount; // 댓글 수는 조회 시 필요한 정보이므로 DTO에 포함
-    private List<RecipientCommentResponseDto> comments;
+    private boolean hasMoreComments; // 추가 댓글이 있는지 여부
 
     // Entity -> DTO 변환 메서드 (정적 팩토리 메서드)
-    public static RecipientResponseDto fromEntity(RecipientEntity entity) {
-        RecipientResponseDto dto = RecipientResponseDto.builder()
+    public static RecipientDetailResponseDto fromEntity(RecipientEntity entity) {
+        RecipientDetailResponseDto dto = RecipientDetailResponseDto.builder()
                 .letterSeq(entity.getLetterSeq())
                 .organCode(entity.getOrganCode())
                 .organEtc(entity.getOrganEtc())
@@ -55,17 +54,15 @@ public class RecipientResponseDto {
                 .modifierId(entity.getModifierId())
                 .delFlag(entity.getDelFlag())
                 .commentCount(0)
+                .hasMoreComments(false)
                 .build();
 
-        // 댓글이 로딩된 경우에만 DTO로 변환하여 포함
-        if (entity.getComments() != null) {
-            // 삭제되지 않은 댓글만 DTO로 변환
-            dto.setComments(entity.getComments().stream()
-                    .filter(comment -> "N".equalsIgnoreCase(comment.getDelFlag()))
-                    .map(RecipientCommentResponseDto::fromEntity)
-                    .collect(Collectors.toList()));
-        }
 
         return dto;
+    }
+    // 서비스 계층에서 commentCount, topComments, hasMoreComments를 설정하기 위한 setter
+    public void setCommentData(int commentCount, List<RecipientCommentResponseDto> topComments, boolean hasMoreComments) {
+        this.commentCount = commentCount;
+        this.hasMoreComments = hasMoreComments;
     }
 }
