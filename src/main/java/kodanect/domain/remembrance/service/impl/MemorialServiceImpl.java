@@ -32,7 +32,7 @@ public class MemorialServiceImpl implements MemorialService {
 
     private static final int CACHE_EXPIRE_MINUTES = 10;
     private static final int CACHE_MAX_SIZE = 100_000;
-    private final int SIZE = 3;
+    private static final int DEFAULT_SIZE = 3;
 
     private final MemorialRepository memorialRepository;
     private final MemorialReplyService memorialReplyService;
@@ -136,10 +136,10 @@ public class MemorialServiceImpl implements MemorialService {
         Memorial memorial = memorialFinder.findByIdOrThrow(donateSeq);
 
         /* 댓글 리스트 모두 조회 */
-        List<MemorialReplyResponse> replies = memorialReplyService.getMemorialReplyList(donateSeq, null, SIZE + 1);
-        boolean replyHasNext = replies.size() > SIZE;
+        List<MemorialReplyResponse> replies = memorialReplyService.getMemorialReplyList(donateSeq, null, DEFAULT_SIZE + 1);
+        boolean replyHasNext = replies.size() > DEFAULT_SIZE;
 
-        List<MemorialReplyResponse> replyContent = replies.stream().limit(SIZE).toList();
+        List<MemorialReplyResponse> replyContent = replies.stream().limit(DEFAULT_SIZE).toList();
         Integer replyNextCursor = replyHasNext ? replyContent.get(replyContent.size()-1).getReplySeq() : null;
         /* 하늘나라 편지 리스트 조회 예정 */
 
