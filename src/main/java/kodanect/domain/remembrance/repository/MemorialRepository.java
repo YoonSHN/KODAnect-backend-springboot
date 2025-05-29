@@ -2,12 +2,13 @@ package kodanect.domain.remembrance.repository;
 
 import kodanect.domain.remembrance.entity.Memorial;
 import kodanect.domain.remembrance.dto.MemorialListResponse;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+
+import java.util.List;
 
 public interface MemorialRepository extends JpaRepository<Memorial, Integer> {
 
@@ -17,17 +18,12 @@ public interface MemorialRepository extends JpaRepository<Memorial, Integer> {
                     (m.donateSeq, m.donorName, m.anonymityFlag, m.donateDate,m.genderFlag, m.donateAge, COUNT(r))
             FROM Memorial m
             LEFT JOIN MemorialReply r ON m.donateSeq = r.donateSeq
-            WHERE m.delFlag = 'N'
+            WHERE m.delFlag = 'N' AND (:cursor IS NULL OR m.donateSeq < :cursor)
             GROUP BY m.donateSeq
             ORDER BY m.writeTime DESC
-        """,
-        countQuery = """
-            SELECT COUNT(DISTINCT m.donateSeq)
-            FROM Memorial m
-            WHERE m.delFlag = 'N'
         """
     )/* 기증자 추모관 게시글 리스트 조회 */
-    Page<MemorialListResponse> findMemorialList(Pageable pageable);
+    List<MemorialListResponse> findByCursor(@Param("cursor") Integer cursor, Pageable pageable);
 
     @Query(
         value = """
@@ -35,17 +31,14 @@ public interface MemorialRepository extends JpaRepository<Memorial, Integer> {
                     (m.donateSeq, m.donorName, m.anonymityFlag, m.donateDate, m.genderFlag, m.donateAge, COUNT(r))
             FROM Memorial m
             LEFT JOIN MemorialReply r ON m.donateSeq = r.donateSeq
-            WHERE m.donorName LIKE :searchWord AND m.donateDate BETWEEN :startDate AND :endDate AND m.delFlag = 'N'
+            WHERE m.delFlag = 'N' AND (:cursor IS NULL OR m.donateSeq < :cursor)
+                    AND m.donateDate BETWEEN :startDate AND :endDate AND m.donorName LIKE :searchWord
             GROUP BY m.donateSeq
             ORDER BY m.writeTime DESC
-        """,
-        countQuery = """
-            SELECT COUNT(DISTINCT m.donateSeq)
-            FROM Memorial m
-            WHERE m.donorName LIKE :searchWord AND m.donateDate BETWEEN :startDate AND :endDate AND m.delFlag = 'N'
         """
     )/* 기증자 추모관 게시글 리스트 날짜 + 문자 조건 조회  */
-    Page<MemorialListResponse> findSearchMemorialList(
+    List<MemorialListResponse> findSearchByCursor(
+            @Param("cursor") Integer cursor,
             Pageable pageable,
             @Param("startDate") String startDate,
             @Param("endDate") String endDate,

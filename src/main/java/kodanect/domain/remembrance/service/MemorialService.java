@@ -1,9 +1,9 @@
 package kodanect.domain.remembrance.service;
 
+import kodanect.common.response.CursorPaginationResponse;
 import kodanect.domain.remembrance.dto.MemorialDetailResponse;
 import kodanect.domain.remembrance.dto.MemorialListResponse;
 import kodanect.domain.remembrance.exception.*;
-import org.springframework.data.domain.Page;
 
 public interface MemorialService {
     /* 이모지 카운트 수 업데이트 */
@@ -12,7 +12,7 @@ public interface MemorialService {
                     MemorialNotFoundException,
                     InvalidDonateSeqException;
     /* 게시글 검색 조건 조회 */
-    Page<MemorialListResponse> getSearchMemorialList(String page, String size, String startDate, String endDate, String searchWord)
+    CursorPaginationResponse<MemorialListResponse> getSearchMemorialList(Integer cursor, int size, String startDate, String endDate, String searchWord)
             throws  MissingPaginationParameterException,
                     InvalidPaginationRangeException,
                     InvalidPaginationFormatException,
@@ -20,7 +20,7 @@ public interface MemorialService {
                     InvalidSearchDateFormatException,
                     InvalidSearchDateRangeException;
     /* 게시글 리스트 조회 */
-    Page<MemorialListResponse> getMemorialList(String page, String size)
+    CursorPaginationResponse<MemorialListResponse> getMemorialList(Integer cursor, int size)
             throws  MissingPaginationParameterException,
                     InvalidPaginationRangeException,
                     InvalidPaginationFormatException;

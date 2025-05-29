@@ -1,12 +1,12 @@
 package kodanect.domain.remembrance.controller;
 
 import kodanect.common.response.ApiResponse;
+import kodanect.common.response.CursorPaginationResponse;
 import kodanect.domain.remembrance.dto.MemorialDetailResponse;
 import kodanect.domain.remembrance.dto.MemorialListResponse;
 import kodanect.domain.remembrance.exception.*;
 import kodanect.domain.remembrance.service.MemorialService;
 import org.springframework.context.support.MessageSourceAccessor;
-import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,17 +24,13 @@ public class MemorialController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<Page<MemorialListResponse>>> getMemorialList(
-            @RequestParam(defaultValue = "1") String page,
-            @RequestParam(defaultValue = "20") String size)
-            throws  MissingPaginationParameterException,
-                    InvalidPaginationRangeException,
-                    InvalidPaginationFormatException
-    {
+    public ResponseEntity<ApiResponse<CursorPaginationResponse<MemorialListResponse>>> getMemorialList(
+            @RequestParam(required = false) Integer cursor,
+            @RequestParam(defaultValue = "20") int size) throws InvalidPaginationRangeException {
         /* 게시글 리스트 조회 */
 
         String successMessage = messageSourceAccessor.getMessage("board.read.success", new Object[] {});
-        Page<MemorialListResponse> memorial = memorialService.getMemorialList(page, size);
+        CursorPaginationResponse<MemorialListResponse> memorial = memorialService.getMemorialList(cursor, size);
         return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, successMessage,memorial));
     }
 
@@ -52,15 +48,13 @@ public class MemorialController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<ApiResponse<Page<MemorialListResponse>>> getSearchMemorialList(
+    public ResponseEntity<ApiResponse<CursorPaginationResponse<MemorialListResponse>>> getSearchMemorialList(
             @RequestParam(defaultValue = "1900-01-01") String startDate,
             @RequestParam(defaultValue = "2100-12-31") String endDate,
             @RequestParam(defaultValue = "") String searchWord,
-            @RequestParam(defaultValue = "1") String page,
-            @RequestParam(defaultValue = "20") String size)
-            throws  MissingPaginationParameterException,
-                    InvalidPaginationRangeException,
-                    InvalidPaginationFormatException,
+            @RequestParam(required = false) Integer cursor,
+            @RequestParam(defaultValue = "20") int size)
+            throws  InvalidPaginationRangeException,
                     MissingSearchDateParameterException,
                     InvalidSearchDateFormatException,
                     InvalidSearchDateRangeException
@@ -68,7 +62,7 @@ public class MemorialController {
         /* 게시글 검색 조건 조회 */
 
         String successMessage = messageSourceAccessor.getMessage("board.search.read.success", new Object[] {});
-        Page<MemorialListResponse> memorial = memorialService.getSearchMemorialList(page, size, startDate, endDate, searchWord);
+        CursorPaginationResponse<MemorialListResponse> memorial = memorialService.getSearchMemorialList(cursor, size, startDate, endDate, searchWord);
         return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, successMessage, memorial));
     }
 

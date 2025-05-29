@@ -1,7 +1,9 @@
 package kodanect.domain.remembrance.controller;
 
+import kodanect.common.response.CursorReplyPaginationResponse;
 import kodanect.domain.remembrance.dto.MemorialReplyCreateRequest;
 import kodanect.domain.remembrance.dto.MemorialReplyDeleteRequest;
+import kodanect.domain.remembrance.dto.MemorialReplyResponse;
 import kodanect.domain.remembrance.dto.MemorialReplyUpdateRequest;
 import kodanect.domain.remembrance.exception.*;
 import kodanect.domain.remembrance.service.MemorialReplyService;
@@ -10,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import kodanect.common.response.ApiResponse;
+
 
 @RestController
 @RequestMapping("/remembrance/{donateSeq}/replies")
@@ -21,6 +24,17 @@ public class MemorialReplyController {
     public MemorialReplyController(MemorialReplyService memorialReplyService, MessageSourceAccessor messageSourceAccessor){
         this.memorialReplyService = memorialReplyService;
         this.messageSourceAccessor = messageSourceAccessor;
+    }
+
+    @GetMapping
+    public ResponseEntity<ApiResponse<CursorReplyPaginationResponse<MemorialReplyResponse>>> getMoreReplies(
+            @PathVariable Integer donateSeq,
+            @RequestParam Integer cursor, @RequestParam(defaultValue = "3") int size) {
+        /* 댓글 더보기 */
+
+        String successMessage = messageSourceAccessor.getMessage("board.reply.read.success", new Object[] {});
+        CursorReplyPaginationResponse<MemorialReplyResponse> memorial = memorialReplyService.getMoreReplyList(donateSeq, cursor, size);
+        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, successMessage, memorial));
     }
 
     @PostMapping

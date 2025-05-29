@@ -71,9 +71,15 @@ public class MemorialDetailResponse {
 
     /* 댓글 리스트 */
     private List<MemorialReplyResponse> memorialReplyResponseList;
+    private Integer replyNextCursor;
+    private boolean replyHasNext;
+
+    /* 편지 리스트 */
 
     /* 기증자 상세 조회 */
-    public static MemorialDetailResponse of(Memorial memorial, List<MemorialReplyResponse> replies) {
+    public static MemorialDetailResponse of(
+            Memorial memorial, List<MemorialReplyResponse> replies,
+            Integer replyNextCursor, boolean replyHasNext) {
         return MemorialDetailResponse.builder()
                 .donateSeq(memorial.getDonateSeq())
                 .donorName(memorial.getDonorName())
@@ -95,6 +101,8 @@ public class MemorialDetailResponse {
                 .sadCount(memorial.getSadCount())
                 .writeTime(memorial.getWriteTime())
                 .memorialReplyResponseList(replies)
+                .replyNextCursor(replyNextCursor)
+                .replyHasNext(replyHasNext)
                 .build();
     }
 }

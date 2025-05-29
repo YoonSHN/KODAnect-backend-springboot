@@ -2,6 +2,8 @@ package kodanect.domain.remembrance.service.impl;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import kodanect.common.response.CursorReplyPaginationResponse;
+import kodanect.common.util.CursorFormatter;
 import kodanect.domain.remembrance.dto.MemorialReplyCreateRequest;
 import kodanect.domain.remembrance.dto.MemorialReplyDeleteRequest;
 import kodanect.domain.remembrance.dto.MemorialReplyUpdateRequest;
@@ -12,6 +14,8 @@ import kodanect.domain.remembrance.repository.MemorialReplyRepository;
 import kodanect.domain.remembrance.service.MemorialReplyService;
 import kodanect.common.util.MemorialFinder;
 import kodanect.common.util.MemorialReplyFinder;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -164,7 +168,7 @@ public class MemorialReplyServiceImpl implements MemorialReplyService {
     }
 
     @Override
-    public List<MemorialReplyResponse> findMemorialReplyList(Integer donateSeq)
+    public List<MemorialReplyResponse> getMemorialReplyList(Integer donateSeq, Integer cursor, int size)
             throws  MemorialNotFoundException,
                     InvalidDonateSeqException
     {
@@ -179,12 +183,34 @@ public class MemorialReplyServiceImpl implements MemorialReplyService {
             /* 게시글 조회 */
             memorialFinder.findByIdOrThrow(donateSeq);
 
+            Pageable pageable = PageRequest.of(0, size +1);
+
             /* 댓글 리스트 모두 조회 */
-            return memorialReplyRepository.findMemorialReplyList(donateSeq);
+            return memorialReplyRepository.findByCursor(donateSeq, cursor, pageable);
         }
         finally {
             lock.readLock().unlock();
         }
+    }
+
+    public CursorReplyPaginationResponse<MemorialReplyResponse> getMoreReplyList(Integer donateSeq, Integer cursor, int size)
+            throws  MemorialNotFoundException,
+                    InvalidDonateSeqException
+    {
+        /* 게시글 댓글 리스트 조회 */
+
+        /* 게시글 ID 검증 */
+        validateDonateSeq(donateSeq);
+
+        /* 게시글 조회 */
+        memorialFinder.findByIdOrThrow(donateSeq);
+
+        Pageable pageable = PageRequest.of(0, size +1);
+
+        /* 댓글 리스트 모두 조회 */
+        List<MemorialReplyResponse> memorial = memorialReplyRepository.findByCursor(donateSeq, cursor, pageable);
+
+        return CursorFormatter.cursorReplyFormat(memorial, size);
     }
 }
 
