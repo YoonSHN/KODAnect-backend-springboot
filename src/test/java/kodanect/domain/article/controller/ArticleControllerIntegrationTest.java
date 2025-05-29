@@ -1,16 +1,11 @@
 package kodanect.domain.article.controller;
 
 import kodanect.common.config.GlobalsProperties;
-import kodanect.domain.article.entity.Article;
-import kodanect.domain.article.entity.ArticleFile;
-import kodanect.domain.article.entity.ArticleFileId;
-import kodanect.domain.article.entity.ArticleId;
+import kodanect.domain.article.entity.*;
 import kodanect.domain.article.repository.ArticleFileRepository;
 import kodanect.domain.article.repository.ArticleRepository;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import kodanect.domain.article.repository.BoardCategoryRepository;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -18,24 +13,24 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.time.LocalDateTime;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@ActiveProfiles("dev")
+@ActiveProfiles("test")
 @Transactional
 class ArticleControllerIntegrationTest {
 
@@ -49,6 +44,9 @@ class ArticleControllerIntegrationTest {
     private ArticleFileRepository articleFileRepository;
 
     @Autowired
+    private BoardCategoryRepository boardCategoryRepository;
+
+    @Autowired
     private GlobalsProperties globalsProperties;
 
     @TempDir
@@ -56,6 +54,41 @@ class ArticleControllerIntegrationTest {
 
     @BeforeEach
     void setUp() {
+        ReflectionTestUtils.setField(globalsProperties, "fileStorePath", tempDir.toString());
+
+        BoardCategory category1 = BoardCategory.builder()
+                .boardCode("7")
+                .boardName("공지사항")
+                .boardTypeCode("NTC")
+                .fileCount(0)
+                .htmlFlag("N")
+                .replyFlag("N")
+                .delFlag("N")
+                .writeTime(LocalDateTime.now())
+                .writerId("admin")
+                .modifyTime(LocalDateTime.now())
+                .modifierId("admin")
+                .build();
+
+        BoardCategory category2 = BoardCategory.builder()
+                .boardCode("32")
+                .boardName("사전정보공개")
+                .boardTypeCode("INFO")
+                .fileCount(0)
+                .htmlFlag("N")
+                .replyFlag("N")
+                .delFlag("N")
+                .writeTime(LocalDateTime.now())
+                .writerId("admin")
+                .modifyTime(LocalDateTime.now())
+                .modifierId("admin")
+                .build();
+
+        boardCategoryRepository.save(category1);
+        boardCategoryRepository.save(category2);
+
+
+
         ArticleId articleId = new ArticleId("7", 1);
         Article article = Article.builder()
                 .id(articleId)
@@ -87,13 +120,6 @@ class ArticleControllerIntegrationTest {
                 .build();
 
         articleRepository.save(makePublic);
-
-
-    }
-
-    @AfterEach
-    void cleanUp() throws IOException {
-        Files.deleteIfExists(Path.of("uploads", "32", "2", "sample.txt"));
     }
 
     @Test
@@ -101,6 +127,7 @@ class ArticleControllerIntegrationTest {
     void getArticles() throws Exception {
         mockMvc.perform(get("/newKoda/notices")
                         .param("optionStr", "1")
+                        .param("searchField", "title")
                         .param("search", "트랜잭션")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -112,7 +139,8 @@ class ArticleControllerIntegrationTest {
     @DisplayName("사전정보 게시판 게시글 목록 조회")
     void getOtherBoardArticles() throws Exception {
         mockMvc.perform(get("/newKoda/makePublic")
-                        .param("search", "제목")
+                        .param("searchField", "title")
+                        .param("search", "사전정보공개")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.content[0].title").value("사전정보공개 제목"))
@@ -122,7 +150,7 @@ class ArticleControllerIntegrationTest {
     @Test
     @DisplayName("사전정보 게시판 상세 조회")
     void getOtherBoardArticleDetail() throws Exception {
-        mockMvc.perform(get("/newKoda/32/2")
+        mockMvc.perform(get("/newKoda/makePublic/2")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.title").value("사전정보공개 제목"))
@@ -143,7 +171,7 @@ class ArticleControllerIntegrationTest {
                 .id(new ArticleFileId("32", 2, 1))
                 .fileName("sample.txt")
                 .orgFileName("sample.txt")
-                .filePathName("uploads/32/2/sample.txt")
+                .filePathName(Paths.get("32", "2", "sample.txt").toString())
                 .writerId("tester2")
                 .writeTime(LocalDateTime.now())
                 .modifierId("admin")
@@ -153,21 +181,20 @@ class ArticleControllerIntegrationTest {
 
         articleFileRepository.save(file);
 
-        mockMvc.perform(get("/newKoda/32/2/files/sample.txt"))
+        mockMvc.perform(get("/newKoda/makePublic/2/files/sample.txt"))
                 .andExpect(status().isOk())
                 .andExpect(header().string(HttpHeaders.CONTENT_DISPOSITION,
-                        org.hamcrest.Matchers.containsString("filename*=UTF-8''sample.txt")))
+                        containsString("filename*=UTF-8''sample.txt")))
                 .andExpect(result -> {
                     String body = result.getResponse().getContentAsString(StandardCharsets.UTF_8);
-                    org.assertj.core.api.Assertions.assertThat(body).isEqualTo("샘플 파일 내용입니다.");
+                    assertThat(body).isEqualTo("샘플 파일 내용입니다.");
                 });
     }
-
 
     @Test
     @DisplayName("사전정보 게시판 첨부파일 다운로드 - 파일 없음")
     void downloadOtherBoardFileNotFound() throws Exception {
-        mockMvc.perform(get("/newKoda/32/2/files/notfound.txt")
+        mockMvc.perform(get("/newKoda/makePublic/2/files/notfound.txt")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").exists())

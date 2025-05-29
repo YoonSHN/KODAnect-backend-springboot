@@ -1,8 +1,10 @@
 package kodanect.domain.article.controller;
 
 import kodanect.common.config.GlobalsProperties;
+import kodanect.common.response.ApiResponse;
 import kodanect.domain.article.dto.ArticleDTO;
 import kodanect.domain.article.dto.ArticleDetailDto;
+import kodanect.domain.article.dto.BoardOption;
 import kodanect.domain.article.service.ArticleService;
 import kodanect.domain.article.util.StringToBoardOptionConverter;
 import org.junit.Before;
@@ -18,9 +20,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.Collections;
+import java.util.List;
 
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -43,65 +45,70 @@ public class ArticleControllerTest {
     private GlobalsProperties globalsProperties;
 
     @Before
-    public void setup() {
-        when(messageSourceAccessor.getMessage("article.list.success"))
+    public void setUp() {
+        when(messageSourceAccessor.getMessage("article.listSuccess"))
                 .thenReturn("게시글 목록 조회에 성공했습니다.");
-        when(messageSourceAccessor.getMessage("article.detail.success"))
+        when(messageSourceAccessor.getMessage("article.detailSuccess"))
                 .thenReturn("게시글 상세 조회에 성공했습니다.");
     }
 
     @Test
     public void testGetArticles() throws Exception {
+        ArticleDTO dto = ArticleDTO.builder().title("공지사항 제목").build();
         when(articleService.getArticles(
-                Collections.singletonList("notice"),
+                eq(BoardOption.fromParam("1").resolveBoardCodes()),
                 eq("all"),
-                null,
-                PageRequest.of(0, 20)))
-                .thenReturn(new PageImpl<>(Collections.singletonList(new ArticleDTO())));
+                isNull(),
+                any(PageRequest.class)))
+                .thenReturn(new PageImpl<>(List.of(dto)));
 
         mockMvc.perform(get("/newKoda/notices")
                         .param("optionStr", "1")
                         .param("page", "0")
                         .param("size", "20"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("게시글 목록 조회에 성공했습니다."));
+                .andExpect(jsonPath("$.message").value("게시글 목록 조회에 성공했습니다."))
+                .andExpect(jsonPath("$.data.content[0].title").value("공지사항 제목"))
+                .andExpect(jsonPath("$.success").value(true));
     }
 
     @Test
     public void testGetOtherBoardArticles() throws Exception {
-        String boardCode = "";
+        ArticleDTO dto = ArticleDTO.builder()
+                .title("사전정보공개 제목")
+                .build();
 
         when(articleService.getArticles(
-                eq(Collections.singletonList("")),
+                eq(List.of("32")),
                 eq("all"),
-                eq(null),
-                eq(PageRequest.of(0, 20))))
-                .thenReturn(new PageImpl<>(Collections.singletonList(new ArticleDTO())));
+                isNull(),
+                any(PageRequest.class)))
+                .thenReturn(new PageImpl<>(List.of(dto)));
 
-        mockMvc.perform(get("/newKoda/" + boardCode)
+        mockMvc.perform(get("/newKoda/makePublic")
                         .param("page", "0")
                         .param("size", "20"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("게시글 목록 조회에 성공했습니다."));
+                .andExpect(jsonPath("$.message").value("게시글 목록 조회에 성공했습니다."))
+                .andExpect(jsonPath("$.data.content[0].title").value("사전정보공개 제목"))
+                .andExpect(jsonPath("$.success").value(true));
     }
-
 
     @Test
     public void testGetArticleDetail() throws Exception {
-        ArticleDetailDto dto = ArticleDetailDto.builder()
-                .title("테스트 제목")
-                .contents("내용입니다")
+        ArticleDetailDto detailDto = ArticleDetailDto.builder()
+                .title("상세 제목")
+                .contents("상세 내용")
                 .build();
 
-        when(articleService.getArticle(eq("7"), eq(1))).thenReturn(dto);
+        when(articleService.getArticle(eq("7"), eq(1))).thenReturn(detailDto);
 
         mockMvc.perform(get("/newKoda/notices/1")
                         .param("optionStr", "1"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.title").value("테스트 제목"))
+                .andExpect(jsonPath("$.message").value("게시글 상세 조회에 성공했습니다."))
+                .andExpect(jsonPath("$.data.title").value("상세 제목"))
+                .andExpect(jsonPath("$.data.contents").value("상세 내용"))
                 .andExpect(jsonPath("$.success").value(true));
     }
-
 }
