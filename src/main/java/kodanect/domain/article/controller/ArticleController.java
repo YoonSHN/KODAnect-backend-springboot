@@ -35,8 +35,6 @@ import java.util.List;
 
 import static kodanect.common.exception.config.MessageKeys.ARTICLE_DETAIL_SUCCESS;
 import static kodanect.common.exception.config.MessageKeys.ARTICLE_LIST_SUCCESS;
-import static kodanect.common.exception.config.MessageKeys.FILE_NOT_FOUND;
-import static kodanect.common.exception.config.MessageKeys.FILE_DOWNLOAD_ERROR;
 
 
 @Slf4j
@@ -128,7 +126,6 @@ public class ArticleController {
 
         String message = messageSourceAccessor.getMessage(ARTICLE_DETAIL_SUCCESS);
         return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, message, article));
-
     }
 
     /**
@@ -144,49 +141,41 @@ public class ArticleController {
             @PathVariable String boardCode,
             @PathVariable Integer articleSeq,
             @PathVariable String fileName
-    ) {
-        try {
-            if (!BoardOption.isValid(boardCode)) {
-                log.warn("잘못된 게시판 코드 요청: {}", boardCode);
-                throw new InvalidBoardCodeException(boardCode);
+    ) throws Exception {
 
-            }
-
-            String dbBoardCode = BoardOption.fromParam(boardCode).getBoardCode();
-
-            Path basePath = Paths.get(globalsProperties.getFileStorePath(), dbBoardCode, articleSeq.toString()).toAbsolutePath().normalize();
-            Path filePath = basePath.resolve(fileName).normalize();
-
-            if (!filePath.startsWith(basePath)) {
-                throw new FileAccessViolationException(filePath.toString());
-            }
-
-            Resource resource = new UrlResource(filePath.toUri());
-            if (!resource.exists() || !resource.isReadable()) {
-                log.warn("파일이 존재하지 않거나 읽을 수 없습니다.");
-                String message = messageSourceAccessor.getMessage(FILE_NOT_FOUND);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.fail(HttpStatus.NOT_FOUND, message));
-            }
-
-            String contentType = Files.probeContentType(filePath);
-            if (contentType == null) {
-                contentType = MediaType.APPLICATION_OCTET_STREAM_VALUE;
-            }
-
-            String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8).replace("\\+", "%20");
-
-            return ResponseEntity.ok()
-                    .contentType(MediaType.parseMediaType(contentType))
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + encodedFileName)
-                    .body(resource);
-
-        } catch (Exception e) {
-            log.error("파일 다운로드 오류 발생:", e);
-            String message = messageSourceAccessor.getMessage(FILE_DOWNLOAD_ERROR);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.fail(HttpStatus.INTERNAL_SERVER_ERROR, message));
+        if (!BoardOption.isValid(boardCode)) {
+            log.warn("잘못된 게시판 코드 요청: {}", boardCode);
+            throw new InvalidBoardCodeException(boardCode);
         }
+
+        String dbBoardCode = BoardOption.fromParam(boardCode).getBoardCode();
+
+        Path basePath = Paths.get(globalsProperties.getFileStorePath(), dbBoardCode, articleSeq.toString()).toAbsolutePath().normalize();
+        Path filePath = basePath.resolve(fileName).normalize();
+
+        if (!filePath.startsWith(basePath)) {
+            throw new FileAccessViolationException(filePath.toString());
+        }
+
+        Resource resource = new UrlResource(filePath.toUri());
+        if (!resource.exists() || !resource.isReadable()) {
+            log.warn("파일이 존재하지 않거나 읽을 수 없습니다.");
+            throw new FileMissingException(fileName);
+        }
+
+        String contentType = Files.probeContentType(filePath);
+        if (contentType == null) {
+            contentType = MediaType.APPLICATION_OCTET_STREAM_VALUE;
+        }
+
+        String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8).replace("\\+", "%20");
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(contentType))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + encodedFileName)
+                .body(resource);
     }
+
 
 
     /**
@@ -222,48 +211,36 @@ public class ArticleController {
             @PathVariable Integer articleSeq,
             @PathVariable String fileName,
             @RequestParam BoardOption optionStr
-    ) {
+    ) throws Exception {
+
         String boardCode = optionStr.getBoardCode();
 
-        try {
-            Path basePath = Paths.get(globalsProperties.getFileStorePath(), boardCode, articleSeq.toString()).toAbsolutePath().normalize();
-            Path filePath = basePath.resolve(fileName).normalize();
+        Path basePath = Paths.get(globalsProperties.getFileStorePath(), boardCode, articleSeq.toString()).toAbsolutePath().normalize();
+        Path filePath = basePath.resolve(fileName).normalize();
 
-            if (!filePath.startsWith(basePath)) {
-                log.warn("경로 접근 위반: {}", filePath);
-                throw new FileAccessViolationException(filePath.toString());
-            }
-
-            Resource resource = new UrlResource(filePath.toUri());
-            if (!resource.exists() || !resource.isReadable()) {
-                log.warn("파일이 존재하지 않거나 읽을 수 없습니다.");
-                FileMissingException ex = new FileMissingException(fileName);
-                String message = messageSourceAccessor.getMessage(FILE_NOT_FOUND);
-                return ResponseEntity
-                        .status(ex.getStatus())
-                        .body(ApiResponse.fail(ex.getStatus(), message));
-            }
-
-            String contentType = Files.probeContentType(filePath);
-            if (contentType == null) {
-                contentType = MediaType.APPLICATION_OCTET_STREAM_VALUE;
-            }
-
-
-            String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8)
-                    .replace("\\+", "%20");
-
-            return ResponseEntity.ok()
-                    .contentType(MediaType.parseMediaType(contentType))
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + encodedFileName)
-                    .body(resource);
-
+        if (!filePath.startsWith(basePath)) {
+            log.warn("경로 접근 위반: {}", filePath);
+            throw new FileAccessViolationException(filePath.toString());
         }
-        catch (Exception e) {
-            log.error("파일 다운로드 오류 발생: {}", e);
-            String message = messageSourceAccessor.getMessage(FILE_DOWNLOAD_ERROR);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.fail(HttpStatus.INTERNAL_SERVER_ERROR, message));
+
+        Resource resource = new UrlResource(filePath.toUri());
+        if (!resource.exists() || !resource.isReadable()) {
+            log.warn("파일이 존재하지 않거나 읽을 수 없습니다.");
+            throw new FileMissingException(fileName);
         }
+
+        String contentType = Files.probeContentType(filePath);
+        if (contentType == null) {
+            contentType = MediaType.APPLICATION_OCTET_STREAM_VALUE;
+        }
+
+        String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8)
+                .replace("\\+", "%20");
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(contentType))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + encodedFileName)
+                .body(resource);
     }
+
 }

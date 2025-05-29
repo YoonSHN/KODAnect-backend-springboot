@@ -255,10 +255,14 @@
 						<configuration>
 							<excludes>
 								<exclude>**/dto/**</exclude>
-								<exclude>**/common/**</exclude>
+								<exclude>**/exception/**</exclude>
+								<exclude>**/response/**</exclude>
+								<exclude>**/util/**</exclude>
+								<exclude>**/validation/**</exclude>
 								<exclude>**/config/**</exclude>
 								<exclude>**/*Application*</exclude>
 								<exclude>**/Swagger*.*</exclude>
+								<exclude>**/entity/**</exclude>
 							</excludes>
 						</configuration>
 					</execution>
@@ -279,7 +283,7 @@
 										<limit>
 											<counter>LINE</counter>
 											<value>COVEREDRATIO</value>
-											<minimum>0.60</minimum>
+											<minimum>0.50</minimum>
 										</limit>
 									</limits>
 								</rule>

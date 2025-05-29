@@ -9,7 +9,7 @@ public class InvalidBoardCodeException extends AbstractCustomException {
     private final String boardCode;
 
     public InvalidBoardCodeException(String boardCode) {
-        super("없는 게시판 코드: " + boardCode);
+        super(INVALID_BOARD_CODE + boardCode);
         this.boardCode = boardCode;
     }
 

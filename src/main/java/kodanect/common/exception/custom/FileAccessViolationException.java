@@ -9,7 +9,7 @@ public class FileAccessViolationException extends AbstractCustomException {
     private final String path;
 
     public FileAccessViolationException(String path) {
-        super("잘못된 파일 경로 접근: " + path);
+        super(FILE_ACCESS_VIOLATION + path);
         this.path = path;
     }
 
