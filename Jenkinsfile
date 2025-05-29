@@ -94,6 +94,7 @@ pipeline {
             when {
                 branch 'dev'
                 branch 'main'
+                expression { return env.CHANGE_ID != null }
             }
             steps {
                 script {
@@ -102,16 +103,22 @@ pipeline {
                     withSonarQubeEnv('SonarCloud') {
                         withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
                             catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-                                sh """
-                                    ./mvnw sonar:sonar \\
-                                      -Dsonar.projectKey=kodanect \\
-                                      -Dsonar.organization=fc-dev3-final-project \\
-                                      -Dsonar.token=${SONAR_TOKEN} \\
-                                      -Dsonar.pullrequest.key=${CHANGE_ID} \\
-                                      -Dsonar.pullrequest.branch=${CHANGE_BRANCH} \\
-                                      -Dsonar.pullrequest.base=${CHANGE_TARGET} \\
-                                      -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+                                def sonarCmd = """./mvnw sonar:sonar \\
+                                  -Dsonar.projectKey=kodanect \\
+                                  -Dsonar.organization=fc-dev3-final-project \\
+                                  -Dsonar.token=${SONAR_TOKEN} \\
+                                  -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
                                 """
+
+                                if (env.CHANGE_ID) {
+                                    sonarCmd += """ \\
+                                  -Dsonar.pullrequest.key=${CHANGE_ID} \\
+                                  -Dsonar.pullrequest.branch=${CHANGE_BRANCH} \\
+                                  -Dsonar.pullrequest.base=${CHANGE_TARGET}
+                                    """
+                                }
+
+                                sh sonarCmd
                             }
 
                             if (currentBuild.currentResult == 'FAILURE') {
@@ -278,7 +285,7 @@ EOF
     post {
         success {
             script {
-                if (env.CHANGE_ID || env.BRANCH_NAME == 'main') {
+                if (env.CHANGE_ID != null || env.BRANCH_NAME?.trim() == 'main') {
                     slackSend(
                         channel: '4_파이널프로젝트_1조_jenkins',
                         color: 'good',
@@ -299,7 +306,7 @@ EOF
 
         failure {
             script {
-                if (env.CHANGE_ID || env.BRANCH_NAME == 'main') {
+                if (env.CHANGE_ID !=null || env.BRANCH_NAME?.trim == 'main') {
                     slackSend(
                         channel: '4_파이널프로젝트_1조_jenkins',
                         color: 'danger',
