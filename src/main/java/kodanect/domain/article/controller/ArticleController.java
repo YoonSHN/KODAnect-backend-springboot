@@ -140,7 +140,7 @@ public class ArticleController {
      * @return 파일 리소스 or 오류 응답
      */
     @GetMapping("/{boardCode}/{articleSeq}/files/{fileName}")
-    public ResponseEntity<?> downloadOtherBoardFile(
+    public ResponseEntity<Object> downloadOtherBoardFile(
             @PathVariable String boardCode,
             @PathVariable Integer articleSeq,
             @PathVariable String fileName
@@ -218,7 +218,7 @@ public class ArticleController {
      * @return 파일 리소스 또는 오류 응답
      */
     @GetMapping("/notices/{articleSeq}/files/{fileName}")
-    public ResponseEntity<?> downloadFile(
+    public ResponseEntity<Object> downloadFile(
             @PathVariable Integer articleSeq,
             @PathVariable String fileName,
             @RequestParam BoardOption optionStr
