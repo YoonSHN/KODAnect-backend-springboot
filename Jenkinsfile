@@ -91,11 +91,6 @@ pipeline {
         }
 
         stage('SonarCloud Analysis') {
-            when {
-                branch 'dev'
-                branch 'main'
-                expression { return env.CHANGE_ID != null }
-            }
             steps {
                 script {
                     githubNotify context: 'sonar', status: 'PENDING', description: 'SonarCloud 분석 중...'
