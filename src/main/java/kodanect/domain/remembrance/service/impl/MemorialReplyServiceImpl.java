@@ -2,8 +2,11 @@ package kodanect.domain.remembrance.service.impl;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import kodanect.domain.remembrance.dto.MemorialReplyCreateRequest;
+import kodanect.domain.remembrance.dto.MemorialReplyDeleteRequest;
+import kodanect.domain.remembrance.dto.MemorialReplyUpdateRequest;
 import kodanect.domain.remembrance.entity.MemorialReply;
-import kodanect.domain.remembrance.dto.MemorialReplyDto;
+import kodanect.domain.remembrance.dto.MemorialReplyResponse;
 import kodanect.domain.remembrance.exception.*;
 import kodanect.domain.remembrance.repository.MemorialReplyRepository;
 import kodanect.domain.remembrance.service.MemorialReplyService;
@@ -45,7 +48,7 @@ public class MemorialReplyServiceImpl implements MemorialReplyService {
     }
 
     @Override
-    public void createReply(Integer donateSeq, MemorialReplyDto memorialReplyDto)
+    public void createReply(Integer donateSeq, MemorialReplyCreateRequest memorialReplyCreateRequest)
             throws  MissingReplyContentException,
                     MissingReplyWriterException,
                     MissingReplyPasswordException,
@@ -58,7 +61,7 @@ public class MemorialReplyServiceImpl implements MemorialReplyService {
 
         try{
             /* 댓글 내용, 작성자, 비밀 번호 검증 */
-            validateReplyWriteFields(memorialReplyDto);
+            validateReplyWriteFields(memorialReplyCreateRequest);
 
             /* 게시글 ID 검증 */
             validateDonateSeq(donateSeq);
@@ -67,10 +70,10 @@ public class MemorialReplyServiceImpl implements MemorialReplyService {
             memorialFinder.findByIdOrThrow(donateSeq);
 
             MemorialReply reply = MemorialReply.builder()
-                    .donateSeq(memorialReplyDto.getDonateSeq())
-                    .replyWriter(memorialReplyDto.getReplyWriter())
-                    .replyPassword(memorialReplyDto.getReplyPassword())
-                    .replyContents(memorialReplyDto.getReplyContents())
+                    .donateSeq(memorialReplyCreateRequest.getDonateSeq())
+                    .replyWriter(memorialReplyCreateRequest.getReplyWriter())
+                    .replyPassword(memorialReplyCreateRequest.getReplyPassword())
+                    .replyContents(memorialReplyCreateRequest.getReplyContents())
                     .build();
 
             memorialReplyRepository.save(reply);
@@ -81,7 +84,7 @@ public class MemorialReplyServiceImpl implements MemorialReplyService {
     }
 
     @Override
-    public void updateReply(Integer donateSeq, Integer replySeq, MemorialReplyDto memorialReplyDto)
+    public void updateReply(Integer donateSeq, Integer replySeq, MemorialReplyUpdateRequest memorialReplyUpdateRequest)
             throws  InvalidDonateSeqException,
                     MissingReplyContentException,
                     MemorialReplyNotFoundException,
@@ -107,12 +110,12 @@ public class MemorialReplyServiceImpl implements MemorialReplyService {
             MemorialReply reply = memorialReplyFinder.findByIdOrThrow(replySeq);
 
             /* 댓글 번호, 비밀 번호, 게시판, 삭제 여부 검증 */
-            validateReplyAuthority(donateSeq, replySeq, memorialReplyDto, reply);
+            validateReplyAuthority(donateSeq, replySeq, memorialReplyUpdateRequest, reply);
 
             /* 댓글 내용 검증 */
-            validateReplyContent(memorialReplyDto);
+            validateReplyContent(memorialReplyUpdateRequest);
 
-            memorialReplyRepository.updateReplyContents(replySeq, memorialReplyDto.getReplyContents());
+            memorialReplyRepository.updateReplyContents(replySeq, memorialReplyUpdateRequest.getReplyContents());
         }
         finally {
             lock.writeLock().unlock();
@@ -120,7 +123,7 @@ public class MemorialReplyServiceImpl implements MemorialReplyService {
     }
 
     @Override
-    public void deleteReply(Integer donateSeq, Integer replySeq, MemorialReplyDto memorialReplyDto)
+    public void deleteReply(Integer donateSeq, Integer replySeq, MemorialReplyDeleteRequest memorialReplyDeleteRequest)
             throws  ReplyPostMismatchException,
                     ReplyIdMismatchException,
                     MissingReplyPasswordException,
@@ -149,7 +152,7 @@ public class MemorialReplyServiceImpl implements MemorialReplyService {
             MemorialReply reply = memorialReplyFinder.findByIdOrThrow(replySeq);
 
             /* 댓글 번호, 비밀 번호, 게시판, 삭제 여부 검증 */
-            validateReplyAuthority(donateSeq, replySeq, memorialReplyDto, reply);
+            validateReplyAuthority(donateSeq, replySeq, memorialReplyDeleteRequest, reply);
 
             /* 소프트 삭제 */
             reply.setDelFlag("Y");
@@ -161,7 +164,7 @@ public class MemorialReplyServiceImpl implements MemorialReplyService {
     }
 
     @Override
-    public List<MemorialReplyDto> findMemorialReplyList(Integer donateSeq)
+    public List<MemorialReplyResponse> findMemorialReplyList(Integer donateSeq)
             throws  MemorialNotFoundException,
                     InvalidDonateSeqException
     {

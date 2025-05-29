@@ -1,7 +1,9 @@
 package kodanect.common.validation;
 
+import kodanect.domain.remembrance.dto.MemorialReplyCreateRequest;
+import kodanect.domain.remembrance.dto.common.ReplyAuthRequest;
+import kodanect.domain.remembrance.dto.common.ReplyContentHolder;
 import kodanect.domain.remembrance.entity.MemorialReply;
-import kodanect.domain.remembrance.dto.MemorialReplyDto;
 import kodanect.domain.remembrance.exception.*;
 
 public class ReplyValidator {
@@ -10,35 +12,35 @@ public class ReplyValidator {
         throw new UnsupportedOperationException("Utility class");
     }
 
-    public static void validateReplyContent(MemorialReplyDto memorialReplyDto) throws MissingReplyContentException {
+    public static void validateReplyContent(ReplyContentHolder replyContentHolder) throws MissingReplyContentException {
         /* 댓글 내용 검증 */
-        if(memorialReplyDto.getReplyContents() == null || memorialReplyDto.getReplyContents().trim().isEmpty()) {
+        if(replyContentHolder.getReplyContents() == null || replyContentHolder.getReplyContents().trim().isEmpty()) {
             throw new MissingReplyContentException();
         }
     }
 
-    public static void validateReplyWriteFields(MemorialReplyDto memorialReplyDto)
+    public static void validateReplyWriteFields(MemorialReplyCreateRequest memorialReplyCreateRequest)
             throws  MissingReplyContentException,
                     MissingReplyWriterException,
                     MissingReplyPasswordException
     {
         /* 댓글 내용 검증 */
-        validateReplyContent(memorialReplyDto);
+        validateReplyContent(memorialReplyCreateRequest);
 
         /* 작성자 검증 */
-        if(memorialReplyDto.getReplyWriter() == null || memorialReplyDto.getReplyWriter().trim().isEmpty()) {
+        if(memorialReplyCreateRequest.getReplyWriter() == null || memorialReplyCreateRequest.getReplyWriter().trim().isEmpty()) {
             throw new MissingReplyWriterException();
         }
 
         /* 비밀 번호 검증 */
-        else if(memorialReplyDto.getReplyPassword() == null || memorialReplyDto.getReplyPassword().trim().isEmpty()) {
+        else if(memorialReplyCreateRequest.getReplyPassword() == null || memorialReplyCreateRequest.getReplyPassword().trim().isEmpty()) {
             throw new MissingReplyPasswordException();
         }
     }
 
     public static void validateReplyAuthority(
             Integer donateSeq, Integer replySeq,
-            MemorialReplyDto memorialReplyDto, MemorialReply reply)
+            ReplyAuthRequest replyAuthRequest, MemorialReply reply)
             throws  ReplyPostMismatchException,
                     ReplyIdMismatchException,
                     MissingReplyPasswordException,
@@ -46,12 +48,12 @@ public class ReplyValidator {
                     ReplyAlreadyDeleteException
     {
         /* 게시글 검증 */
-        if(!donateSeq.equals(reply.getDonateSeq()) || !donateSeq.equals(memorialReplyDto.getDonateSeq())) {
+        if(!donateSeq.equals(reply.getDonateSeq()) || !donateSeq.equals(replyAuthRequest.getDonateSeq())) {
             throw new ReplyPostMismatchException();
         }
 
         /* 댓글 검증 */
-        else if(!replySeq.equals(memorialReplyDto.getReplySeq())){
+        else if(!replySeq.equals(replyAuthRequest.getReplySeq())){
             throw new ReplyIdMismatchException();
         }
 
@@ -66,7 +68,7 @@ public class ReplyValidator {
         }
 
         /* 비밀 번호 비교 */
-        else if(!reply.getReplyPassword().equals(memorialReplyDto.getReplyPassword())) {
+        else if(!reply.getReplyPassword().equals(replyAuthRequest.getReplyPassword())) {
             throw new ReplyPasswordMismatchException();
         }
     }

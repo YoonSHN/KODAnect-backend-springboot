@@ -10,7 +10,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter @ToString
-public class MemorialDetailDto {
+public class MemorialDetailResponse {
 
     /* 기증자 일련번호 */
     private Integer donateSeq;
@@ -23,9 +23,6 @@ public class MemorialDetailDto {
 
     /* 추모합니다. */
     private String donateTitle;
-
-    /* 권역 코드 */
-    private String areaCode;
 
     /* 기증자 내용 */
     private String contents;
@@ -72,29 +69,16 @@ public class MemorialDetailDto {
     /* 생성 일시 */
     private LocalDateTime writeTime;
 
-    /* 생성자 아이디 */
-    private String writerId;
-
-    /* 수정 일시 */
-    private LocalDateTime modifyTime;
-
-    /* 수정자 아이디 */
-    private String modifierId;
-
-    /* 삭제 여부 */
-    private String delFlag;
-
     /* 댓글 리스트 */
-    private List<MemorialReplyDto> memorialReplyDtoList;
+    private List<MemorialReplyResponse> memorialReplyResponseList;
 
     /* 기증자 상세 조회 */
-    public static MemorialDetailDto of(Memorial memorial, List<MemorialReplyDto> replies) {
-        return MemorialDetailDto.builder()
+    public static MemorialDetailResponse of(Memorial memorial, List<MemorialReplyResponse> replies) {
+        return MemorialDetailResponse.builder()
                 .donateSeq(memorial.getDonateSeq())
                 .donorName(memorial.getDonorName())
                 .anonymityFlag(memorial.getAnonymityFlag())
                 .donateTitle(memorial.getDonateTitle())
-                .areaCode(memorial.getAreaCode())
                 .contents(memorial.getContents())
                 .fileName(memorial.getFileName())
                 .orgFileName(memorial.getOrgFileName())
@@ -110,11 +94,7 @@ public class MemorialDetailDto {
                 .hardCount(memorial.getHardCount())
                 .sadCount(memorial.getSadCount())
                 .writeTime(memorial.getWriteTime())
-                .writerId(memorial.getWriterId())
-                .modifyTime(memorial.getModifyTime())
-                .modifierId(memorial.getModifierId())
-                .delFlag(memorial.getDelFlag())
-                .memorialReplyDtoList(replies)
+                .memorialReplyResponseList(replies)
                 .build();
     }
 }

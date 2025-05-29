@@ -6,7 +6,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter @ToString
-public class MemorialListDto {
+public class MemorialListResponse {
 
     /* 기증자 일련번호 */
     private Integer donateSeq;
@@ -25,9 +25,6 @@ public class MemorialListDto {
 
     /* 기증자 나이 */
     private Integer donateAge;
-
-    /* 삭제 여부 */
-    private String delFlag;
 
     /* 댓글 개수 조회 */
     private long replyCount;

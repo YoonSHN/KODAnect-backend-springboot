@@ -45,7 +45,7 @@ public class MemorialServiceImpl implements MemorialService {
         this.memorialFinder = memorialFinder;
     }
 
-    private ReentrantReadWriteLock getLock(int donateSeq) {
+    private ReentrantReadWriteLock getLock(Integer donateSeq) {
         return lockCache.get(donateSeq, k -> new ReentrantReadWriteLock());
     }
 
@@ -77,7 +77,7 @@ public class MemorialServiceImpl implements MemorialService {
     }
 
     @Override
-    public Page<MemorialListDto> getSearchMemorialList(
+    public Page<MemorialListResponse> getSearchMemorialList(
             String page, String size, String startDate, String endDate, String searchWord)
             throws  MissingPaginationParameterException,
                     InvalidPaginationRangeException,
@@ -109,7 +109,7 @@ public class MemorialServiceImpl implements MemorialService {
     }
 
     @Override
-    public Page<MemorialListDto> getMemorialList(String page, String size)
+    public Page<MemorialListResponse> getMemorialList(String page, String size)
             throws  MissingPaginationParameterException,
                     InvalidPaginationRangeException,
                     InvalidPaginationFormatException
@@ -127,7 +127,7 @@ public class MemorialServiceImpl implements MemorialService {
     }
 
     @Override
-    public MemorialDetailDto getMemorialByDonateSeq(Integer donateSeq)
+    public MemorialDetailResponse getMemorialByDonateSeq(Integer donateSeq)
             throws  MemorialNotFoundException,
                     InvalidDonateSeqException
     {
@@ -140,12 +140,12 @@ public class MemorialServiceImpl implements MemorialService {
         Memorial memorial = memorialFinder.findByIdOrThrow(donateSeq);
 
         /* 댓글 리스트 모두 조회 */
-        List<MemorialReplyDto> replyList = memorialReplyService.findMemorialReplyList(donateSeq);
+        List<MemorialReplyResponse> replies = memorialReplyService.findMemorialReplyList(donateSeq);
 
         /* 하늘나라 편지 리스트 조회 예정 */
 
         /* 기증자 상세 조회 */
-        return MemorialDetailDto.of(memorial, replyList);
+        return MemorialDetailResponse.of(memorial, replies);
     }
 }
 

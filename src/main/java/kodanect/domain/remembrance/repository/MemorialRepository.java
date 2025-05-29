@@ -1,7 +1,7 @@
 package kodanect.domain.remembrance.repository;
 
 import kodanect.domain.remembrance.entity.Memorial;
-import kodanect.domain.remembrance.dto.MemorialListDto;
+import kodanect.domain.remembrance.dto.MemorialListResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -13,8 +13,8 @@ public interface MemorialRepository extends JpaRepository<Memorial, Integer> {
 
     @Query(
         value = """
-            SELECT new kodanect.domain.remembrance.dto.MemorialListDto
-                    (m.donateSeq, m.donorName, m.anonymityFlag, m.donateDate,m.genderFlag, m.donateAge, m.delFlag, COUNT(r))
+            SELECT new kodanect.domain.remembrance.dto.MemorialListResponse
+                    (m.donateSeq, m.donorName, m.anonymityFlag, m.donateDate,m.genderFlag, m.donateAge, COUNT(r))
             FROM Memorial m
             LEFT JOIN MemorialReply r ON m.donateSeq = r.donateSeq
             WHERE m.delFlag = 'N'
@@ -27,12 +27,12 @@ public interface MemorialRepository extends JpaRepository<Memorial, Integer> {
             WHERE m.delFlag = 'N'
         """
     )/* 기증자 추모관 게시글 리스트 조회 */
-    Page<MemorialListDto> findMemorialList(Pageable pageable);
+    Page<MemorialListResponse> findMemorialList(Pageable pageable);
 
     @Query(
         value = """
-            SELECT new kodanect.domain.remembrance.dto.MemorialListDto
-                    (m.donateSeq, m.donorName, m.anonymityFlag, m.donateDate, m.genderFlag, m.donateAge, m.delFlag, COUNT(r))
+            SELECT new kodanect.domain.remembrance.dto.MemorialListResponse
+                    (m.donateSeq, m.donorName, m.anonymityFlag, m.donateDate, m.genderFlag, m.donateAge, COUNT(r))
             FROM Memorial m
             LEFT JOIN MemorialReply r ON m.donateSeq = r.donateSeq
             WHERE m.donorName LIKE :searchWord AND m.donateDate BETWEEN :startDate AND :endDate AND m.delFlag = 'N'
@@ -45,7 +45,7 @@ public interface MemorialRepository extends JpaRepository<Memorial, Integer> {
             WHERE m.donorName LIKE :searchWord AND m.donateDate BETWEEN :startDate AND :endDate AND m.delFlag = 'N'
         """
     )/* 기증자 추모관 게시글 리스트 날짜 + 문자 조건 조회  */
-    Page<MemorialListDto> findSearchMemorialList(
+    Page<MemorialListResponse> findSearchMemorialList(
             Pageable pageable,
             @Param("startDate") String startDate,
             @Param("endDate") String endDate,
