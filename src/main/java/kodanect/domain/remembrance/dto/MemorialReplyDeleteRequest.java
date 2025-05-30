@@ -6,8 +6,7 @@ import lombok.*;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Getter
-@ToString
+@Getter @ToString
 public class MemorialReplyDeleteRequest implements ReplyAuthRequest {
 
     /* 게시글 일련번호 */
