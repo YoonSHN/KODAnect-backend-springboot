@@ -13,17 +13,13 @@ public interface MemorialService {
                     InvalidDonateSeqException;
     /* 게시글 검색 조건 조회 */
     CursorPaginationResponse<MemorialResponse> getSearchMemorialList(Integer cursor, int size, String startDate, String endDate, String searchWord)
-            throws  MissingPaginationParameterException,
-                    InvalidPaginationRangeException,
-                    InvalidPaginationFormatException,
+            throws  InvalidPaginationRangeException,
                     MissingSearchDateParameterException,
                     InvalidSearchDateFormatException,
                     InvalidSearchDateRangeException;
     /* 게시글 리스트 조회 */
     CursorPaginationResponse<MemorialResponse> getMemorialList(Integer cursor, int size)
-            throws  MissingPaginationParameterException,
-                    InvalidPaginationRangeException,
-                    InvalidPaginationFormatException;
+            throws  InvalidPaginationRangeException;
     /* 게시글 상세 조회 */
     MemorialDetailResponse getMemorialByDonateSeq(Integer donateSeq)
             throws  MemorialNotFoundException,
