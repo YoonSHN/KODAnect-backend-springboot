@@ -40,7 +40,7 @@ public class ReplyValidator {
 
     public static void validateReplyAuthority(
             Integer donateSeq, Integer replySeq,
-            ReplyAuthRequest replyAuthRequest, MemorialReply reply)
+            ReplyAuthRequest replyAuthRequest, MemorialReply memorialReply)
             throws  ReplyPostMismatchException,
                     ReplyIdMismatchException,
                     MissingReplyPasswordException,
@@ -48,7 +48,7 @@ public class ReplyValidator {
                     ReplyAlreadyDeleteException
     {
         /* 게시글 검증 */
-        if(!donateSeq.equals(reply.getDonateSeq()) || !donateSeq.equals(replyAuthRequest.getDonateSeq())) {
+        if(!donateSeq.equals(memorialReply.getDonateSeq()) || !donateSeq.equals(replyAuthRequest.getDonateSeq())) {
             throw new ReplyPostMismatchException();
         }
 
@@ -58,17 +58,17 @@ public class ReplyValidator {
         }
 
         /* 삭제 여부 검증 */
-        else if(!reply.getDelFlag().equals("N")){
+        else if(!memorialReply.getDelFlag().equals("N")){
             throw new ReplyAlreadyDeleteException();
         }
 
         /* 비밀 번호 검증 */
-        else if(reply.getReplyPassword() == null || reply.getReplyPassword().trim().isEmpty()) {
+        else if(memorialReply.getReplyPassword() == null || memorialReply.getReplyPassword().trim().isEmpty()) {
             throw new MissingReplyPasswordException();
         }
 
         /* 비밀 번호 비교 */
-        else if(!reply.getReplyPassword().equals(replyAuthRequest.getReplyPassword())) {
+        else if(!memorialReply.getReplyPassword().equals(replyAuthRequest.getReplyPassword())) {
             throw new ReplyPasswordMismatchException();
         }
     }

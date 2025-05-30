@@ -118,26 +118,5 @@ public class Memorial {
     @Column(nullable = false, length = 1)
     @Builder.Default private String delFlag = DEFAULT_DEL_FLAG;
 
-    public void setFlowerCount(int flowerCount) {
-        this.flowerCount = flowerCount;
-    }
-    public void setLoveCount(int loveCount) {
-        this.loveCount = loveCount;
-    }
-    public void setSeeCount(int seeCount) {
-        this.seeCount = seeCount;
-    }
-    public void setMissCount(int missCount) {
-        this.missCount = missCount;
-    }
-    public void setProudCount(int proudCount) {
-        this.proudCount = proudCount;
-    }
-    public void setHardCount(int hardCount) {
-        this.hardCount = hardCount;
-    }
-    public void setSadCount(int sadCount) {
-        this.sadCount = sadCount;
-    }
 }
 

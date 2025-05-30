@@ -29,12 +29,15 @@ public class MemorialReplyController {
     @GetMapping
     public ResponseEntity<ApiResponse<CursorReplyPaginationResponse<MemorialReplyResponse>>> getMoreReplies(
             @PathVariable Integer donateSeq,
-            @RequestParam Integer cursor, @RequestParam(defaultValue = "3") int size) {
+            @RequestParam Integer cursor, @RequestParam(defaultValue = "3") int size)
+            throws  MemorialNotFoundException,
+                    InvalidDonateSeqException
+    {
         /* 댓글 더보기 */
 
         String successMessage = messageSourceAccessor.getMessage("board.reply.read.success", new Object[] {});
-        CursorReplyPaginationResponse<MemorialReplyResponse> memorial = memorialReplyService.getMoreReplyList(donateSeq, cursor, size);
-        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, successMessage, memorial));
+        CursorReplyPaginationResponse<MemorialReplyResponse> memorialReplyResponses = memorialReplyService.getMoreReplyList(donateSeq, cursor, size);
+        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, successMessage, memorialReplyResponses));
     }
 
     @PostMapping

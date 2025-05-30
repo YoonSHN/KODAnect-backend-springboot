@@ -6,7 +6,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter @ToString
-public class MemorialListResponse {
+public class MemorialResponse {
 
     /* 기증자 일련번호 */
     private Integer donateSeq;

@@ -1,6 +1,7 @@
 package kodanect.common.exception.config;
 
 import kodanect.common.response.ApiResponse;
+import kodanect.domain.remembrance.exception.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,15 +27,67 @@ import org.springframework.web.servlet.NoHandlerFoundException;
 public class GlobalExcepHndlr {
 
     /**
+     * 400 예외 처리
+     *
+     * 잘못된 입력 발생 시 400 응답 반환
+     * */
+    @ExceptionHandler({
+        InvalidDonateSeqException.class,
+        InvalidEmotionTypeException.class,
+        InvalidPaginationRangeException.class,
+        InvalidReplySeqException.class,
+        InvalidSearchDateFormatException.class,
+        InvalidSearchDateRangeException.class,
+        MissingReplyContentException.class,
+        MissingReplyPasswordException.class,
+        MissingReplyWriterException.class,
+        MissingSearchDateParameterException.class,
+        ReplyIdMismatchException.class,
+        ReplyPostMismatchException.class
+    })public ResponseEntity<ApiResponse<Void>> handleBadRequest() {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.fail(HttpStatus.BAD_REQUEST, "잘못된 요청입니다."));
+    }
+
+    /**
+     * 403 예외 처리
+     *
+     * 권한 오류 발생 시 403 응답 반환
+     * */
+    @ExceptionHandler(ReplyPasswordMismatchException.class)
+    public ResponseEntity<ApiResponse<Void>> handleForbidden() {
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(ApiResponse.fail(HttpStatus.FORBIDDEN, "비밀번호가 일치하지 않습니다."));
+    }
+
+    /**
      * 404 예외 처리
      *
      * 매핑되지 않은 URI 요청에 대해 404 응답 반환
      */
-    @ExceptionHandler(NoHandlerFoundException.class)
+    @ExceptionHandler({
+        MemorialNotFoundException.class,
+        MemorialReplyNotFoundException.class,
+        NoHandlerFoundException.class
+    })
     public ResponseEntity<ApiResponse<Void>> handleNotFound() {
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
                 .body(ApiResponse.fail(HttpStatus.NOT_FOUND, "요청한 리소스를 찾을 수 없습니다."));
+    }
+
+    /**
+     * 409 예외 처리
+     *
+     * 충돌 발생 시 409 응답 반환
+     */
+    @ExceptionHandler(ReplyAlreadyDeleteException.class)
+    public ResponseEntity<ApiResponse<Void>> handleConflict() {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(ApiResponse.fail(HttpStatus.CONFLICT, "해당 항목은 이미 삭제되었습니다."));
     }
 
     /**

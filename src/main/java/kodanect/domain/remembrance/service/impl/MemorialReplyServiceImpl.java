@@ -73,14 +73,10 @@ public class MemorialReplyServiceImpl implements MemorialReplyService {
             /* 게시글 조회 */
             memorialFinder.findByIdOrThrow(donateSeq);
 
-            MemorialReply reply = MemorialReply.builder()
-                    .donateSeq(memorialReplyCreateRequest.getDonateSeq())
-                    .replyWriter(memorialReplyCreateRequest.getReplyWriter())
-                    .replyPassword(memorialReplyCreateRequest.getReplyPassword())
-                    .replyContents(memorialReplyCreateRequest.getReplyContents())
-                    .build();
+            /* 객체 생성 */
+            MemorialReply memorialReply = MemorialReply.of(memorialReplyCreateRequest);
 
-            memorialReplyRepository.save(reply);
+            memorialReplyRepository.save(memorialReply);
         }
         finally {
             lock.writeLock().unlock();
@@ -111,14 +107,15 @@ public class MemorialReplyServiceImpl implements MemorialReplyService {
             memorialFinder.findByIdOrThrow(donateSeq);
 
             /* 댓글 조회 */
-            MemorialReply reply = memorialReplyFinder.findByIdOrThrow(replySeq);
+            MemorialReply memorialReply = memorialReplyFinder.findByIdOrThrow(replySeq);
 
             /* 댓글 번호, 비밀 번호, 게시판, 삭제 여부 검증 */
-            validateReplyAuthority(donateSeq, replySeq, memorialReplyUpdateRequest, reply);
+            validateReplyAuthority(donateSeq, replySeq, memorialReplyUpdateRequest, memorialReply);
 
             /* 댓글 내용 검증 */
             validateReplyContent(memorialReplyUpdateRequest);
 
+            /* 댓글 수정 */
             memorialReplyRepository.updateReplyContents(replySeq, memorialReplyUpdateRequest.getReplyContents());
         }
         finally {
@@ -153,14 +150,15 @@ public class MemorialReplyServiceImpl implements MemorialReplyService {
             memorialFinder.findByIdOrThrow(donateSeq);
 
             /* 댓글 조회 */
-            MemorialReply reply = memorialReplyFinder.findByIdOrThrow(replySeq);
+            MemorialReply memorialReply = memorialReplyFinder.findByIdOrThrow(replySeq);
 
             /* 댓글 번호, 비밀 번호, 게시판, 삭제 여부 검증 */
-            validateReplyAuthority(donateSeq, replySeq, memorialReplyDeleteRequest, reply);
+            validateReplyAuthority(donateSeq, replySeq, memorialReplyDeleteRequest, memorialReply);
 
             /* 소프트 삭제 */
-            reply.setDelFlag("Y");
-            memorialReplyRepository.save(reply);
+            memorialReply.setDelFlag("Y");
+
+            memorialReplyRepository.save(memorialReply);
         }
         finally {
             lock.writeLock().unlock();
@@ -197,7 +195,7 @@ public class MemorialReplyServiceImpl implements MemorialReplyService {
             throws  MemorialNotFoundException,
                     InvalidDonateSeqException
     {
-        /* 게시글 댓글 리스트 조회 */
+        /* 게시글 댓글 리스트 더보기 */
 
         /* 게시글 ID 검증 */
         validateDonateSeq(donateSeq);
@@ -205,12 +203,13 @@ public class MemorialReplyServiceImpl implements MemorialReplyService {
         /* 게시글 조회 */
         memorialFinder.findByIdOrThrow(donateSeq);
 
+        /* 페이징 */
         Pageable pageable = PageRequest.of(0, size +1);
 
         /* 댓글 리스트 모두 조회 */
-        List<MemorialReplyResponse> memorial = memorialReplyRepository.findByCursor(donateSeq, cursor, pageable);
+        List<MemorialReplyResponse> memorialReplyResponses = memorialReplyRepository.findByCursor(donateSeq, cursor, pageable);
 
-        return CursorFormatter.cursorReplyFormat(memorial, size);
+        return CursorFormatter.cursorReplyFormat(memorialReplyResponses, size);
     }
 }
 

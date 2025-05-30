@@ -3,6 +3,7 @@ package kodanect.domain.remembrance.service.impl;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import kodanect.common.response.CursorPaginationResponse;
+import kodanect.common.response.CursorReplyPaginationResponse;
 import kodanect.common.util.CursorFormatter;
 import kodanect.domain.remembrance.dto.*;
 import kodanect.domain.remembrance.entity.Memorial;
@@ -79,7 +80,7 @@ public class MemorialServiceImpl implements MemorialService {
     }
 
     @Override
-    public CursorPaginationResponse<MemorialListResponse> getSearchMemorialList(
+    public CursorPaginationResponse<MemorialResponse> getSearchMemorialList(
             Integer cursor, int size, String startDate, String endDate, String searchWord)
             throws  InvalidPaginationRangeException,
                     MissingSearchDateParameterException,
@@ -101,14 +102,14 @@ public class MemorialServiceImpl implements MemorialService {
         /* 페이징 포매팅 */
         Pageable pageable = PageRequest.of(0, size +1);
 
-        List<MemorialListResponse> memorial = memorialRepository.findSearchByCursor(cursor, pageable, startDateStr, endDateStr, searchWord);
+        List<MemorialResponse> memorialResponses = memorialRepository.findSearchByCursor(cursor, pageable, startDateStr, endDateStr, searchWord);
 
-        return CursorFormatter.cursorFormat(memorial, size);
+        return CursorFormatter.cursorFormat(memorialResponses, size);
 
     }
 
     @Override
-    public CursorPaginationResponse<MemorialListResponse> getMemorialList(Integer cursor, int size) throws InvalidPaginationRangeException {
+    public CursorPaginationResponse<MemorialResponse> getMemorialList(Integer cursor, int size) throws InvalidPaginationRangeException {
         /* 게시글 리스트 조회 */
 
         /* 페이징 검증 */
@@ -117,9 +118,9 @@ public class MemorialServiceImpl implements MemorialService {
         /* 페이징 포매팅 */
         Pageable pageable = PageRequest.of(0, size +1);
 
-        List<MemorialListResponse> memorial = memorialRepository.findByCursor(cursor, pageable);
+        List<MemorialResponse> memorialResponses = memorialRepository.findByCursor(cursor, pageable);
 
-        return CursorFormatter.cursorFormat(memorial, size);
+        return CursorFormatter.cursorFormat(memorialResponses, size);
     }
 
     @Override
@@ -136,15 +137,16 @@ public class MemorialServiceImpl implements MemorialService {
         Memorial memorial = memorialFinder.findByIdOrThrow(donateSeq);
 
         /* 댓글 리스트 모두 조회 */
-        List<MemorialReplyResponse> replies = memorialReplyService.getMemorialReplyList(donateSeq, null, DEFAULT_SIZE + 1);
-        boolean replyHasNext = replies.size() > DEFAULT_SIZE;
+        List<MemorialReplyResponse> memorialReplyResponses = memorialReplyService.getMemorialReplyList(donateSeq, null, DEFAULT_SIZE + 1);
 
-        List<MemorialReplyResponse> replyContent = replies.stream().limit(DEFAULT_SIZE).toList();
-        Integer replyNextCursor = replyHasNext ? replyContent.get(replyContent.size()-1).getReplySeq() : null;
+        /* 댓글 리스트 페이징 포매팅 */
+        CursorReplyPaginationResponse<MemorialReplyResponse> cursoredReplies = CursorFormatter.cursorReplyFormat(memorialReplyResponses, DEFAULT_SIZE);
+
         /* 하늘나라 편지 리스트 조회 예정 */
 
         /* 기증자 상세 조회 */
-        return MemorialDetailResponse.of(memorial, replyContent, replyNextCursor, replyHasNext);
+        return MemorialDetailResponse.of(memorial,
+                cursoredReplies.getContent(), cursoredReplies.getReplyNextCursor(), cursoredReplies.isReplyHasNext());
     }
 }
 

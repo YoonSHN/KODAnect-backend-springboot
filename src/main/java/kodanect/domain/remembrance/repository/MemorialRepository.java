@@ -1,7 +1,7 @@
 package kodanect.domain.remembrance.repository;
 
 import kodanect.domain.remembrance.entity.Memorial;
-import kodanect.domain.remembrance.dto.MemorialListResponse;
+import kodanect.domain.remembrance.dto.MemorialResponse;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -14,7 +14,7 @@ public interface MemorialRepository extends JpaRepository<Memorial, Integer> {
 
     @Query(
         value = """
-            SELECT new kodanect.domain.remembrance.dto.MemorialListResponse
+            SELECT new kodanect.domain.remembrance.dto.MemorialResponse
                     (m.donateSeq, m.donorName, m.anonymityFlag, m.donateDate,m.genderFlag, m.donateAge, COUNT(r))
             FROM Memorial m
             LEFT JOIN MemorialReply r ON m.donateSeq = r.donateSeq
@@ -23,11 +23,11 @@ public interface MemorialRepository extends JpaRepository<Memorial, Integer> {
             ORDER BY m.writeTime DESC
         """
     )/* 기증자 추모관 게시글 리스트 조회 */
-    List<MemorialListResponse> findByCursor(@Param("cursor") Integer cursor, Pageable pageable);
+    List<MemorialResponse> findByCursor(@Param("cursor") Integer cursor, Pageable pageable);
 
     @Query(
         value = """
-            SELECT new kodanect.domain.remembrance.dto.MemorialListResponse
+            SELECT new kodanect.domain.remembrance.dto.MemorialResponse
                     (m.donateSeq, m.donorName, m.anonymityFlag, m.donateDate, m.genderFlag, m.donateAge, COUNT(r))
             FROM Memorial m
             LEFT JOIN MemorialReply r ON m.donateSeq = r.donateSeq
@@ -37,7 +37,7 @@ public interface MemorialRepository extends JpaRepository<Memorial, Integer> {
             ORDER BY m.writeTime DESC
         """
     )/* 기증자 추모관 게시글 리스트 날짜 + 문자 조건 조회  */
-    List<MemorialListResponse> findSearchByCursor(
+    List<MemorialResponse> findSearchByCursor(
             @Param("cursor") Integer cursor,
             Pageable pageable,
             @Param("startDate") String startDate,

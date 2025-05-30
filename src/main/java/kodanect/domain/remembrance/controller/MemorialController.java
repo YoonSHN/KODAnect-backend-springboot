@@ -3,7 +3,7 @@ package kodanect.domain.remembrance.controller;
 import kodanect.common.response.ApiResponse;
 import kodanect.common.response.CursorPaginationResponse;
 import kodanect.domain.remembrance.dto.MemorialDetailResponse;
-import kodanect.domain.remembrance.dto.MemorialListResponse;
+import kodanect.domain.remembrance.dto.MemorialResponse;
 import kodanect.domain.remembrance.exception.*;
 import kodanect.domain.remembrance.service.MemorialService;
 import org.springframework.context.support.MessageSourceAccessor;
@@ -24,14 +24,14 @@ public class MemorialController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<CursorPaginationResponse<MemorialListResponse>>> getMemorialList(
+    public ResponseEntity<ApiResponse<CursorPaginationResponse<MemorialResponse>>> getMemorialList(
             @RequestParam(required = false) Integer cursor,
             @RequestParam(defaultValue = "20") int size) throws InvalidPaginationRangeException {
         /* 게시글 리스트 조회 */
 
         String successMessage = messageSourceAccessor.getMessage("board.read.success", new Object[] {});
-        CursorPaginationResponse<MemorialListResponse> memorial = memorialService.getMemorialList(cursor, size);
-        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, successMessage,memorial));
+        CursorPaginationResponse<MemorialResponse> memorialResponses = memorialService.getMemorialList(cursor, size);
+        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, successMessage,memorialResponses));
     }
 
     @GetMapping("/{donateSeq}")
@@ -43,12 +43,12 @@ public class MemorialController {
         /* 게시글 상세 조회 */
 
         String successMessage = messageSourceAccessor.getMessage("board.read.success", new Object[] {});
-        MemorialDetailResponse memorial = memorialService.getMemorialByDonateSeq(donateSeq);
-        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, successMessage, memorial));
+        MemorialDetailResponse memorialDetailResponse = memorialService.getMemorialByDonateSeq(donateSeq);
+        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, successMessage, memorialDetailResponse));
     }
 
     @GetMapping("/search")
-    public ResponseEntity<ApiResponse<CursorPaginationResponse<MemorialListResponse>>> getSearchMemorialList(
+    public ResponseEntity<ApiResponse<CursorPaginationResponse<MemorialResponse>>> getSearchMemorialList(
             @RequestParam(defaultValue = "1900-01-01") String startDate,
             @RequestParam(defaultValue = "2100-12-31") String endDate,
             @RequestParam(defaultValue = "") String searchWord,
@@ -62,8 +62,8 @@ public class MemorialController {
         /* 게시글 검색 조건 조회 */
 
         String successMessage = messageSourceAccessor.getMessage("board.search.read.success", new Object[] {});
-        CursorPaginationResponse<MemorialListResponse> memorial = memorialService.getSearchMemorialList(cursor, size, startDate, endDate, searchWord);
-        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, successMessage, memorial));
+        CursorPaginationResponse<MemorialResponse> memorialResponses = memorialService.getSearchMemorialList(cursor, size, startDate, endDate, searchWord);
+        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, successMessage, memorialResponses));
     }
 
     @PatchMapping("/{donateSeq}/{emotion}")

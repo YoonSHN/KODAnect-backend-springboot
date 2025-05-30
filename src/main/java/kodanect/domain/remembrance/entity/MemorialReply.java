@@ -1,5 +1,6 @@
 package kodanect.domain.remembrance.entity;
 
+import kodanect.domain.remembrance.dto.MemorialReplyCreateRequest;
 import lombok.*;
 
 import javax.persistence.*;
@@ -66,12 +67,18 @@ public class MemorialReply {
         this.donateSeq = donateSeq;
     }
 
-    public void setReplyContents(String replyContents) {
-        this.replyContents = replyContents;
-    }
-
     public void setDelFlag(String delFlag) {
         this.delFlag = delFlag;
     }
+
+    public static MemorialReply of(MemorialReplyCreateRequest memorialReplyCreateRequest) {
+        return MemorialReply.builder()
+                .donateSeq(memorialReplyCreateRequest.getDonateSeq())
+                .replyWriter(memorialReplyCreateRequest.getReplyWriter())
+                .replyPassword(memorialReplyCreateRequest.getReplyPassword())
+                .replyContents(memorialReplyCreateRequest.getReplyContents())
+                .build();
+    }
+
 }
 

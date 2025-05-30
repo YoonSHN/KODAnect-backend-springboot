@@ -70,7 +70,7 @@ public class MemorialDetailResponse {
     private LocalDateTime writeTime;
 
     /* 댓글 리스트 */
-    private List<MemorialReplyResponse> memorialReplyResponseList;
+    private List<MemorialReplyResponse> memorialReplyResponses;
     private Integer replyNextCursor;
     private boolean replyHasNext;
 
@@ -79,7 +79,8 @@ public class MemorialDetailResponse {
     /* 기증자 상세 조회 */
     public static MemorialDetailResponse of(
             Memorial memorial, List<MemorialReplyResponse> replies,
-            Integer replyNextCursor, boolean replyHasNext) {
+            Integer replyNextCursor, boolean replyHasNext)
+    {
         return MemorialDetailResponse.builder()
                 .donateSeq(memorial.getDonateSeq())
                 .donorName(memorial.getDonorName())
@@ -100,7 +101,7 @@ public class MemorialDetailResponse {
                 .hardCount(memorial.getHardCount())
                 .sadCount(memorial.getSadCount())
                 .writeTime(memorial.getWriteTime())
-                .memorialReplyResponseList(replies)
+                .memorialReplyResponses(replies)
                 .replyNextCursor(replyNextCursor)
                 .replyHasNext(replyHasNext)
                 .build();

@@ -1,7 +1,7 @@
 package kodanect.domain.remembrance.exception;
 
 public class InvalidDonateSeqException extends RuntimeException {
-    /* 게시글 번호가 유효하지 않을 경우 */
+    /* 유효하지 않은 게시글 번호를 요청할 경우 */
     public InvalidDonateSeqException(String message) {
         super(message);
     }

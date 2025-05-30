@@ -2,7 +2,7 @@ package kodanect.domain.remembrance.service;
 
 import kodanect.common.response.CursorPaginationResponse;
 import kodanect.domain.remembrance.dto.MemorialDetailResponse;
-import kodanect.domain.remembrance.dto.MemorialListResponse;
+import kodanect.domain.remembrance.dto.MemorialResponse;
 import kodanect.domain.remembrance.exception.*;
 
 public interface MemorialService {
@@ -12,7 +12,7 @@ public interface MemorialService {
                     MemorialNotFoundException,
                     InvalidDonateSeqException;
     /* 게시글 검색 조건 조회 */
-    CursorPaginationResponse<MemorialListResponse> getSearchMemorialList(Integer cursor, int size, String startDate, String endDate, String searchWord)
+    CursorPaginationResponse<MemorialResponse> getSearchMemorialList(Integer cursor, int size, String startDate, String endDate, String searchWord)
             throws  MissingPaginationParameterException,
                     InvalidPaginationRangeException,
                     InvalidPaginationFormatException,
@@ -20,7 +20,7 @@ public interface MemorialService {
                     InvalidSearchDateFormatException,
                     InvalidSearchDateRangeException;
     /* 게시글 리스트 조회 */
-    CursorPaginationResponse<MemorialListResponse> getMemorialList(Integer cursor, int size)
+    CursorPaginationResponse<MemorialResponse> getMemorialList(Integer cursor, int size)
             throws  MissingPaginationParameterException,
                     InvalidPaginationRangeException,
                     InvalidPaginationFormatException;
