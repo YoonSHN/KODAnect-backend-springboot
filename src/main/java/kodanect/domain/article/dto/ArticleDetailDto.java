@@ -33,7 +33,7 @@ public class ArticleDetailDto {
                 .articleSeq(article.getId().getArticleSeq())
                 .title(article.getTitle())
                 .contents(article.getContents())
-                .readCount(article.getReadCount())
+                .readCount(article.getReadCount() != null ? article.getReadCount() : 0)
                 .fixFlag(article.getFixFlag())
                 .writeTime(article.getWriteTime())
                 .writerId(article.getWriterId())
