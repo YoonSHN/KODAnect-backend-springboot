@@ -30,10 +30,8 @@ public class RecipientCommentController {
     public ResponseEntity<ApiResponse<RecipientCommentResponseDto>> writeComment(@PathVariable("letterSeq") int letterSeq,
                                                                                  @Valid @RequestBody RecipientCommentRequestDto requestDto) {
 
-        // DTO에서 letterSeq를 설정 (URL 경로 변수에서 받은 값을 DTO에 주입)
-        requestDto.setLetterSeq(letterSeq);
-
         RecipientCommentResponseDto createdComment = recipientCommentService.insertComment(
+                letterSeq, // 게시물 번호를 직접 서비스로 전달
                 requestDto, // DTO 객체 전달
                 requestDto.getCaptchaToken() // 캡차 토큰 추출
         );
@@ -46,9 +44,9 @@ public class RecipientCommentController {
     public ResponseEntity<ApiResponse<RecipientCommentResponseDto>> updateComment(@PathVariable("letterSeq") int letterSeq,
                                                                                   @PathVariable("commentSeq") int commentSeq,
                                                                                   @Valid @RequestBody RecipientCommentRequestDto requestDto) {
-        // DTO에서 letterSeq와 commentSeq 설정 (URL 경로 변수에서 받은 값을 DTO에 주입)
-        requestDto.setLetterSeq(letterSeq);
-
+        // 참고: 현재 recipientCommentService.updateComment 메서드는 letterSeq를 파라미터로 받지 않습니다.
+        // 만약 update 로직에서 letterSeq가 필요하다면 서비스 메서드 시그니처를 변경해야 합니다.
+        // 예: recipientCommentService.updateComment(letterSeq, commentSeq, requestDto.getCommentContents(), ...);
         RecipientCommentResponseDto updatedComment = recipientCommentService.updateComment(
                 commentSeq, // 댓글 시퀀스
                 requestDto.getCommentContents(), // 업데이트할 내용
@@ -77,5 +75,4 @@ public class RecipientCommentController {
 
         return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, "댓글이 성공적으로 삭제되었습니다."));
     }
-
 }

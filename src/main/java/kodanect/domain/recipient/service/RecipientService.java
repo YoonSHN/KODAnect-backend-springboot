@@ -25,13 +25,10 @@ public interface RecipientService {
     // 특정 게시물의 페이징된 댓글 조회 (새로운 구현)
     List<RecipientCommentResponseDto> selectPaginatedCommentsForRecipient(int letterSeq, Integer lastCommentId, int size);
 
-    // "더 보기" 기능을 위한 게시물 목록 조회
-    // lastId가 null이면 첫 페이지, 아니면 lastId보다 작은 게시물 조회 (최신순)
-    List<RecipientListResponseDto> selectRecipientList(RecipientSearchCondition searchCondition, Integer lastId, int size);
+    List<RecipientListResponseDto> selectRecipientList(
+            RecipientSearchCondition searchCondition,
+            Integer lastId, // lastId를 Integer 타입으로 유지 (null 허용)
+            int size);
 
-    // 제목, 내용, 전체 검색
-    List<RecipientListResponseDto> selectRecipientList(RecipientSearchCondition searchCondition);
-
-    // 제목, 내용, 전체 검색 결과 수
     int selectRecipientListTotCnt(RecipientSearchCondition searchCondition);
 }

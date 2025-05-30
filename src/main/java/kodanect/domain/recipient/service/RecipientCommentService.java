@@ -10,7 +10,8 @@ public interface RecipientCommentService {
     List<RecipientCommentResponseDto> selectRecipientCommentByLetterSeq(int letterSeq);
 
     // 댓글 작성
-    RecipientCommentResponseDto insertComment(RecipientCommentRequestDto requestDto, String captchaToken);
+    // int letterSeq 파라미터 추가
+    RecipientCommentResponseDto insertComment(int letterSeq, RecipientCommentRequestDto requestDto, String captchaToken);
 
     // 댓글 수정
     RecipientCommentResponseDto updateComment(int commentSeq, String newContents, String newWriter, String inputPasscode, String captchaToken);

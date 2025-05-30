@@ -66,19 +66,20 @@ public class RecipientCommentServiceImpl implements RecipientCommentService {
 
     // 댓글 작성
     @Override
-    public RecipientCommentResponseDto insertComment(RecipientCommentRequestDto requestDto, String captchaToken) {
-        // 로그 출력
-        logger.info("Inserting comment for letterSeq: {}", requestDto.getLetterSeq());
+    public RecipientCommentResponseDto insertComment(int letterSeq, RecipientCommentRequestDto requestDto, String captchaToken) {
+        // 로그 출력: requestDto.getLetterSeq() 대신 letterSeq 파라미터 사용
+        logger.info("Inserting comment for letterSeq: {}", letterSeq);
 
         // 1. hCaptcha 인증
         if (!hcaptchaService.verifyCaptcha(captchaToken)) {
-            logger.warn(CAPTCHA_FAILED_MESSAGE );
+            logger.warn(CAPTCHA_FAILED_MESSAGE);
             throw new RecipientInvalidDataException(CAPTCHA_FAILED_MESSAGE);
         }
         logger.info("hCaptcha 인증 성공. 댓글 등록 진행.");
 
         // 2. 게시물 유효성 확인 (삭제되지 않은 게시물인지)
-        RecipientEntity parentLetter = recipientRepository.findById(requestDto.getLetterSeq())
+        // requestDto.getLetterSeq() 대신 letterSeq 파라미터 사용
+        RecipientEntity parentLetter = recipientRepository.findById(letterSeq)
                 .filter(entity -> "N".equalsIgnoreCase(entity.getDelFlag()))
                 .orElseThrow(() -> new RecipientNotFoundException("댓글을 등록할 게시물을 찾을 수 없거나 이미 삭제되었습니다."));
 

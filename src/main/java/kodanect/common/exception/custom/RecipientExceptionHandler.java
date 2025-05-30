@@ -1,18 +1,26 @@
-package kodanect.domain.recipient.exception;
+package kodanect.common.exception.custom;
 
-import kodanect.common.exception.custom.InvalidIntegerConversionException;
 import kodanect.common.response.ApiResponse;
+import kodanect.domain.recipient.exception.CommentNotFoundException;
+import kodanect.domain.recipient.exception.InvalidPasscodeException;
+import kodanect.domain.recipient.exception.RecipientInvalidDataException;
+import kodanect.domain.recipient.exception.RecipientNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @Slf4j
-@RestControllerAdvice(basePackages = "kodanect.domain.recipient")
+@RestControllerAdvice
+//        (basePackages = "kodanect.domain.recipient")
 
 public class RecipientExceptionHandler {
-
+    public RecipientExceptionHandler() {
+        log.info(">>> RecipientExceptionHandler loaded");
+    }
     /**
      * 리소스를 찾을 수 없거나 이미 삭제된 경우의 예외 처리 (404 Not Found)
      * RecipientNotFoundException, CommentNotFoundException
@@ -42,7 +50,7 @@ public class RecipientExceptionHandler {
      * RecipientInvalidDataException
      */
     @ExceptionHandler(RecipientInvalidDataException.class)
-    public ResponseEntity<ApiResponse<String>> handleInvalidCommentDataException(RecipientInvalidDataException ex) {
+    public ResponseEntity<ApiResponse<String>> handleInvalidDataException(RecipientInvalidDataException ex) {
         log.warn("Bad Request (400 Bad Request): {}", ex.getMessage());
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
@@ -59,5 +67,24 @@ public class RecipientExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(ApiResponse.fail(HttpStatus.BAD_REQUEST, ex.getMessage()));
+    }
+
+    /**
+     * 유효성 검증 실패 예외(MethodArgumentNotValidException)를 처리하는 핸들러 메서드입니다.
+     * Spring MVC에서 @Valid 또는 @Validated를 사용한 @RequestBody 객체의 필드 유효성 검사에서 실패할 경우 발생하는 예외를 처리합니다.
+     */
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ApiResponse<String>> handleValidationExceptions(MethodArgumentNotValidException ex) {
+        StringBuilder errorMessage = new StringBuilder();
+
+        for (FieldError fieldError : ex.getBindingResult().getFieldErrors()) {
+            errorMessage.append(fieldError.getDefaultMessage()).append(" ");
+        }
+
+        log.warn("Validation failed (400): {}", errorMessage.toString().trim());
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.fail(HttpStatus.BAD_REQUEST, errorMessage.toString().trim()));
     }
 }

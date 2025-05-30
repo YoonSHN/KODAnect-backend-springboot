@@ -14,7 +14,7 @@ public class RecipientSearchCondition {
     // 검색 키워드
     private String searchKeyword;
 
-    // 검색 타입 (예: "title", "contents", "all")
-    private String searchType;
+    // 검색 타입 (예: SearchType.TITLE, SearchType.CONTENTS, SearchType.ALL)
+    private SearchType searchType;
 
 }

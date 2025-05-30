@@ -23,6 +23,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.safety.Safelist;
 
 import javax.persistence.criteria.Predicate;
+import java.math.BigInteger;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -299,76 +300,95 @@ public class RecipientServiceImpl implements RecipientService {
                 .toList();
     }
 
-    // "더 보기" 기능을 위한 게시물 목록 조회
-    // lastId가 null이면 첫 페이지, 아니면 lastId보다 작은 게시물 조회 (최신순)
+    /**
+     * 게시물 목록 조회 (검색 및 "더 보기" 페이징 통합)
+     * searchCondition: 검색 조건 (searchType, searchKeyword)
+     * lastId: "더 보기" 기능을 위한 마지막 게시물 ID (null 또는 0이면 첫 페이지 조회)
+     * size: 한 번에 가져올 게시물 수
+     */
     @Override
-    public List<RecipientListResponseDto> selectRecipientList(RecipientSearchCondition searchCondition, Integer lastId, int size) {
+    public List<RecipientListResponseDto> selectRecipientList(
+            RecipientSearchCondition searchCondition,
+            Integer lastId, // lastId를 Integer 타입으로 유지 (null 허용)
+            int size) {
+
+        // 1. 기본 Specification 생성 (검색 조건 적용)
         Specification<RecipientEntity> spec = getRecipientSpecification(searchCondition);
 
-        // 정렬 조건 추가: letterSeq를 기준으로 내림차순 정렬 (최신 게시물부터)
+        // 2. "더 보기" 기능 (lastId) 조건 추가
+        if (lastId != null && lastId > 0) { // lastId가 유효한 경우에만 조건 추가
+            spec = spec.and((root, query, cb) -> cb.lessThan(root.get(LETTER_SEQ), lastId));
+        }
+
+        // 3. 정렬 조건 설정 (letterSeq 기준 내림차순 - 최신 게시물부터)
         Sort sort = Sort.by(Sort.Direction.DESC, LETTER_SEQ);
-        // Pageable을 사용하여 limit (size)만 적용하고 offset은 JPA 내부에서 lastId를 통해 처리
-        Pageable pageable = PageRequest.of(0, size, sort); // offset은 0으로 고정하고, size와 정렬만 설정
 
-        List<RecipientEntity> recipientList;
+        // 4. Pageable 설정 (offset은 항상 0, limit은 size)
+        // JPA의 Pageable은 offset/limit 기반이므로, lastId는 Specification으로 직접 처리해야 합니다.
+        Pageable pageable = PageRequest.of(0, size, sort);
 
-        if (lastId == null || lastId == 0) {
-            // 첫 조회: 전체 게시물 중 최신순으로 size만큼 가져옴
-            recipientList = recipientRepository.findAll(spec, pageable).getContent();
-        }
-        else {
-            // 추가 조회: lastId보다 작은 게시물 중 최신순으로 size만큼 가져옴
-            // Specification에 lastId 조건을 추가해야 합니다.
-            Specification<RecipientEntity> lastIdSpec = (root, query, cb) -> {
-                // 기존 Specification에 lastId < letterSeq 조건을 추가
-                return cb.and(
-                        spec.toPredicate(root, query, cb),          // 기존 조건
-                        cb.lessThan(root.get(LETTER_SEQ), lastId)  // lastId보다 작은 ID
-                );
-            };
-            recipientList = recipientRepository.findAll(lastIdSpec, pageable).getContent();
-        }
+        // 5. 게시물 조회
+        List<RecipientEntity> recipientList = recipientRepository.findAll(spec, pageable).getContent();
 
-        // 2. 각 RecipientEntity에 대한 댓글 수를 조회
+        // 6. 각 RecipientEntity에 대한 댓글 수를 조회
         final Map<Integer, Integer> commentCountMap = getCommentCountMap(recipientList);
 
-        // 3. RecipientEntity를 RecipientResponseDto로 변환하고 commentCount 필드를 채우기
+        // 7. RecipientEntity를 RecipientResponseDto로 변환하고 commentCount 필드를 채우기
         return recipientList.stream()
                 .map(entity -> {
                     RecipientListResponseDto dto = RecipientListResponseDto.fromEntity(entity);
                     dto.setCommentCount(commentCountMap.getOrDefault(entity.getLetterSeq(), 0));
                     return dto;
                 })
-                .toList();
+                .toList(); // Stream.toList() 사용 (Java 16+)
     }
 
-    // 제목, 내용, 전체 검색
-    @Override
-    public List<RecipientListResponseDto> selectRecipientList(RecipientSearchCondition searchCondition) {
-        Specification<RecipientEntity> spec = getRecipientSpecification(searchCondition);
-        List<RecipientEntity> recipientList = recipientRepository.findAll(spec);
-
-        // 댓글 수 맵 생성
-        final Map<Integer, Integer> commentCountMap = getCommentCountMap(recipientList);
-
-        // DTO 변환 + 댓글 수 세팅
-        return recipientList.stream()
-                .map(entity -> {
-                    RecipientListResponseDto dto = RecipientListResponseDto.fromEntity(entity);
-                    dto.setCommentCount(commentCountMap.getOrDefault(entity.getLetterSeq(), 0));
-                    return dto;
-                })
-                .toList(); // Stream.toList() 사용
-    }
-
-    // 제목, 내용, 전체 검색 결과 수
+    /**
+     * 게시물 검색 결과 총 개수 조회 (검색 조건 적용)
+     */
     @Override
     public int selectRecipientListTotCnt(RecipientSearchCondition searchCondition) {
         Specification<RecipientEntity> spec = getRecipientSpecification(searchCondition);
         return (int) recipientRepository.count(spec);
     }
 
-    // 댓글 수를 letterSeq 기준으로 매핑한 Map 반환
+    /**
+     * RecipientSearchCondition에 따라 동적인 Specification 생성
+     * (검색 타입: 제목, 내용, ALL만 지원)
+     */
+    private Specification<RecipientEntity> getRecipientSpecification(RecipientSearchCondition searchCondition) {
+        return (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            // 삭제되지 않은 게시물만 조회 (기본 조건)
+            predicates.add(cb.equal(root.get(DEL_FLAG), "N"));
+
+            // 검색어 (searchKeyword)가 있고 검색 타입 (searchType)이 있는 경우
+            String searchKeyword = searchCondition.getSearchKeyword();
+            SearchType searchType = searchCondition.getSearchType();
+
+            if (StringUtils.hasText(searchKeyword)) {
+                String likeKeyword = "%" + searchKeyword.trim().toLowerCase() + "%"; // 대소문자 무시 검색
+
+                if (searchType == null || searchType == SearchType.ALL) { // 검색 타입이 없거나 'ALL'인 경우 (제목+내용)
+                    predicates.add(cb.or(
+                            cb.like(cb.lower(root.get("letterTitle")), likeKeyword), // 제목 검색
+                            cb.like(cb.lower(root.get("letterContents")), likeKeyword)  // 내용 검색
+                    ));
+                } else if (searchType == SearchType.TITLE) { // 제목만 검색
+                    predicates.add(cb.like(cb.lower(root.get("letterTitle")), likeKeyword));
+                } else if (searchType == SearchType.CONTENTS) { // 내용만 검색
+                    predicates.add(cb.like(cb.lower(root.get("letterContents")), likeKeyword));
+                }
+                // SearchType.WRITER 관련 로직은 제거됨
+            }
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+    }
+
+    /**
+     * 댓글 수를 letterSeq 기준으로 매핑한 Map 반환
+     */
     private Map<Integer, Integer> getCommentCountMap(List<RecipientEntity> recipientList) {
         List<Integer> letterSeqs = recipientList.stream()
                 .map(RecipientEntity::getLetterSeq)
@@ -378,9 +398,9 @@ public class RecipientServiceImpl implements RecipientService {
         if (!letterSeqs.isEmpty()) {
             List<Object[]> commentCountsRaw = recipientRepository.countCommentsByLetterSeqs(letterSeqs);
             for (Object[] arr : commentCountsRaw) {
-                Integer letterSeq = extractAsInteger(arr[0], LETTER_SEQ);
-                Integer commentCount = extractAsInteger(arr[1], "commentCount");
-                commentCountMap.put(letterSeq, commentCount);
+                Integer letterSeq = (Integer) arr[0];
+                BigInteger commentCountBigInt = (BigInteger) arr[1];
+                commentCountMap.put(letterSeq, commentCountBigInt.intValue()); // int로 변환하여 저장
             }
         }
         return commentCountMap;
@@ -390,7 +410,7 @@ public class RecipientServiceImpl implements RecipientService {
     private Integer extractAsInteger(Object obj, String fieldName) {
         if (obj == null) {
             logger.warn("Null value encountered for field '{}'", fieldName);
-            return null; // 또는 throw new InvalidIntegerConversionException(...)
+            return null;
         }
 
         try {
@@ -419,46 +439,6 @@ public class RecipientServiceImpl implements RecipientService {
         catch (Exception e) {
             throw new InvalidIntegerConversionException("Unexpected error during conversion of " + fieldName, e);
         }
-    }
-
-    // Spring Data JPA Specification을 활용한 동적 쿼리 생성 메서드 (이전과 동일)
-    private Specification<RecipientEntity> getRecipientSpecification(RecipientSearchCondition searchCondition) {
-        return (root, query, cb) -> {
-            List<javax.persistence.criteria.Predicate> predicates = new ArrayList<>();
-
-            // 삭제되지 않은 게시물만 조회
-            predicates.add(cb.equal(root.get(DEL_FLAG), "N"));
-
-            // 검색 조건 (제목, 내용, 작성자)
-            String searchType = searchCondition.getSearchType();
-            String searchKeyword = searchCondition.getSearchKeyword();
-
-            if (StringUtils.hasText(searchType) && StringUtils.hasText(searchKeyword)) {
-                String likeKeyword = "%" + searchKeyword.toLowerCase() + "%";
-                switch (searchType) {
-                    case "title":
-                        predicates.add(cb.like(cb.lower(root.get("letterTitle")), likeKeyword));
-                        break;
-                    case "contents":
-                        predicates.add(cb.like(cb.lower(root.get("letterContents")), likeKeyword));
-                        break;
-                    case "writer":
-                        predicates.add(cb.like(cb.lower(root.get("letterWriter")), likeKeyword));
-                        break;
-                    case "all":
-                        predicates.add(cb.or(
-                                cb.like(cb.lower(root.get("letterTitle")), likeKeyword),
-                                cb.like(cb.lower(root.get("letterContents")), likeKeyword),
-                                cb.like(cb.lower(root.get("letterWriter")), likeKeyword)
-                        ));
-                        break;
-                    default:
-                        // 유효하지 않은 searchType은 무시하거나 예외 처리
-                        break;
-                }
-            }
-            return cb.and(predicates.toArray(new javax.persistence.criteria.Predicate[0]));
-        };
     }
 
 }
