@@ -80,7 +80,10 @@ public class HcaptchaService {
         JsonNode errorCodes = responseBody.get("error-codes");
         if (errorCodes != null && errorCodes.isArray()) {
             for (JsonNode errorCode : errorCodes) {
-                logger.warn("hCaptcha 인증 실패 오류 코드: {}", errorCode.asText());
+                // 로깅 레벨이 활성화되어 있을 때만 메시지 파라미터를 평가하고 로깅합니다.
+                if (logger.isWarnEnabled()) { // 이 줄을 추가합니다.
+                    logger.warn("hCaptcha 인증 실패 오류 코드: {}", errorCode.asText());
+                }
             }
         }
     }

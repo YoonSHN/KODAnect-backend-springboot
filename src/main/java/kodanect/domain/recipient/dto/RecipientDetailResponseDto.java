@@ -36,7 +36,7 @@ public class RecipientDetailResponseDto {
 
     // Entity -> DTO 변환 메서드 (정적 팩토리 메서드)
     public static RecipientDetailResponseDto fromEntity(RecipientEntity entity) {
-        RecipientDetailResponseDto dto = RecipientDetailResponseDto.builder()
+        return RecipientDetailResponseDto.builder() // 빌더로 객체를 생성한 결과를 바로 반환
                 .letterSeq(entity.getLetterSeq())
                 .organCode(entity.getOrganCode())
                 .organEtc(entity.getOrganEtc())
@@ -56,12 +56,9 @@ public class RecipientDetailResponseDto {
                 .commentCount(0)
                 .hasMoreComments(false)
                 .build();
-
-
-        return dto;
     }
     // 서비스 계층에서 commentCount, topComments, hasMoreComments를 설정하기 위한 setter
-    public void setCommentData(int commentCount, List<RecipientCommentResponseDto> topComments, boolean hasMoreComments) {
+    public void setCommentData(int commentCount, boolean hasMoreComments) {
         this.commentCount = commentCount;
         this.hasMoreComments = hasMoreComments;
     }

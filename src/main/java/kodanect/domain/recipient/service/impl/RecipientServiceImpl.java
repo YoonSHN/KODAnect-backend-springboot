@@ -33,6 +33,11 @@ public class RecipientServiceImpl implements RecipientService {
     private static final String ANONYMOUS_WRITER_VALUE = "익명";
     private static final String CAPTCHA_FAILED_MESSAGE = "캡차 인증에 실패했습니다. 다시 시도해주세요.";
     private static final String RECIPIENT_NOT_FOUND_MESSAGE = "해당 게시물이 존재하지 않거나 이미 삭제되었습니다.";
+    private static final int INITIAL_COMMENT_LOAD_LIMIT = 3; // 초기에 로딩할 댓글의 개수
+    private static final String LETTER_SEQ = "letterSeq";
+    private static final String DEL_FLAG = "delFlag";
+    private static final String COMMENT_SEQ = "commentSeq";
+    private static final String WRITE_TIME = "writeTime";
 
     private final RecipientRepository recipientRepository;
     private final RecipientCommentRepository recipientCommentRepository;
@@ -246,14 +251,10 @@ public class RecipientServiceImpl implements RecipientService {
             totalCommentCount = 0;
         }
 
-        // 초기 로딩할 댓글 (예: 3개) 조회 _ lastCommentId = 0 (or null), size = 3으로 호출하여 첫 3개를 가져옵니다.
-        List<RecipientCommentResponseDto> topComments = selectPaginatedCommentsForRecipient(letterSeq, null, 3); // lastCommentId를 null로 전달
-
         // DTO에 댓글 관련 데이터 설정
         responseDto.setCommentData(
                 totalCommentCount,
-                topComments,
-                totalCommentCount > 3 // 전체 댓글 수가 3개보다 많으면 더보기 버튼 활성화
+                totalCommentCount > INITIAL_COMMENT_LOAD_LIMIT // 전체 댓글 수가 3개보다 많으면 더보기 버튼 활성화
         );
 
         return responseDto;
@@ -270,7 +271,7 @@ public class RecipientServiceImpl implements RecipientService {
                 .filter(entity -> "N".equalsIgnoreCase(entity.getDelFlag()))
                 .orElseThrow(() -> new RecipientNotFoundException(RECIPIENT_NOT_FOUND_MESSAGE));
 
-        Sort sort = Sort.by(Sort.Direction.ASC, "writeTime", "commentSeq"); // 작성 시간 오름차순, 동일 시간은 commentSeq로 정렬
+        Sort sort = Sort.by(Sort.Direction.ASC, WRITE_TIME, COMMENT_SEQ); // 작성 시간 오름차순, 동일 시간은 commentSeq로 정렬
         Pageable pageable = PageRequest.of(0, size, sort); // PageRequest는 내부적으로 OFFSET/LIMIT 쿼리를 생성
 
         List<RecipientCommentEntity> comments;
@@ -282,11 +283,11 @@ public class RecipientServiceImpl implements RecipientService {
             // 또는 Specification을 사용하여 쿼리 생성
             Specification<RecipientCommentEntity> spec = (root, query, cb) -> {
                 Predicate p = cb.and(
-                        cb.equal(root.get("letterSeq"), activeRecipient),
-                        cb.equal(root.get("delFlag"), "N")
+                        cb.equal(root.get(LETTER_SEQ), activeRecipient),
+                        cb.equal(root.get(DEL_FLAG), "N")
                 );
                 if (lastCommentId != null && lastCommentId != 0) {
-                    p = cb.and(p, cb.greaterThan(root.get("commentSeq"), lastCommentId));
+                    p = cb.and(p, cb.greaterThan(root.get(COMMENT_SEQ), lastCommentId));
                 }
                 return p;
             };
@@ -295,7 +296,7 @@ public class RecipientServiceImpl implements RecipientService {
 
         return comments.stream()
                 .map(RecipientCommentResponseDto::fromEntity)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     // "더 보기" 기능을 위한 게시물 목록 조회
@@ -305,7 +306,7 @@ public class RecipientServiceImpl implements RecipientService {
         Specification<RecipientEntity> spec = getRecipientSpecification(searchCondition);
 
         // 정렬 조건 추가: letterSeq를 기준으로 내림차순 정렬 (최신 게시물부터)
-        Sort sort = Sort.by(Sort.Direction.DESC, "letterSeq");
+        Sort sort = Sort.by(Sort.Direction.DESC, LETTER_SEQ);
         // Pageable을 사용하여 limit (size)만 적용하고 offset은 JPA 내부에서 lastId를 통해 처리
         Pageable pageable = PageRequest.of(0, size, sort); // offset은 0으로 고정하고, size와 정렬만 설정
 
@@ -322,7 +323,7 @@ public class RecipientServiceImpl implements RecipientService {
                 // 기존 Specification에 lastId < letterSeq 조건을 추가
                 return cb.and(
                         spec.toPredicate(root, query, cb),          // 기존 조건
-                        cb.lessThan(root.get("letterSeq"), lastId)  // lastId보다 작은 ID
+                        cb.lessThan(root.get(LETTER_SEQ), lastId)  // lastId보다 작은 ID
                 );
             };
             recipientList = recipientRepository.findAll(lastIdSpec, pageable).getContent();
@@ -337,9 +338,8 @@ public class RecipientServiceImpl implements RecipientService {
                     RecipientListResponseDto dto = RecipientListResponseDto.fromEntity(entity);
                     dto.setCommentCount(commentCountMap.getOrDefault(entity.getLetterSeq(), 0));
                     return dto;
-                    }
-                )
-                .collect(Collectors.toList());
+                })
+                .toList();
     }
 
     // 제목, 내용, 전체 검색
@@ -378,7 +378,7 @@ public class RecipientServiceImpl implements RecipientService {
         if (!letterSeqs.isEmpty()) {
             List<Object[]> commentCountsRaw = recipientRepository.countCommentsByLetterSeqs(letterSeqs);
             for (Object[] arr : commentCountsRaw) {
-                Integer letterSeq = extractAsInteger(arr[0], "letterSeq");
+                Integer letterSeq = extractAsInteger(arr[0], LETTER_SEQ);
                 Integer commentCount = extractAsInteger(arr[1], "commentCount");
                 commentCountMap.put(letterSeq, commentCount);
             }
@@ -411,14 +411,12 @@ public class RecipientServiceImpl implements RecipientService {
             );
         }
         catch (NumberFormatException e) {
-            logger.error("Invalid number format for field '{}': {}", fieldName, obj, e);
             throw new InvalidIntegerConversionException("Invalid number format for field: " + fieldName + ", value: " + obj, e);
         }
         catch (InvalidIntegerConversionException e) {
             throw e;
         }
         catch (Exception e) {
-            logger.error("Unexpected error converting {} to Integer. Value = {}, Type = {}", fieldName, obj, obj.getClass().getName(), e);
             throw new InvalidIntegerConversionException("Unexpected error during conversion of " + fieldName, e);
         }
     }
@@ -429,7 +427,7 @@ public class RecipientServiceImpl implements RecipientService {
             List<javax.persistence.criteria.Predicate> predicates = new ArrayList<>();
 
             // 삭제되지 않은 게시물만 조회
-            predicates.add(cb.equal(root.get("delFlag"), "N"));
+            predicates.add(cb.equal(root.get(DEL_FLAG), "N"));
 
             // 검색 조건 (제목, 내용, 작성자)
             String searchType = searchCondition.getSearchType();
