@@ -2,6 +2,7 @@ package kodanect.common.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
@@ -18,7 +19,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  * - 모든 요청 경로("/**")에 CORS 정책 적용
  */
 @Configuration
-public class GlobalCorsConfig implements WebMvcConfigurer {
+public class WebMvcConfig implements WebMvcConfigurer {
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
@@ -29,6 +30,11 @@ public class GlobalCorsConfig implements WebMvcConfigurer {
                 .allowCredentials(true);
     }
 
+    @Override
+    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        registry.addResourceHandler("/admin/kindeditor/attached/**")
+                .addResourceLocations("file:/app/uploads/admin/kindeditor/attached/");
+    }
 }
 
 
