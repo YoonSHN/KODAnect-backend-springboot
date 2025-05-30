@@ -171,24 +171,18 @@ public class MemorialReplyServiceImpl implements MemorialReplyService {
                     InvalidDonateSeqException
     {
         /* 게시글 댓글 리스트 조회 */
-        ReentrantReadWriteLock lock = getLock(donateSeq);
-        lock.readLock().lock();
 
-        try{
-            /* 게시글 ID 검증 */
-            validateDonateSeq(donateSeq);
+        /* 게시글 ID 검증 */
+        validateDonateSeq(donateSeq);
 
-            /* 게시글 조회 */
-            memorialFinder.findByIdOrThrow(donateSeq);
+        /* 게시글 조회 */
+        memorialFinder.findByIdOrThrow(donateSeq);
 
-            Pageable pageable = PageRequest.of(0, size +1);
+        Pageable pageable = PageRequest.of(0, size +1);
 
-            /* 댓글 리스트 모두 조회 */
-            return memorialReplyRepository.findByCursor(donateSeq, cursor, pageable);
-        }
-        finally {
-            lock.readLock().unlock();
-        }
+        /* 댓글 리스트 모두 조회 */
+        return memorialReplyRepository.findByCursor(donateSeq, cursor, pageable);
+
     }
 
     public CursorReplyPaginationResponse<MemorialReplyResponse> getMoreReplyList(Integer donateSeq, Integer cursor, int size)
