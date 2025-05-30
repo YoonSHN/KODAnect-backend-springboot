@@ -15,6 +15,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.support.MessageSourceAccessor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -60,7 +61,9 @@ public class ArticleControllerTest {
                 eq("all"),
                 isNull(),
                 any(PageRequest.class)))
-                .thenReturn(new PageImpl<>(List.of(dto)));
+                .thenReturn((Page) new PageImpl<>(List.of(dto)));
+
+
 
         mockMvc.perform(get("/newKoda/notices")
                         .param("optionStr", "1")
@@ -83,7 +86,7 @@ public class ArticleControllerTest {
                 eq("all"),
                 isNull(),
                 any(PageRequest.class)))
-                .thenReturn(new PageImpl<>(List.of(dto)));
+                .thenReturn((Page) new PageImpl<>(List.of(dto)));
 
         mockMvc.perform(get("/newKoda/makePublic")
                         .param("page", "0")

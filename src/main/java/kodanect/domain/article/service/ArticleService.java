@@ -8,7 +8,7 @@ import org.springframework.data.domain.Pageable;
 import java.util.List;
 
 public interface ArticleService {
-    Page<ArticleDTO> getArticles(List<String> boardCodes, String searchField, String keyword, Pageable pageable);
+    Page<? extends ArticleDTO>  getArticles(List<String> boardCodes, String searchField, String keyword, Pageable pageable);
 
     ArticleDetailDto getArticle(String boardCode, Integer articleSeq);
 }

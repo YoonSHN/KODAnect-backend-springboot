@@ -3,6 +3,7 @@ package kodanect.domain.article.service.impl;
 import kodanect.common.exception.custom.ArticleNotFoundException;
 import kodanect.domain.article.dto.ArticleDTO;
 import kodanect.domain.article.dto.ArticleDetailDto;
+import kodanect.domain.article.dto.MakePublicDTO;
 import kodanect.domain.article.entity.Article;
 import kodanect.domain.article.repository.ArticleRepository;
 import kodanect.domain.article.service.ArticleService;
@@ -23,18 +24,25 @@ public class ArticleServiceImpl implements ArticleService {
     /**
      * 게시글 목록 조회
      *
-     * @param boardCodes    게시판 유형 ("notice", "recruit", "all")
+     * @param boardCodes    게시판 유형
      * @param keyword  검색 키워드 (제목/내용)
      * @param pageable 페이징 정보
      * @return 페이징 ArticleDTO 리스트
      */
-    @Override
-    public Page<ArticleDTO> getArticles(List<String> boardCodes, String searchField, String keyword, Pageable pageable) {
-        Page<Article> articles = articleRepository.searchArticles(boardCodes, searchField,keyword, pageable);
+    public Page<? extends ArticleDTO> getArticles(List<String> boardCodes, String searchField, String keyword, Pageable pageable) {
+        Page<Article> articles = articleRepository.searchArticles(boardCodes, searchField, keyword, pageable);
         if (articles == null) {
             return Page.empty(pageable);
         }
-        return articles.map(ArticleDTO::fromArticle);
+
+        String boardCode = boardCodes.get(0);
+
+        switch (boardCode) {
+            case "32":
+                return articles.map(MakePublicDTO::fromArticleToMakePublicDto);
+            default:
+                return articles.map(ArticleDTO::fromArticle);
+        }
     }
 
     /**

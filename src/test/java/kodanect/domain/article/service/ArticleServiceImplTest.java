@@ -55,7 +55,7 @@ public class ArticleServiceImplTest {
                 .thenReturn(articlePage);
 
         // when
-        Page<ArticleDTO> result = articleService.getArticles(List.of("7"), "제목","공지", PageRequest.of(0, 10));
+        Page<? extends ArticleDTO> result = articleService.getArticles(List.of("7"), "제목","공지", PageRequest.of(0, 10));
 
         // then
         assertNotNull(result);
@@ -87,7 +87,7 @@ public class ArticleServiceImplTest {
                 .thenReturn(articlePage);
 
         // when
-        Page<ArticleDTO> result = articleService.getArticles(List.of("27"), null ,null, PageRequest.of(0, 10));
+        Page<? extends ArticleDTO> result = articleService.getArticles(List.of("27"), null ,null, PageRequest.of(0, 10));
 
         // then
         assertEquals(1, result.getTotalElements());
@@ -116,7 +116,7 @@ public class ArticleServiceImplTest {
                 .thenReturn(mockPage);
 
         // when
-        Page<ArticleDTO> result = articleService.getArticles(expectedBoardCodes, null,null, PageRequest.of(0, 10));
+        Page<? extends ArticleDTO> result = articleService.getArticles(expectedBoardCodes, null,null, PageRequest.of(0, 10));
 
         // then
         assertEquals(1, result.getTotalElements());

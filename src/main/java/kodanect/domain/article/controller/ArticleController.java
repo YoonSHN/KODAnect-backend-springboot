@@ -56,10 +56,13 @@ public class ArticleController {
      * @param pageable 페이징 및 정렬 정보
      * @return ApiResponse
      */
-    private ResponseEntity<ApiResponse<Page<ArticleDTO>>> getArticlesCommon(List<String> boardCodes, String searchField, String search, Pageable pageable) {
-        Page<ArticleDTO> result = service.getArticles(boardCodes, searchField, search, pageable);
+    private ResponseEntity<ApiResponse<Page<? extends ArticleDTO>>> getArticlesCommon(
+            List<String> boardCodes, String searchField, String search, Pageable pageable) {
+
+        Page<? extends ArticleDTO> articles = service.getArticles(boardCodes, searchField, search, pageable);
+
         String message = messageSourceAccessor.getMessage(ARTICLE_LIST_SUCCESS);
-        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, message, result));
+        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, message, articles));
     }
 
     /**
@@ -129,7 +132,7 @@ public class ArticleController {
      * @return ApiResponse
      */
     @GetMapping("/notices")
-    public ResponseEntity<ApiResponse<Page<ArticleDTO>>> getArticles(
+    public ResponseEntity<ApiResponse<Page<? extends ArticleDTO>>> getArticles(
             @RequestParam(defaultValue = "all") BoardOption optionStr,
             @RequestParam(required = false, defaultValue = "all") String searchField,
             @RequestParam(required = false) String search,
@@ -149,7 +152,7 @@ public class ArticleController {
      * @return ApiResponse
      */
     @GetMapping("/{boardCode}")
-    public ResponseEntity<ApiResponse<Page<ArticleDTO>>> getOtherBoardArticles(
+    public ResponseEntity<ApiResponse<Page<? extends ArticleDTO>>> getOtherBoardArticles(
             @PathVariable String boardCode,
             @RequestParam(required = false, defaultValue = "all") String searchField,
             @RequestParam(required = false) String search,
