@@ -1,19 +1,18 @@
 package kodanect.domain.article.controller;
 
 import kodanect.common.config.GlobalsProperties;
-import kodanect.common.response.ApiResponse;
 import kodanect.domain.article.dto.ArticleDTO;
 import kodanect.domain.article.dto.ArticleDetailDto;
-import kodanect.domain.article.dto.BoardOption;
+import kodanect.domain.article.dto.DownloadFile;
+import kodanect.domain.article.repository.BoardCategoryCache;
 import kodanect.domain.article.service.ArticleService;
-import kodanect.domain.article.util.StringToBoardOptionConverter;
+import kodanect.domain.article.service.FileDownloadService;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Import;
 import org.springframework.context.support.MessageSourceAccessor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -30,7 +29,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @RunWith(SpringRunner.class)
 @WebMvcTest(controllers = ArticleController.class)
-@Import(StringToBoardOptionConverter.class)
 public class ArticleControllerTest {
 
     @Autowired
@@ -45,6 +43,12 @@ public class ArticleControllerTest {
     @MockBean
     private GlobalsProperties globalsProperties;
 
+    @MockBean
+    private BoardCategoryCache boardCategoryCache;
+
+    @MockBean
+    private FileDownloadService fileDownloadService;
+
     @Before
     public void setUp() {
         when(messageSourceAccessor.getMessage("article.listSuccess"))
@@ -56,14 +60,15 @@ public class ArticleControllerTest {
     @Test
     public void testGetArticles() throws Exception {
         ArticleDTO dto = ArticleDTO.builder().title("공지사항 제목").build();
+
+        when(boardCategoryCache.getBoardCodeByUrlParam("1")).thenReturn("7");
+
         when(articleService.getArticles(
-                eq(BoardOption.fromParam("1").resolveBoardCodes()),
+                eq(List.of("7")),
                 eq("all"),
                 isNull(),
                 any(PageRequest.class)))
                 .thenReturn((Page) new PageImpl<>(List.of(dto)));
-
-
 
         mockMvc.perform(get("/newKoda/notices")
                         .param("optionStr", "1")
@@ -77,9 +82,9 @@ public class ArticleControllerTest {
 
     @Test
     public void testGetOtherBoardArticles() throws Exception {
-        ArticleDTO dto = ArticleDTO.builder()
-                .title("사전정보공개 제목")
-                .build();
+        ArticleDTO dto = ArticleDTO.builder().title("사전정보공개 제목").build();
+
+        when(boardCategoryCache.getBoardCodeByUrlParam("makePublic")).thenReturn("32");
 
         when(articleService.getArticles(
                 eq(List.of("32")),
@@ -104,6 +109,7 @@ public class ArticleControllerTest {
                 .contents("상세 내용")
                 .build();
 
+        when(boardCategoryCache.getBoardCodeByUrlParam("1")).thenReturn("7");
         when(articleService.getArticle("7", 1)).thenReturn(detailDto);
 
         mockMvc.perform(get("/newKoda/notices/1")
@@ -114,4 +120,37 @@ public class ArticleControllerTest {
                 .andExpect(jsonPath("$.data.contents").value("상세 내용"))
                 .andExpect(jsonPath("$.success").value(true));
     }
+
+    @Test
+    public void testInvalidSearchField() throws Exception {
+        when(boardCategoryCache.getBoardCodeByUrlParam("1")).thenReturn("7");
+
+        mockMvc.perform(get("/newKoda/notices")
+                        .param("optionStr", "1")
+                        .param("searchField", "invalidField")
+                        .param("page", "0")
+                        .param("size", "20"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("검색 필드는 title, content, all 중 하나여야 합니다."));
+    }
+
+    @Test
+    public void testSearchKeywordTooLong() throws Exception {
+        when(boardCategoryCache.getBoardCodeByUrlParam("1")).thenReturn("7");
+
+        String longKeyword = "a".repeat(101);
+
+        mockMvc.perform(get("/newKoda/notices")
+                        .param("optionStr", "1")
+                        .param("searchField", "title")
+                        .param("search", longKeyword)
+                        .param("page", "0")
+                        .param("size", "20"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("검색어는 최대 100자까지 입력할 수 있습니다."));
+    }
+
+
 }

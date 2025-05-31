@@ -10,6 +10,9 @@ import lombok.experimental.SuperBuilder;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+/**
+ * 게시글 리스트/상세 조회 응답용 DTO
+ */
 @Getter
 @SuperBuilder
 @AllArgsConstructor

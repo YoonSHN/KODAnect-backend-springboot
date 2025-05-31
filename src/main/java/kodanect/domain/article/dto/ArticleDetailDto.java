@@ -9,6 +9,10 @@ import lombok.Getter;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * 게시글 상세 조회 응답 DTO
+ * - 게시글 기본 정보 + 파일 목록 포함
+ */
 @Getter
 @Builder
 public class ArticleDetailDto {

@@ -24,9 +24,9 @@ public class ArticleServiceImpl implements ArticleService {
     /**
      * 게시글 목록 조회
      *
-     * @param boardCodes    게시판 유형
-     * @param keyword  검색 키워드 (제목/내용)
-     * @param pageable 페이징 정보
+     * @param boardCodes 게시판 유형
+     * @param keyword    검색 키워드 (제목/내용)
+     * @param pageable   페이징 정보
      * @return 페이징 ArticleDTO 리스트
      */
     public Page<? extends ArticleDTO> getArticles(List<String> boardCodes, String searchField, String keyword, Pageable pageable) {
@@ -37,6 +37,7 @@ public class ArticleServiceImpl implements ArticleService {
 
         String boardCode = boardCodes.get(0);
 
+        // 카테고리 증가시 factory + Strategy 패턴으로 변경고려
         switch (boardCode) {
             case "32":
                 return articles.map(MakePublicDTO::fromArticleToMakePublicDto);
@@ -48,7 +49,7 @@ public class ArticleServiceImpl implements ArticleService {
     /**
      * 게시글 상세 조회
      *
-     * @param boardCode 게시판 코드
+     * @param boardCode  게시판 코드
      * @param articleSeq 게시글 순번
      * @return ArticleDetailDto (존재하지 않으면 예외 발생)
      */
@@ -60,7 +61,6 @@ public class ArticleServiceImpl implements ArticleService {
 
         Article article = articleRepository.findWithFilesByBoardCodeAndArticleSeq(boardCode, articleSeq)
                 .orElseThrow(() -> new ArticleNotFoundException(articleSeq));
-
 
         return ArticleDetailDto.fromArticleDetailDto(article);
     }

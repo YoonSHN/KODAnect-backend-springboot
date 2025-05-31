@@ -35,20 +35,6 @@ public class ArticleExceptionHandler {
     }
 
     /**
-     * 잘못된 게시판 옵션 값을 전달 시 예외 처리
-     */
-    @ExceptionHandler(InvalidBoardOptionException.class)
-    public ResponseEntity<ApiResponse<Void>> handleInvalidBoardOption(InvalidBoardOptionException ex) {
-        String message = messageSourceAccessor.getMessage(
-                ex.getMessageKey(),
-                ex.getArguments(),
-                "유효하지 않은 게시판 옵션입니다."
-        );
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.fail(HttpStatus.BAD_REQUEST, message));
-    }
-
-    /**
      * 존재하지 않는 게시판 코드로 요청할 경우 예외 처리
      */
     @ExceptionHandler(InvalidBoardCodeException.class)
@@ -89,5 +75,7 @@ public class ArticleExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(ApiResponse.fail(HttpStatus.NOT_FOUND, message));
     }
+
+
 
 }

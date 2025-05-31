@@ -6,21 +6,20 @@ import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
- * 전역 CORS 설정
+ * 전역 Web MVC 설정 클래스
  *
- * 웹 프론트엔드와의 도메인 간 통신 허용 정책 구성
- *
- * 역할
- * - 프론트엔드 요청에 대한 교차 출처 허용 설정
- * - 허용 도메인, 메서드, 헤더, 인증 정보 정의
- *
- * 특징
- * - WebMvcConfigurer 구현 방식 사용
- * - 모든 요청 경로("/**")에 CORS 정책 적용
+ * 역할:
+ * - CORS(Cross-Origin Resource Sharing) 정책 전역 설정
+ * - 외부 정적 리소스 핸들링 경로 설정
  */
 @Configuration
 public class WebMvcConfig implements WebMvcConfigurer {
 
+    /**
+     * CORS 설정
+     * - 특정 도메인에서 오는 요청을 허용
+     * - 프론트엔드 로컬 서버에서 API 호출 허용
+     */
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
@@ -30,6 +29,10 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 .allowCredentials(true);
     }
 
+    /**
+     * 정적 자원 핸들러 설정
+     * - 외부 파일 시스템에 저장된 리소스를 특정 URL 경로로 노출
+     */
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         registry.addResourceHandler("/admin/kindeditor/attached/**")

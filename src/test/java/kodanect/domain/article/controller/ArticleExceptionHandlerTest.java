@@ -3,7 +3,10 @@ package kodanect.domain.article.controller;
 import kodanect.common.config.GlobalsProperties;
 import kodanect.common.exception.config.ArticleExceptionHandler;
 import kodanect.common.exception.custom.*;
+import kodanect.domain.article.dto.ArticleDetailDto;
+import kodanect.domain.article.repository.BoardCategoryCache;
 import kodanect.domain.article.service.ArticleService;
+import kodanect.domain.article.service.FileDownloadService;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -38,11 +41,19 @@ class ArticleExceptionHandlerTest {
     @MockBean
     private GlobalsProperties globalsProperties;
 
+    @MockBean
+    private BoardCategoryCache boardCategoryCache;
+
+    @MockBean
+    private FileDownloadService fileDownloadService;
+
     @Test
     @DisplayName("게시글 없음 예외 - 404")
     void handleArticleNotFoundException() throws Exception {
         int articleSeq = 999;
         String optionStr = "1";
+
+        when(boardCategoryCache.getBoardCodeByUrlParam(optionStr)).thenReturn("7");
 
         when(articleService.getArticle(eq("7"), eq(articleSeq)))
                 .thenThrow(new ArticleNotFoundException(articleSeq));
@@ -59,31 +70,13 @@ class ArticleExceptionHandlerTest {
     }
 
     @Test
-    @DisplayName("잘못된 게시판 옵션 - 400")
-    void handleInvalidBoardOptionException() throws Exception {
-        String invalidOption = "999";
-
-        when(articleService.getArticles(null, null, null, null))
-                .thenThrow(new InvalidBoardOptionException(invalidOption));
-        when(messageSourceAccessor.getMessage(anyString(), any(Object[].class), anyString()))
-                .thenReturn("유효하지 않은 게시판 옵션입니다.");
-
-        mockMvc.perform(get("/newKoda/notices")
-                        .param("optionStr", invalidOption)
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.code").value(400))
-                .andExpect(jsonPath("$.message").value("유효하지 않은 게시판 옵션입니다."));
-    }
-
-    @Test
     @DisplayName("잘못된 게시판 코드 - 400")
     void handleInvalidBoardCodeException() throws Exception {
         String boardCode = "INVALID";
 
-        when(articleService.getArticle(eq("NOTICE"), eq(1)))
+        when(boardCategoryCache.getBoardCodeByUrlParam(boardCode))
                 .thenThrow(new InvalidBoardCodeException(boardCode));
+
         when(messageSourceAccessor.getMessage(anyString(), any(Object[].class), anyString()))
                 .thenReturn("잘못된 게시판 코드입니다.");
 
@@ -94,6 +87,7 @@ class ArticleExceptionHandlerTest {
                 .andExpect(jsonPath("$.code").value(400))
                 .andExpect(jsonPath("$.message").value("잘못된 게시판 코드입니다."));
     }
+
     @Test
     @DisplayName("파일 없음 예외 - 404")
     void handleFileMissingException() throws Exception {
@@ -101,14 +95,15 @@ class ArticleExceptionHandlerTest {
         int articleSeq = 1;
         String fileName = "notfound.pdf";
 
+        when(boardCategoryCache.getBoardCodeByUrlParam(optionStr)).thenReturn("7");
+
+        when(fileDownloadService.loadDownloadFile(eq("7"), eq(articleSeq), eq(fileName)))
+                .thenThrow(new FileMissingException(fileName));
+
+        when(articleService.getArticle(eq("7"), eq(articleSeq)))
+                .thenReturn(ArticleDetailDto.builder().title("test").build());
 
         when(globalsProperties.getFileStorePath()).thenReturn("/files");
-
-        when(articleService.getArticle(anyString(), anyInt()))
-                .thenReturn(null);
-
-        String message = messageSourceAccessor.getMessage(FILE_NOT_FOUND);
-        log.debug("file.notFound message = {}", message);
 
         when(messageSourceAccessor.getMessage(eq(FILE_NOT_FOUND), any(Object[].class), anyString()))
                 .thenReturn("파일을 찾을 수 없습니다.");

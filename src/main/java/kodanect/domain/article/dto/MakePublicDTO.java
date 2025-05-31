@@ -8,6 +8,11 @@ import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDate;
 
+/**
+ * 게시글 DTO
+ *
+ * ArticleDTO를 확장하여 공개 시작일과 공개 방식(disclosureMethod)을 추가로 포함
+ */
 @Getter
 @SuperBuilder
 @NoArgsConstructor

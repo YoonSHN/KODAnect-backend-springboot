@@ -4,6 +4,7 @@ import kodanect.common.config.GlobalsProperties;
 import kodanect.domain.article.entity.*;
 import kodanect.domain.article.repository.ArticleFileRepository;
 import kodanect.domain.article.repository.ArticleRepository;
+import kodanect.domain.article.repository.BoardCategoryCache;
 import kodanect.domain.article.repository.BoardCategoryRepository;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.io.TempDir;
@@ -49,6 +50,9 @@ class ArticleControllerIntegrationTest {
     @Autowired
     private GlobalsProperties globalsProperties;
 
+    @Autowired
+    BoardCategoryCache boardCategoryCache;
+
     @TempDir
     Path tempDir;
 
@@ -86,6 +90,8 @@ class ArticleControllerIntegrationTest {
 
         boardCategoryRepository.save(category1);
         boardCategoryRepository.save(category2);
+
+        boardCategoryCache.reload();
 
 
 
@@ -148,7 +154,7 @@ class ArticleControllerIntegrationTest {
     }
 
     @Test
-    @DisplayName("사전정보 게시판 상세 조회")
+    @DisplayName("사전 정보 게시판 상세 조회")
     void getOtherBoardArticleDetail() throws Exception {
         mockMvc.perform(get("/newKoda/makePublic/2")
                         .accept(MediaType.APPLICATION_JSON))
@@ -158,7 +164,7 @@ class ArticleControllerIntegrationTest {
     }
 
     @Test
-    @DisplayName("사전정보 게시판 첨부파일 다운로드 - 성공")
+    @DisplayName("사전 정보 게시판 첨부파일 다운로드 - 성공")
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void downloadOtherBoardFile() throws Exception {
         String rootPath = globalsProperties.getFileStorePath();

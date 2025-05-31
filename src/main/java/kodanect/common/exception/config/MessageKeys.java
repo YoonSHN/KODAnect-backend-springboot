@@ -13,13 +13,8 @@ public final class MessageKeys {
     public static final String INVALID_BOARD_CODE = "board.invalidCode";
     public static final String FILE_NOT_FOUND = "file.notFound";
     public static final String FILE_ACCESS_VIOLATION = "file.accessViolation";
-    public static final String FILE_DOWNLOAD_ERROR = "file.downloadError";
     public static final String ARTICLE_DETAIL_SUCCESS = "article.detailSuccess";
     public static final String ARTICLE_LIST_SUCCESS = "article.listSuccess";
-
-
-    // 게시판 옵션 관련
-    public static final String INVALID_BOARD_OPTION = "exception.board.invalid-option";
 
     private MessageKeys() {}
 
