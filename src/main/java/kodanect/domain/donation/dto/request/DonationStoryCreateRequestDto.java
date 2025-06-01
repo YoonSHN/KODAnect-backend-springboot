@@ -22,7 +22,7 @@ public class DonationStoryCreateRequestDto {
     private String storyTitle;
 
     @NotBlank
-    @Size(min=8)
+    @Size(min = 8, message = "{Size.donationStoryCreateRequestDto.storyPasscode}")
     private String storyPasscode;
     @NotBlank
     private String storyWriter;

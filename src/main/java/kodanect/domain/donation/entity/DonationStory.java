@@ -63,6 +63,7 @@ public class DonationStory {
 
     @OneToMany(mappedBy="story", fetch= FetchType.LAZY, cascade=CascadeType.ALL, orphanRemoval=true)
     @JsonIgnore
+    @Builder.Default
     private List<DonationStoryComment> comments = new ArrayList<>();
 
     // private String donorName;
@@ -85,6 +86,7 @@ public class DonationStory {
     public void removeComment(DonationStoryComment comment){
         comments.remove(comment);
         comment.setStory(null);
+        this.delFlag= "Y";
     }
     //조회수 증가
     public void increaseReadCount(){ //조회수 증가메서드

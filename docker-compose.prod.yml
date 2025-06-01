@@ -6,7 +6,7 @@ services:
     container_name: kodanect-spring-prod
     restart: always
     env_file:
-      - .env
+      - .env.dev
     environment:
       DB_HOST: ${DB_HOST}
       DB_PORT: ${DB_PORT}

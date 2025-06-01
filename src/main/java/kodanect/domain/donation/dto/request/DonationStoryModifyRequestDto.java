@@ -17,14 +17,14 @@ public class DonationStoryModifyRequestDto {
 
     @NotNull
     private AreaCode areaCode;
-    @NotBlank
+    @NotBlank(message = "{donation.error.required.title}")
     private String storyTitle;
 
-    @NotBlank
+    @NotBlank(message = "{donation.story.writer.blank}")
     private String storyWriter;
     private String storyContents;
 
     private MultipartFile file;
-    @NotNull
+    @NotNull(message = "{donation.story.captcha.null}")
     private String captchaToken; // hCaptcha가 전달한 캡차 인증 값
 }

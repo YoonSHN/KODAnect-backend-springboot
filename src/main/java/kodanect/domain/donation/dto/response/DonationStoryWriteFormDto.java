@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotNull;
 import java.util.List;
 
 /*
@@ -17,5 +18,6 @@ import java.util.List;
 @AllArgsConstructor
 public class DonationStoryWriteFormDto {
 
+    @NotNull
     private List<AreaCode> areaOptions; //db에 저장된 권역 정보
 }

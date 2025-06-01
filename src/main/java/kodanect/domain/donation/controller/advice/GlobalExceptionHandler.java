@@ -11,6 +11,8 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    private static final int BAD_REQUEST = 400;
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<?> handleValidationException(MethodArgumentNotValidException e) {
         Map<String, String> errorMap = e.getBindingResult().getFieldErrors().stream()
@@ -22,7 +24,7 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.badRequest().body(Map.of(
                 "success", false,
-                "code", 400,
+                "code", BAD_REQUEST,
                 "message", "입력값이 유효하지 않습니다.",
                 "errors", errorMap
         ));

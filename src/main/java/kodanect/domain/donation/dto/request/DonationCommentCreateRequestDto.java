@@ -16,12 +16,12 @@ import javax.validation.constraints.NotNull;
 @Builder
 public class DonationCommentCreateRequestDto {
 
-    @NotBlank
+    @NotBlank(message="donation.error.required.writer")
     private String commentWriter;
-    @NotNull
+    @NotBlank(message="donation.comment.verify.passcode.blank")
     private String commentPasscode;
-    @NotBlank
+    @NotBlank(message="donation.comment.contents.blank")
     private String contents;
-    @NotNull
+    @NotNull(message="donation.story.captcha.null")
     private String captchaToken;
 }

@@ -32,7 +32,8 @@ public class CaptchaService {
 
             // 성공 여부를 true/false로 반환
             return Boolean.TRUE.equals(result.get("success"));
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             e.printStackTrace();
             return false;
         }

@@ -1,18 +1,20 @@
 package kodanect.domain.donation.controller;
 
-
+import kodanect.common.response.ApiResponse;
+import kodanect.domain.donation.dto.OffsetBasedPageRequest;
 import kodanect.domain.donation.dto.request.*;
 import kodanect.domain.donation.dto.response.AreaCode;
 import kodanect.domain.donation.dto.response.DonationStoryDetailDto;
 import kodanect.domain.donation.dto.response.DonationStoryListDto;
 import kodanect.domain.donation.dto.response.DonationStoryWriteFormDto;
-import kodanect.domain.donation.service.impl.DonationCommentService;
-import kodanect.domain.donation.service.impl.DonationService;
+import kodanect.domain.donation.service.DonationCommentService;
+import kodanect.domain.donation.service.DonationService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
+import org.springframework.context.support.MessageSourceAccessor;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.WebDataBinder;
@@ -27,150 +29,178 @@ import java.util.Map;
 @RequestMapping()
 public class DonationController {
 
-    private final DonationService donationService;
-    private final DonationCommentService donationCommentService;
-
     private static final int DEFAULT_PAGE_SIZE = 20;
 
+    private final DonationService donationService;
+    private final DonationCommentService donationCommentService;
+    private final MessageSourceAccessor messageSourceAccessor;
+
+    /**
+     * 기증 스토리 전체 목록 조회 (더보기 방식 페이징 포함)
+     */
     @GetMapping("/donationLetters")
-    public ResponseEntity<?> getAllDonationList(
-            @PageableDefault(size = DEFAULT_PAGE_SIZE, sort = "storySeq", direction = Sort.Direction.DESC)
-            Pageable pageable
+    public ResponseEntity<ApiResponse<?>> getAllDonationList(
+            @RequestParam(defaultValue = "0") int offset,
+            @RequestParam(defaultValue = "20") int limit
     ) {
-        try {
-            Page<DonationStoryListDto> page = donationService.findAllDonationStories(pageable);
-            System.out.println("서비스 호출 완료");
+        Pageable pageable = new OffsetBasedPageRequest(offset, limit, Sort.by("storySeq").descending());
+        Slice<DonationStoryListDto> slice = donationService.findStoriesWithOffset(pageable);
 
-            return ResponseEntity.ok(Map.of("success", true, "code", 200, "message", "기증 후 스토리 목록 가져오기 성공", "data", page.getContent(), "pageInfo", Map.of("totalPages", page.getTotalPages(), "totalElements", page.getTotalElements(), "currentPage", page.getNumber(), "pageSize", page.getSize(), "numberOfElements", page.getNumberOfElements(), "isFirst", page.isFirst(), "isLast", page.isLast(), "hasNext", page.hasNext(), "hasPrevious", page.hasPrevious(), "sort", page.getSort().toString())));
-        } catch (RuntimeException re) {
-            re.printStackTrace();
-            return ResponseEntity.status(500).body(Map.of("success", false, "code", 500, "message", "기증 후 스토리 목록 가져오기 실패"));
-        }
+//        Map<String, Object> pageInfo = Map.of(
+//                "currentOffset", offset,
+//                "pageSize", limit,
+//                "hasNext", slice.hasNext(),
+//                "hasPrevious", slice.hasPrevious(),
+//                "sort", slice.getSort().toString()
+//        );
+
+        String message = messageSourceAccessor.getMessage("board.list.get.success");
+        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, message,
+                Map.of("pageInfo", slice)));
     }
 
+    /**
+     * 기증 스토리 검색 (제목/내용 기준, 페이징 포함)
+     */
+    @GetMapping("/donationLetters/search")
+    public ResponseEntity<ApiResponse<?>> searchDonationStories(
+            @RequestParam("type") String type,
+            @RequestParam("keyword") String keyword,
+            @RequestParam(defaultValue = "0") int offset,
+            @RequestParam(defaultValue = "20") int limit
+    ) {
+        Pageable pageable = new OffsetBasedPageRequest(offset, limit, Sort.by("storySeq").descending());
+        Slice<DonationStoryListDto> slice = donationService.findDonationStorySearchResult(pageable, type, keyword);
+
+        Map<String, Object> pageInfo = Map.of(
+                "currentOffset", offset,
+                "pageSize", limit,
+                "hasNext", slice.hasNext(),
+                "hasPrevious", slice.hasPrevious(),
+                "sort", slice.getSort().toString()
+        );
+
+        String message = messageSourceAccessor.getMessage("board.list.get.success");
+        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, message,
+                Map.of("items", slice.getContent(), "pageInfo", pageInfo)));
+    }
+
+    /**
+     * 기증 스토리 작성 폼에 필요한 데이터 반환
+     */
     @GetMapping("/donationLetters/new")
-    public ResponseEntity<?> getDonationWriteForm() {
+    public ResponseEntity<ApiResponse<DonationStoryWriteFormDto>> getDonationWriteForm() {
         DonationStoryWriteFormDto formDto = donationService.loadDonationStoryFormData();
-        if (formDto != null) {
-            return ResponseEntity.ok(Map.of("success", true, "code", 200, "message", "폼 데이터 로드 성공", "data", donationService.loadDonationStoryFormData()));
-        }
-        return ResponseEntity.status(500).body(Map.of("success", false, "code", 500, "message", "폼 데이터 로드 실패"));
-
+        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, "폼 데이터 로드 성공", formDto));
     }
 
+    /**
+     * 기증 스토리 등록
+     */
     @PostMapping(value = "/donationLetters", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> createStory(@ModelAttribute @Valid DonationStoryCreateRequestDto requestDto) throws Exception {
-        try {
-            donationService.createDonationStory(requestDto);
-            return ResponseEntity.ok(Map.of("success", true, "code", 201, "message", "스토리가 성공적으로 등록되었습니다."));
-        } catch (IllegalArgumentException ie) {
-            return ResponseEntity.status(400).body(Map.of("success", false, "code", 400, "message", "필수 입력값이 누락되었습니다."));
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body(Map.of("success", false, "code", 500, "message", "서버 내부 오류가 발생했습니다.", "error", e.getMessage()));
-        }
+    public ResponseEntity<ApiResponse<Void>> createStory(@ModelAttribute @Valid DonationStoryCreateRequestDto requestDto) {
+        donationService.createDonationStory(requestDto);
+        String message = messageSourceAccessor.getMessage("donation.create.success");
+        return ResponseEntity.ok(ApiResponse.success(HttpStatus.CREATED, message));
     }
 
+    /**
+     * 특정 기증 스토리 상세 조회
+     */
     @GetMapping("/donationLetters/{storySeq}")
-    public ResponseEntity<?> getDonationStoryDetail(@PathVariable("storySeq") Long storySeq) {
-        try {
-            DonationStoryDetailDto donationDetailStory = donationService.findDonationStory(storySeq);
-
-            return ResponseEntity.ok(Map.of("success", true, "status", 200, "message", "detail 페이지 출력", "data", donationDetailStory));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(404).body(Map.of("success", false, "status", 404, "message", "해당 스토리를 찾을 수 없습니다."));
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body(Map.of("success", false, "status", 500, "message", "서버 내부 오류가 발생했습니다.", "error", e.getMessage()));
-        }
+    public ResponseEntity<ApiResponse<DonationStoryDetailDto>> getDonationStoryDetail(@PathVariable Long storySeq) {
+        DonationStoryDetailDto detailDto = donationService.findDonationStory(storySeq);
+        String message = messageSourceAccessor.getMessage("article.detail.success");
+        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, message, detailDto));
     }
 
-    /*스토리 수정인증*/
+    /**
+     * 기증 스토리 수정 인증
+     */
     @PostMapping("/donationLetters/{storySeq}/verifyPwd")
-    public ResponseEntity<?> verifyStoryPassword(@PathVariable("storySeq") Long storySeq, @RequestBody VerifyStoryPasscodeDto passCordDto) {
-        try {
-            donationService.verifyPasswordWithPassword(storySeq, passCordDto);
+    public ResponseEntity<ApiResponse<Map<String, Object>>> verifyStoryPassword(
+            @PathVariable Long storySeq,
+            @RequestBody VerifyStoryPasscodeDto passCordDto) {
 
-            return ResponseEntity.ok(Map.of("result", 1, "message", "비밀번호가 일치합니다."));
-        } catch (IllegalArgumentException e) {
-            String message = switch (e.getMessage()) {
-                case "NOT_FOUND" -> "해당 게시글이 존재하지 않습니다.";
-                case "MISMATCH_PWD" -> "비밀번호가 일치하지 않습니다.";
-                default -> "알 수 없는 오류가 발생했습니다.";
-            };
-            return ResponseEntity.status(400).body(Map.of("result", 0, "message", message));
-        }
-
+        donationService.verifyPasswordWithPassword(storySeq, passCordDto);
+        String message = messageSourceAccessor.getMessage("donation.password.match");
+        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, message, Map.of("result", 1)));
     }
 
-    /*
-    기증 후 스토리 수정
+    /**
+     * 기증 스토리 수정
      */
     @PatchMapping(value = "/donationLetters/{storySeq}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> modifyStory(@PathVariable("storySeq") Long storySeq, @ModelAttribute @Valid DonationStoryModifyRequestDto requestDto) {
-        try {
-            donationService.modifyDonationStory(storySeq, requestDto);
+    public ResponseEntity<ApiResponse<Void>> modifyStory(
+            @PathVariable Long storySeq,
+            @ModelAttribute @Valid DonationStoryModifyRequestDto requestDto) {
 
-            return ResponseEntity.ok(Map.of("success", true, "code", 201, "message", "스토리가 성공적으로 수정되었습니다."));
-        } catch (IllegalArgumentException ie) {
-            return ResponseEntity.status(400).body(Map.of("success", false, "code", 400, "message", "필수 입력값이 누락되었습니다."));
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body(Map.of("success", false, "code", 500, "message", "서버 내부 오류가 발생했습니다."));
-        }
+        donationService.modifyDonationStory(storySeq, requestDto);
+        String message = messageSourceAccessor.getMessage("donation.update.success");
+        return ResponseEntity.ok(ApiResponse.success(HttpStatus.CREATED, "스토리가 성공적으로 수정되었습니다."));
     }
 
-    /*
-    가증 후 스토리 스토리 삭제
+    /**
+     * 기증 스토리 삭제
      */
     @DeleteMapping("/donationLetters/{storySeq}")
-    public ResponseEntity<?> deleteStory(@PathVariable("storySeq") Long storySeq, @RequestBody VerifyStoryPasscodeDto storyPasscodeDto) {
-        try {
-            donationService.deleteDonationStory(storySeq, storyPasscodeDto);
-            return ResponseEntity.ok(Map.of("result", 1, "message", "스토리가 정상적으로 삭제 되었습니다."));
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(400).body(Map.of("result", 0, "message", "비밀번호가 일치하지 않습니다."));
-        }
+    public ResponseEntity<ApiResponse<Map<String, Object>>> deleteStory(
+            @PathVariable Long storySeq,
+            @RequestBody VerifyStoryPasscodeDto storyPasscodeDto) {
+
+        donationService.deleteDonationStory(storySeq, storyPasscodeDto);
+        String message = messageSourceAccessor.getMessage("donation.delete.success");
+        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, message, Map.of("result", 1)));
     }
 
-    /*
-    기증 후 스토리 댓글 등록
+    /**
+     * 댓글 작성(등록)
      */
     @PostMapping("/donationLetters/{storySeq}/comments")
-    public ResponseEntity<?> createComment(@PathVariable("storySeq") Long storySeq, @RequestBody @Valid DonationCommentCreateRequestDto requestDto) {
-        try {
-            donationCommentService.createDonationStoryComment(storySeq, requestDto);
+    public ResponseEntity<ApiResponse<Void>> createComment(
+            @PathVariable Long storySeq,
+            @RequestBody @Valid DonationCommentCreateRequestDto requestDto) {
 
-            return ResponseEntity.ok(Map.of("success", true, "code", 200, "message", "편지 댓글이 성공적으로 등록되었습니다."));
-        } catch (IllegalArgumentException ie) {
-            return ResponseEntity.status(400).body(Map.of("success", false, "code", 400, "message", "필수 입력값이 누락되었습니다."));
-        } catch (Exception e) {
-            return ResponseEntity.ok(Map.of("success", false, "code", 500, "message", "서버 내부 오류가 발생했습니다."));
-        }
+        donationCommentService.createDonationStoryComment(storySeq, requestDto);
+        String message = messageSourceAccessor.getMessage("donation.comment.create.success");
+        return ResponseEntity.ok(ApiResponse.success(
+                HttpStatus.OK,
+                message));
     }
 
+    /**
+     * 댓글 수정
+     */
     @PatchMapping("/donationLetters/{storySeq}/comments/{commentSeq}")
-    public ResponseEntity<?> modifyComment(@PathVariable("storySeq") Long storySeq, @PathVariable("commentSeq") Long commentSeq, @RequestBody DonationStoryCommentModifyRequestDto requestDto) {
-        try {
-            donationCommentService.modifyDonationComment(commentSeq, requestDto);
+    public ResponseEntity<ApiResponse<Void>> modifyComment(
+            @PathVariable Long storySeq,
+            @PathVariable Long commentSeq,
+            @RequestBody DonationStoryCommentModifyRequestDto requestDto) {
 
-            return ResponseEntity.ok(Map.of("success", true, "code", 201, "message", "스토리 댓글이 성공적으로 수정되었습니다."));
-        } catch (IllegalArgumentException ie) {
-            return ResponseEntity.status(400).body(Map.of("success", false, "code", 400, "message", "필수 입력값이 누락되었습니다."));
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body(Map.of("success", false, "code", 500, "message", "서버 내부 오류가 발생했습니다."));
-        }
+        donationCommentService.modifyDonationComment(commentSeq, requestDto);
+        String message = messageSourceAccessor.getMessage("donation.comment.update.success");
+
+        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, message));
     }
 
+    /**
+     * 댓글 삭제
+     */
     @DeleteMapping("/donationLetters/{storySeq}/comments/{commentSeq}")
-    public ResponseEntity<?> deleteComment(@PathVariable("storySeq") Long storySeq, @PathVariable("commentSeq") Long commentSeq, @RequestBody VerifyCommentPasscodeDto commentPassword) {
-        try {
-            donationCommentService.deleteDonationComment(commentSeq, commentPassword);
-            return ResponseEntity.ok(Map.of("success", true, "code", 201, "message", "스토리 댓글이 성공적으로 삭제되었습니다."));
-        } catch (IllegalArgumentException ie) {
-            return ResponseEntity.status(400).body(Map.of("success", false, "code", 400, "message", ie.getMessage()));
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body(Map.of("success", false, "code", 500, "message", e.getMessage()));
-        }
+    public ResponseEntity<ApiResponse<Void>> deleteComment(
+            @PathVariable Long storySeq,
+            @PathVariable Long commentSeq,
+            @RequestBody VerifyCommentPasscodeDto commentPassword) {
+
+        donationCommentService.deleteDonationComment(commentSeq, commentPassword);
+        String message = messageSourceAccessor.getMessage("donation.comment.delete.success");
+        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK,message));
     }
 
+    /**
+     * 문자열로 넘어온 권역 코드를 enum 타입인 AreaCode로 변환해주는 바인더 등록 메서드
+     * - 스프링 MVC가 문자열을 AreaCode 타입으로 자동 변환할 수 있게 도와줌
+     */
     @InitBinder
     public void initBinder(WebDataBinder binder) {
         binder.registerCustomEditor(AreaCode.class, new PropertyEditorSupport() {
@@ -181,4 +211,3 @@ public class DonationController {
         });
     }
 }
-
