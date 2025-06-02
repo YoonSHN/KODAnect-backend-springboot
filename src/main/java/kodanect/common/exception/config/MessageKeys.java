@@ -9,16 +9,12 @@ package kodanect.common.exception.config;
  */
 public final class MessageKeys {
     // 게시글 관련
-    public static final String ARTICLE_LIST_SUCCESS = "article.list.success";
-    public static final String ARTICLE_DETAIL_SUCCESS = "article.detail.success";
-    public static final String ARTICLE_NOT_FOUND = "exception.article.not-found";
-
-    // 파일 관련
-    public static final String FILE_NOT_FOUND = "file.not.found";
-    public static final String FILE_DOWNLOAD_ERROR = "file.download.error";
-
-    // 게시판 옵션 관련
-    public static final String INVALID_BOARD_OPTION = "exception.board.invalid-option";
+    public static final String ARTICLE_NOT_FOUND = "article.notFound";
+    public static final String INVALID_BOARD_CODE = "board.invalidCode";
+    public static final String FILE_NOT_FOUND = "file.notFound";
+    public static final String FILE_ACCESS_VIOLATION = "file.accessViolation";
+    public static final String ARTICLE_DETAIL_SUCCESS = "article.detailSuccess";
+    public static final String ARTICLE_LIST_SUCCESS = "article.listSuccess";
 
     private MessageKeys() {}
 

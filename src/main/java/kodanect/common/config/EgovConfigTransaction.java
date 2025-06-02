@@ -114,7 +114,9 @@ public class EgovConfigTransaction {
 	@Bean
 	public Advisor txAdvisor(@Qualifier("transactionManager") PlatformTransactionManager txManager) {
 		AspectJExpressionPointcut pointcut = new AspectJExpressionPointcut();
-		pointcut.setExpression("execution(* kodanect.domain..service.impl..*(..))");
+		pointcut.setExpression(
+				"execution(* kodanect.domain..service.impl..*(..)) && !@annotation(org.springframework.transaction.annotation.Transactional)"
+		);
 		return new DefaultPointcutAdvisor(pointcut, txAdvice(txManager));
 	}
 

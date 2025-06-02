@@ -16,6 +16,9 @@ services:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
     ports:
       - "8080:8080"
+    volumes:
+      - /home/app/files:/app/files
+      - /home/app/uploads:/app/uploads
     network_mode: host
 
 
