@@ -147,7 +147,7 @@ public class GlobalExcepHndlr {
                 .body(ApiResponse.fail(HttpStatus.NOT_FOUND, msg));
     }
     @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<ApiResponse<?>> handleRuntimeException(RuntimeException ex) {
+    public ResponseEntity<ApiResponse<Void>> handleRuntimeException(RuntimeException ex) {
         log.error("Unhandled exception: ", ex);
 
         String message = messageSourceAccessor.getMessage("error.internal"); // ← 이 줄이 핵심

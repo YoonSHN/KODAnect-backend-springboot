@@ -15,11 +15,11 @@ import java.util.Map;
 public class CaptchaService {
     // 캡차 검증 (프론트에서 받은 토큰을 hcaptcha에 전달하여 재검증)
     public boolean verifyCaptcha(String token) {
-        String secret = "team-secret-key"; // 실제 시크릿키로 바꿔야 함
+        String secret = "team-secret-key";
         String url = "https://hcaptcha.com/siteverify";
 
         try {
-            HttpClient client = HttpClient.newHttpClient();
+            HttpClient client = HttpClient.newHttpClient(); // 그냥 선언만 하면 됨
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
@@ -32,11 +32,15 @@ public class CaptchaService {
             ObjectMapper mapper = new ObjectMapper();
             Map<String, Object> result = mapper.readValue(response.body(), Map.class);
 
-            // 성공 여부를 true/false로 반환
             return Boolean.TRUE.equals(result.get("success"));
         }
+        catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.error("인터럽트 발생", e);
+            return false;
+        }
         catch (Exception e) {
-            log.error("에러 발생");
+            log.error("캡차 검증 중 예외 발생", e);
             return false;
         }
     }

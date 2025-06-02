@@ -47,7 +47,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(DonationController.class)
 @ContextConfiguration(classes = KodanectBootApplication.class)
 @Import(GlobalExcepHndlr.class)
-public class DonationControllerTest {
+class DonationControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -151,7 +151,7 @@ public class DonationControllerTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.message").value("검색 성공"))
-                .andExpect(jsonPath("$.data.items[0].storySeq").value(2));
+                .andExpect(jsonPath("$.data.content[0].storySeq").value(2));
     }
 
     @Test
@@ -174,7 +174,7 @@ public class DonationControllerTest {
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.items").isEmpty());
+                .andExpect(jsonPath("$.data.content").isEmpty());
     }
 
 
@@ -403,6 +403,40 @@ public class DonationControllerTest {
                 .andExpect(jsonPath("$.code").value(201))
                 .andExpect(jsonPath("$.message").value("스토리가 성공적으로 수정되었습니다."));
     }
+    @Test
+    @DisplayName("PATCH /donationLetters/{storySeq} - 사진 제거 성공")
+    void modifyStory_removeImage_success() throws Exception {
+        Long storySeq = 1L;
+
+        DonationStoryModifyRequestDto reqDto = DonationStoryModifyRequestDto.builder()
+                .areaCode(AreaCode.AREA100)
+                .storyTitle("수정제목")
+                .storyWriter("수정작성자")
+                .storyContents("수정내용")
+                .file(null)
+                .captchaToken("token")
+                .build();
+
+        doNothing().when(donationService).modifyDonationStory(eq(storySeq), any(DonationStoryModifyRequestDto.class));
+        given(messageSourceAccessor.getMessage("donation.update.success"))
+                .willReturn("스토리가 성공적으로 수정되었습니다.");
+
+        mockMvc.perform(multipart("/donationLetters/{storySeq}", storySeq)
+                        .with(request -> {
+                            request.setMethod("PATCH");
+                            return request;
+                        })
+                        .param("areaCode", reqDto.getAreaCode().name())
+                        .param("storyTitle", reqDto.getStoryTitle())
+                        .param("storyWriter", reqDto.getStoryWriter())
+                        .param("storyContents", reqDto.getStoryContents())
+                        .param("captchaToken", reqDto.getCaptchaToken())
+                        .contentType(MediaType.MULTIPART_FORM_DATA))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(201))
+                .andExpect(jsonPath("$.message").value("스토리가 성공적으로 수정되었습니다."));
+    }
 
     @Test
     @DisplayName("PATCH /donationLetters/{storySeq} - 실패 (필수 입력 누락 → 400, 스프링 검증)")
@@ -542,7 +576,7 @@ public class DonationControllerTest {
                 .contents("댓글내용")
                 .captchaToken("token")
                 .build();
-        given(messageSourceAccessor.getMessage(eq("donation.error.required.writer")))
+        given(messageSourceAccessor.getMessage("donation.error.required.writer"))
                 .willReturn("작성자는 필수 입력값입니다.");
 
         // 스프링이 자동으로 MethodArgumentNotValidException을 발생시킴

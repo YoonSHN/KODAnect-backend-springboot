@@ -10,11 +10,11 @@ import kodanect.domain.donation.dto.response.DonationStoryDetailDto;
 import kodanect.domain.donation.dto.response.DonationStoryListDto;
 import kodanect.domain.donation.dto.response.DonationStoryWriteFormDto;
 import kodanect.domain.donation.entity.DonationStory;
-import kodanect.domain.donation.exception.BadRequestException;
-import kodanect.domain.donation.exception.NotFoundException;
+import kodanect.domain.donation.exception.*;
 import kodanect.domain.donation.repository.DonationRepository;
 import kodanect.domain.donation.service.DonationService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
@@ -31,12 +31,13 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class DonationServiceImpl implements DonationService {
+
+    private static final String uploadDir = "target/test-uploads";
 
     private final DonationRepository donationRepository;
     private final MessageResolver messageResolver;
-
-    private final String uploadDir = "target/test-uploads";
 
     @Override
     @Transactional(readOnly = true)
@@ -72,7 +73,7 @@ public class DonationServiceImpl implements DonationService {
     public DonationStoryWriteFormDto loadDonationStoryFormData() {
         List<AreaCode> areas = List.of(AreaCode.AREA100, AreaCode.AREA200, AreaCode.AREA300);
         if (areas.isEmpty()) {
-            throw new RuntimeException(messageResolver.get("donation.error.area.unavailable"));
+            throw new NotFoundAreaCode(messageResolver.get("donation.error.area.unavailable"));
         }
         return DonationStoryWriteFormDto.builder().areaOptions(areas).build();
     }
@@ -135,10 +136,17 @@ public class DonationServiceImpl implements DonationService {
         String storedFileName = story.getFileName();
         String originalFileName = story.getOrgFileName();
 
+        // 새 파일로 교체
         if (requestDto.getFile() != null && !requestDto.getFile().isEmpty()) {
             String[] result = updateFileIfChanged(requestDto.getFile(), originalFileName, storedFileName);
             storedFileName = result[0];
             originalFileName = result[1];
+        }
+        else if(story.getFileName() != null){
+            // 새 파일 없이 기존 파일이 있는 경우 → 삭제 요청으로 간주
+            deleteFile(storedFileName);
+            storedFileName = null;
+            originalFileName = null;
         }
 
         story.modifyDonationStory(requestDto, storedFileName, originalFileName);
@@ -186,7 +194,7 @@ public class DonationServiceImpl implements DonationService {
             return new String[]{storedFileName, originalFileName};
         }
         catch (IOException e) {
-            throw new RuntimeException(messageResolver.get("donation.error.file.upload.fail"), e);
+            throw new FailToUploadFileException(messageResolver.get("donation.error.file.upload.fail"));
         }
     }
 
@@ -203,7 +211,7 @@ public class DonationServiceImpl implements DonationService {
             return saveFileIfExists(file);
         }
         catch (IOException e) {
-            throw new RuntimeException(messageResolver.get("donation.error.file.delete.fail"), e);
+            throw new InvalidDeleteOriginalImageException(messageResolver.get("donation.error.file.delete.fail"));
         }
     }
 
@@ -211,5 +219,15 @@ public class DonationServiceImpl implements DonationService {
     private DonationStory findStoryOrThrow(Long storySeq) {
         return donationRepository.findWithCommentsById(storySeq)
                 .orElseThrow(() -> new NotFoundException(messageResolver.get("donation.error.notfound")));
+    }
+
+    public void deleteFile(String fileName) {
+        try {
+            Path path = Paths.get(uploadDir, fileName);
+            Files.deleteIfExists(path);
+        }
+        catch (IOException e) {
+            log.warn("파일 삭제 실패: {}", fileName, e);
+        }
     }
 }

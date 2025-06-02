@@ -66,7 +66,6 @@ public class DonationStory {
     @Builder.Default
     private List<DonationStoryComment> comments = new ArrayList<>();
 
-    // private String donorName;
 
     @PrePersist
     protected void onCreate() {//엔티티가 처음 persist 되기 직전에 호출되는 메서드 (생성일자 설정)
@@ -103,23 +102,6 @@ public class DonationStory {
         this.orgFileName = orgFileName;
     }
 
-
-//    // JSON 처리용 getter/setter
-//    public List<String> getFileNames() {
-//        try {
-//            return new ObjectMapper().readValue(fileNamesJson, new TypeReference<>() {});
-//        } catch (Exception e) {
-//            return List.of(); // 파싱 실패 시 빈 리스트 반환
-//        }
-//    }
-//
-//    public void setFileNames(List<String> fileNames) {
-//        try {
-//            this.fileNamesJson = new ObjectMapper().writeValueAsString(fileNames);
-//        } catch (Exception e) {
-//            this.fileNamesJson = "[]";
-//        }
-//    }
 
 
 }

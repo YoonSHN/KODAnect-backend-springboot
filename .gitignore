@@ -57,9 +57,10 @@ coverage/
 *.sql~
 *.db
 
-# === 덤프 db(복사) ==
-dump.sql
+# === 로컬 db(집에서) ==
 .env.dev.local
 docker-compose.mysql.dev.yml
+
+
 KODAnect-backend-springboot.git/
 KODAnect-backend-springboot.git.bfg-report/

@@ -39,7 +39,7 @@ public class DonationController {
      * 기증 스토리 전체 목록 조회 (더보기 방식 페이징 포함)
      */
     @GetMapping("/donationLetters")
-    public ResponseEntity<ApiResponse<?>> getAllDonationList(
+    public ResponseEntity<ApiResponse<Slice<DonationStoryListDto>>> getAllDonationList(
             @RequestParam(defaultValue = "0") int offset,
             @RequestParam(defaultValue = "20") int limit
     ) {
@@ -55,7 +55,7 @@ public class DonationController {
      * 기증 스토리 검색 (제목/내용 기준, 페이징 포함)
      */
     @GetMapping("/donationLetters/search")
-    public ResponseEntity<ApiResponse<?>> searchDonationStories(
+    public ResponseEntity<ApiResponse<Slice<DonationStoryListDto>>> searchDonationStories(
             @RequestParam("type") String type,
             @RequestParam("keyword") String keyword,
             @RequestParam(defaultValue = "0") int offset,
@@ -122,7 +122,7 @@ public class DonationController {
 
         donationService.modifyDonationStory(storySeq, requestDto);
         String message = messageSourceAccessor.getMessage("donation.update.success");
-        return ResponseEntity.ok(ApiResponse.success(HttpStatus.CREATED, "스토리가 성공적으로 수정되었습니다."));
+        return ResponseEntity.ok(ApiResponse.success(HttpStatus.CREATED, message));
     }
 
     /**
