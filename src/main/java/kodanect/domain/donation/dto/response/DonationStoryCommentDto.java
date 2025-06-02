@@ -5,18 +5,16 @@ import kodanect.domain.donation.entity.DonationStoryComment;
 import lombok.Builder;
 import lombok.Getter;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 
 @Getter
 @Builder
 public class DonationStoryCommentDto {
-    @NotNull
+
     private Long commentSeq;
-    @NotBlank
+
     private String commentWriter; //추모자
-    @NotBlank
+
     private String comments;
     private LocalDateTime commentWriteTime;
 

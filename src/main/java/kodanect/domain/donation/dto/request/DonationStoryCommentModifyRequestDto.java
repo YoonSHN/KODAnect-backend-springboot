@@ -13,13 +13,13 @@ import javax.validation.constraints.NotBlank;
 @NoArgsConstructor
 @Builder
 public class DonationStoryCommentModifyRequestDto {
-    @NotBlank
+    @NotBlank(message="donation.error.required.writer")
     private String commentWriter;
-    @NotBlank
+    @NotBlank(message="donation.content.blank")
     private String commentContents;
-    @NotBlank
+    @NotBlank(message="donation.comment.verify.passcode.blank")
     private String commentPasscode;
-    @NotBlank
+    @NotBlank(message="donation.captcha.token.blank")
     private String captchaToken;
 
 }

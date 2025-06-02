@@ -15,7 +15,7 @@ import javax.validation.constraints.NotNull;
 @Setter
 public class DonationStoryModifyRequestDto {
 
-    @NotNull
+    @NotNull(message="donation.story.areaCode.null")
     private AreaCode areaCode;
     @NotBlank(message = "{donation.error.required.title}")
     private String storyTitle;
@@ -25,6 +25,6 @@ public class DonationStoryModifyRequestDto {
     private String storyContents;
 
     private MultipartFile file;
-    @NotNull(message = "{donation.story.captcha.null}")
+    @NotBlank(message = "donation.captcha.token.blank")
     private String captchaToken; // hCaptcha가 전달한 캡차 인증 값
 }
