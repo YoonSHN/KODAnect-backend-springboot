@@ -1,6 +1,7 @@
 package kodanect.domain.donation.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
@@ -10,6 +11,7 @@ import java.net.http.HttpResponse;
 import java.util.Map;
 
 @Service
+@Slf4j
 public class CaptchaService {
     // 캡차 검증 (프론트에서 받은 토큰을 hcaptcha에 전달하여 재검증)
     public boolean verifyCaptcha(String token) {
@@ -34,7 +36,7 @@ public class CaptchaService {
             return Boolean.TRUE.equals(result.get("success"));
         }
         catch (Exception e) {
-            e.printStackTrace();
+            log.error("에러 발생");
             return false;
         }
     }

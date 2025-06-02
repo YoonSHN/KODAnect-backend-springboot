@@ -120,9 +120,9 @@ public class DonationController {
     @PostMapping("/donationLetters/{storySeq}/verifyPwd")
     public ResponseEntity<ApiResponse<Map<String, Object>>> verifyStoryPassword(
             @PathVariable Long storySeq,
-            @RequestBody VerifyStoryPasscodeDto passCordDto) {
+            @RequestBody VerifyStoryPasscodeDto passCodeDto) {
 
-        donationService.verifyPasswordWithPassword(storySeq, passCordDto);
+        donationService.verifyPasswordWithPassword(storySeq, passCodeDto);
         String message = messageSourceAccessor.getMessage("donation.password.match");
         return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, message, Map.of("result", 1)));
     }

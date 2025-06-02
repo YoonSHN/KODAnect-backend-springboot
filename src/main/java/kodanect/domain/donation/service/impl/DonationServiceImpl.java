@@ -61,9 +61,9 @@ public class DonationServiceImpl implements DonationService {
     @Transactional(readOnly = true)
     public Slice<DonationStoryListDto> findDonationStorySearchResult(Pageable pageable, String type, String keyword) {
         return switch (type) {
-            case "제목" -> donationRepository.findByTitleContaining(pageable, keyword);
-            case "내용" -> donationRepository.findByContentsContaining(pageable, keyword);
-            case "전체" -> donationRepository.findByTitleOrContentsContaining(pageable, keyword);
+            case "storyTitle" -> donationRepository.findByTitleContaining(pageable, keyword);
+            case "storyContents" -> donationRepository.findByContentsContaining(pageable, keyword);
+            case "All" -> donationRepository.findByTitleOrContentsContaining(pageable, keyword);
             default ->  new SliceImpl<>(List.of(), pageable, false);
         };
     }

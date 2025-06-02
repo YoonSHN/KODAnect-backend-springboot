@@ -107,7 +107,7 @@ public class DonationCommentServiceImpl implements DonationCommentService {
 
         // 비밀번호 일치 여부 확인
         if (!commentDto.getCommentPasscode().equals(storyComment.getCommentPasscode())) {
-            throw new BadRequestException(messageResolver.get("donation.comment.error.passcode.mismatch"));
+            throw new BadRequestException(messageResolver.get("donation.error.delete.password_mismatch"));
         }
 
         // 연관된 스토리에서도 댓글 제거
