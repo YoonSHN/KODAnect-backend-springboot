@@ -1,8 +1,8 @@
 package kodanect.domain.recipient.service.impl;
 
-import kodanect.domain.recipient.exception.CommentNotFoundException;
+import kodanect.domain.recipient.exception.RecipientCommentNotFoundException;
 import kodanect.domain.recipient.exception.RecipientInvalidDataException;
-import kodanect.domain.recipient.exception.InvalidPasscodeException;
+import kodanect.domain.recipient.exception.RecipientInvalidPasscodeException;
 import kodanect.domain.recipient.exception.RecipientNotFoundException;
 import kodanect.common.util.HcaptchaService;
 import kodanect.domain.recipient.dto.RecipientCommentRequestDto;
@@ -119,12 +119,12 @@ public class RecipientCommentServiceImpl implements RecipientCommentService {
 
         // 1. 삭제되지 않은 기존 댓글 조회
         RecipientCommentEntity existingComment = recipientCommentRepository.findByCommentSeqAndDelFlag(commentSeq, "N")
-                .orElseThrow(() -> new CommentNotFoundException(COMMENT_NOT_FOUND_MESSAGE));
+                .orElseThrow(() -> new RecipientCommentNotFoundException(COMMENT_NOT_FOUND_MESSAGE));
 
         // 2. 비밀번호 검증
         if (!existingComment.checkPasscode(inputPasscode)) {
             logger.warn("댓글 비밀번호 불일치: commentSeq={}", commentSeq);
-            throw new InvalidPasscodeException("비밀번호가 일치하지 않습니다.");
+            throw new RecipientInvalidPasscodeException("비밀번호가 일치하지 않습니다.");
         }
 
         // 3. 입력받은 데이터로 댓글 정보 업데이트
@@ -160,12 +160,12 @@ public class RecipientCommentServiceImpl implements RecipientCommentService {
 
         // 1. 삭제되지 않은 기존 댓글 조회
         RecipientCommentEntity existingComment = recipientCommentRepository.findByCommentSeqAndDelFlag(commentSeq, "N")
-                .orElseThrow(() -> new CommentNotFoundException(COMMENT_NOT_FOUND_MESSAGE));
+                .orElseThrow(() -> new RecipientCommentNotFoundException(COMMENT_NOT_FOUND_MESSAGE));
 
         // 2. 비밀번호 확인
         if (!existingComment.checkPasscode(inputPasscode)) {
             logger.warn("댓글 삭제 실패: 비밀번호 불일치 (commentSeq={})", commentSeq);
-            throw new InvalidPasscodeException("비밀번호가 일치하지 않습니다.");
+            throw new RecipientInvalidPasscodeException("비밀번호가 일치하지 않습니다.");
         }
 
         // 3. 댓글 소프트 삭제

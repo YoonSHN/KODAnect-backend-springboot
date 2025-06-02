@@ -1,31 +1,35 @@
 package kodanect.common.exception.custom;
 
 import kodanect.common.response.ApiResponse;
-import kodanect.domain.recipient.exception.CommentNotFoundException;
-import kodanect.domain.recipient.exception.InvalidPasscodeException;
+import kodanect.domain.recipient.exception.RecipientCommentNotFoundException;
+import kodanect.domain.recipient.exception.RecipientInvalidPasscodeException;
 import kodanect.domain.recipient.exception.RecipientInvalidDataException;
 import kodanect.domain.recipient.exception.RecipientNotFoundException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 @Slf4j
-@RestControllerAdvice
-//        (basePackages = "kodanect.domain.recipient")
-
+@RestControllerAdvice(basePackages = "kodanect.domain.recipient")
+@Order(Ordered.HIGHEST_PRECEDENCE)
 public class RecipientExceptionHandler {
     public RecipientExceptionHandler() {
         log.info(">>> RecipientExceptionHandler loaded");
     }
+
     /**
      * 리소스를 찾을 수 없거나 이미 삭제된 경우의 예외 처리 (404 Not Found)
      * RecipientNotFoundException, CommentNotFoundException
      */
-    @ExceptionHandler({RecipientNotFoundException.class, CommentNotFoundException.class})
+    @ExceptionHandler({RecipientNotFoundException.class, RecipientCommentNotFoundException.class})
     public ResponseEntity<ApiResponse<String>> handleNotFoundCustomException(RuntimeException ex) {
         log.warn("Resource Not Found (404 Not Found): {}", ex.getMessage());
         return ResponseEntity
@@ -37,8 +41,8 @@ public class RecipientExceptionHandler {
      * 비밀번호 불일치와 같은 접근 권한 예외 처리 (403 Forbidden)
      * InvalidPasscodeException
      */
-    @ExceptionHandler(InvalidPasscodeException.class)
-    public ResponseEntity<ApiResponse<String>> handleInvalidPasscodeException(InvalidPasscodeException ex) {
+    @ExceptionHandler(RecipientInvalidPasscodeException.class)
+    public ResponseEntity<ApiResponse<String>> handleInvalidPasscodeException(RecipientInvalidPasscodeException ex) {
         log.warn("Access Forbidden (403 Forbidden): {}", ex.getMessage());
         return ResponseEntity
                 .status(HttpStatus.UNAUTHORIZED) // 403 Forbidden이 더 적절할 수 있습니다. UNATHORIZED는 인증 실패.
@@ -83,8 +87,41 @@ public class RecipientExceptionHandler {
 
         log.warn("Validation failed (400): {}", errorMessage.toString().trim());
 
+        try {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.fail(HttpStatus.BAD_REQUEST, errorMessage.toString().trim()));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * @ModelAttribute 등에서 바인딩 실패 시 발생하는 예외 처리
+     */
+    @ExceptionHandler(BindException.class)
+    public ResponseEntity<ApiResponse<String>> handleBindException(BindException ex) {
+        StringBuilder errorMessage = new StringBuilder();
+        for (FieldError fieldError : ex.getBindingResult().getFieldErrors()) {
+            errorMessage.append(fieldError.getDefaultMessage()).append(" ");
+        }
+        log.warn("BindException (400): {}", errorMessage.toString().trim());
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(ApiResponse.fail(HttpStatus.BAD_REQUEST, errorMessage.toString().trim()));
+    }
+
+    /**
+     * 쿼리 파라미터 타입 불일치 시 발생 (예: int year = "abc")
+     */
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiResponse<String>> handleTypeMismatchException(MethodArgumentTypeMismatchException ex) {
+        String errorMsg = String.format("요청 파라미터 [%s]에 잘못된 값이 들어왔습니다. '%s'는 [%s] 타입이어야 합니다.",
+                ex.getName(), ex.getValue(), ex.getRequiredType().getSimpleName());
+
+        log.warn("타입 불일치 (400): {}", errorMsg);
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.fail(HttpStatus.BAD_REQUEST, errorMsg));
     }
 }

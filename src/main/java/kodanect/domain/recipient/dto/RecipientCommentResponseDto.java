@@ -29,7 +29,7 @@ public class RecipientCommentResponseDto {
         }
         return RecipientCommentResponseDto.builder()
                 .commentSeq(entity.getCommentSeq())
-                .letterSeq(entity.getLetterSeq() != null ? entity.getLetterSeq().getLetterSeq() : null)
+                .letterSeq(entity.getLetterSeq().getLetterSeq())
                 .commentWriter(entity.getCommentWriter())
                 .commentContents(entity.getCommentContents())
                 .writeTime(entity.getWriteTime())

@@ -42,6 +42,7 @@ public class EgovAopExceptionTransfer {
 	@AfterThrowing(pointcut="exceptionTransferService()", throwing="ex")
 	public void doAfterThrowingExceptionTransferService(JoinPoint thisJoinPoint, Exception ex) throws Exception {
 		exceptionTransfer.transfer(thisJoinPoint, ex);
+		throw ex;
 	}
 
 }

@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.constraints.*;
 // 게시물 생성 및 수정 요청에 사용될 DTO
@@ -61,13 +62,8 @@ public class RecipientRequestDto {
     @NotBlank(message = "내용은 필수 입력 항목입니다.")
     private String letterContents;
 
-    // 이미지 파일 명
-    @Size(max = 600, message = "파일명이 너무 깁니다. (최대 600자)")
-    private String fileName;
-
-    // 이미지 원본 파일 명
-    @Size(max = 600, message = "원본 파일명이 너무 깁니다. (최대 600자)")
-    private String orgFileName;
+    // 첨부파일 (MultipartFile 형태로 직접 파일을 받습니다.)
+    private MultipartFile imageFile;
 
     // --- CAPTCHA 인증 토큰 추가 (클라이언트로부터 받음) ---
     @NotBlank(message = "캡챠 토큰은 필수입니다.")
@@ -84,8 +80,6 @@ public class RecipientRequestDto {
                 .letterWriter(this.letterWriter)
                 .anonymityFlag(this.anonymityFlag)
                 .letterContents(this.letterContents)
-                .fileName(this.fileName)
-                .orgFileName(this.orgFileName)
                 // writerId, modifierId, delFlag, readCount 등은 서비스 계층에서 처리
                 .build();
     }
