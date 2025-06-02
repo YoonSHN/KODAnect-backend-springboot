@@ -34,7 +34,7 @@ import java.util.UUID;
 @Slf4j
 public class DonationServiceImpl implements DonationService {
 
-    private static final String uploadDir = "target/test-uploads";
+    private static final String uploadDir = "/app/uploads";
 
     private final DonationRepository donationRepository;
     private final MessageResolver messageResolver;

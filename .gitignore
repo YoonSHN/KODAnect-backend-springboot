@@ -57,9 +57,7 @@ coverage/
 *.sql~
 *.db
 
-# === 로컬 db(집에서) ==
-.env.dev.local
-docker-compose.mysql.dev.yml
+
 
 
 KODAnect-backend-springboot.git/
