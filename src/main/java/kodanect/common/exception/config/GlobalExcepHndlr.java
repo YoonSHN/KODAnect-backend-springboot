@@ -85,7 +85,7 @@ public class GlobalExcepHndlr {
      * @Valided 유효성 검사 실패 예외 처리
      */
     @ExceptionHandler(ValidationFailedException.class)
-    public ResponseEntity<ApiResponse<Void>> ValidationFailedException(MethodArgumentNotValidException ex) {
+    public ResponseEntity<ApiResponse<Void>> validationFailedException(MethodArgumentNotValidException ex) {
         Optional<String> errorMessageOpt = ex.getBindingResult().getAllErrors()
                 .stream()
                 .map(ObjectError::getDefaultMessage)
