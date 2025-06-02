@@ -63,6 +63,8 @@ public class EgovConfigCommon {
 				"classpath:/org/egovframe/rte/fdl/property/messages/properties");
 		reloadableResourceBundleMessageSource.setDefaultEncoding("UTF-8");
 		reloadableResourceBundleMessageSource.setCacheSeconds(MESSAGE_CACHE_SECONDS);
+		reloadableResourceBundleMessageSource.setFallbackToSystemLocale(false);
+		reloadableResourceBundleMessageSource.setUseCodeAsDefaultMessage(true);
 		return reloadableResourceBundleMessageSource;
 	}
 

@@ -23,7 +23,6 @@ public class WebMvcConfig implements WebMvcConfigurer {
     @Value("${file.base-url}")
     private String fileBaseUrl;
 
-
     /**
      * CORS 설정
      * - 특정 도메인에서 오는 요청을 허용
@@ -53,3 +52,5 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 .addResourceLocations("file:" + uploadDir + "/");
     }
 }
+
+
