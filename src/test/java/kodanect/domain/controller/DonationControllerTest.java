@@ -82,7 +82,7 @@ public class DonationControllerTest {
 
         given(donationService.findStoriesWithOffset(any(Pageable.class))).willReturn(slice);
         given(messageSourceAccessor.getMessage("board.list.get.success"))
-                .willReturn("기증 후 스토리 목록 가져오기 성공");
+                .willReturn("게시글 목록 조회를 성공했습니다.");
 
         // when & then
         mockMvc.perform(get("/donationLetters")
@@ -93,10 +93,10 @@ public class DonationControllerTest {
                 .andExpect(status().isOk())                              // HTTP 200
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.code").value(200))               // body.code == 200
-                .andExpect(jsonPath("$.message").value("기증 후 스토리 목록 가져오기 성공"))
-                .andExpect(jsonPath("$.data.items[0].storySeq").value(1))
-                .andExpect(jsonPath("$.data.items[0].storyTitle").value("제목1"))
-                .andExpect(jsonPath("$.data.pageInfo.currentOffset").value(0));
+                .andExpect(jsonPath("$.message").value("게시글 목록 조회를 성공했습니다."))
+                .andExpect(jsonPath("$.data.content[0].storySeq").value(1L))
+                .andExpect(jsonPath("$.data.content[0].storyTitle").value("제목1"))
+                .andExpect(jsonPath("$.data.pageable.offset").value(0));
     }
 
     @Test

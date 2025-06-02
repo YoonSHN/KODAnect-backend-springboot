@@ -46,17 +46,9 @@ public class DonationController {
         Pageable pageable = new OffsetBasedPageRequest(offset, limit, Sort.by("storySeq").descending());
         Slice<DonationStoryListDto> slice = donationService.findStoriesWithOffset(pageable);
 
-//        Map<String, Object> pageInfo = Map.of(
-//                "currentOffset", offset,
-//                "pageSize", limit,
-//                "hasNext", slice.hasNext(),
-//                "hasPrevious", slice.hasPrevious(),
-//                "sort", slice.getSort().toString()
-//        );
 
         String message = messageSourceAccessor.getMessage("board.list.get.success");
-        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, message,
-                Map.of("pageInfo", slice)));
+        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, message, slice));
     }
 
     /**
@@ -72,17 +64,10 @@ public class DonationController {
         Pageable pageable = new OffsetBasedPageRequest(offset, limit, Sort.by("storySeq").descending());
         Slice<DonationStoryListDto> slice = donationService.findDonationStorySearchResult(pageable, type, keyword);
 
-        Map<String, Object> pageInfo = Map.of(
-                "currentOffset", offset,
-                "pageSize", limit,
-                "hasNext", slice.hasNext(),
-                "hasPrevious", slice.hasPrevious(),
-                "sort", slice.getSort().toString()
-        );
+
 
         String message = messageSourceAccessor.getMessage("board.list.get.success");
-        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, message,
-                Map.of("items", slice.getContent(), "pageInfo", pageInfo)));
+        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, message, slice));
     }
 
     /**
