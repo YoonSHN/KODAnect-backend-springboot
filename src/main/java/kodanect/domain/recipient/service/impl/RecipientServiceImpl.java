@@ -205,9 +205,20 @@ public class RecipientServiceImpl implements RecipientService {
 
         // 1. 첨부파일 등록 관련
         String[] fileInfo = saveImageFile(requestDto.getImageFile());
-        if (fileInfo != null) {
+        if (fileInfo != null && fileInfo.length > 0) { // <--- fileInfo.length > 0 조건 추가
             recipientEntityRequest.setFileName(fileInfo[0]);
-            recipientEntityRequest.setOrgFileName(fileInfo[1]);
+            // orgFileName은 fileInfo.length가 2 이상일 때만 접근하도록 안전 장치 추가
+            if (fileInfo.length > 1) {
+                recipientEntityRequest.setOrgFileName(fileInfo[1]);
+            } else {
+                // 원본 파일명이 없는 경우 (예: 파일명만 있는 경우)
+                recipientEntityRequest.setOrgFileName(null);
+            }
+        } else {
+            // 파일이 없거나 유효하지 않아 fileInfo가 null 또는 빈 배열일 때의 처리
+            recipientEntityRequest.setFileName(null);
+            recipientEntityRequest.setOrgFileName(null);
+            logger.info("첨부된 이미지 파일이 없거나 유효하지 않습니다.");
         }
 
         // 2. Jsoup을 사용하여 HTML 필터링 및 내용 유효성 검사
