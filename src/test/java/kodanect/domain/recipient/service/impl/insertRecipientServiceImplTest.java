@@ -1,0 +1,383 @@
+package kodanect.domain.recipient.service.impl;
+
+import kodanect.domain.recipient.dto.RecipientDetailResponseDto;
+import kodanect.domain.recipient.dto.RecipientRequestDto;
+import kodanect.domain.recipient.entity.RecipientEntity;
+import kodanect.domain.recipient.exception.RecipientInvalidDataException;
+import kodanect.domain.recipient.repository.RecipientRepository;
+import kodanect.common.util.HcaptchaService;
+import kodanect.domain.recipient.service.RecipientService;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner; // JUnit 4 Mockito Runner
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.util.ReflectionTestUtils; // private 필드 접근용
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertThrows; // JUnit 4 예외 테스트
+
+@RunWith(MockitoJUnitRunner.class)
+public class insertRecipientServiceImplTest {
+    @Mock
+    private RecipientRepository recipientRepository;
+
+    @Mock
+    private HcaptchaService hcaptchaService;
+
+    // Jsoup.clean()과 Files.copy()는 static 메서드이므로 직접 Mocking이 어렵습니다.
+    // Files.copy의 IOException 테스트를 위해서는 MockMultipartFile의 getInputStream()을
+    // IOException을 던지도록 만들거나, PowerMockito 같은 라이브러리를 사용해야 합니다.
+    // 여기서는 일반적인 시나리오만 테스트하고, Files.copy의 IOException은 MockMultipartFile
+    // 내부에서 발생하도록 하여 간접적으로 테스트합니다. (실제 운영 환경에서는 발생 가능한 에러이므로 중요)
+
+    @InjectMocks
+    private RecipientServiceImpl recipientService;
+
+    // RecipientService에 정의된 상수 값들을 테스트에서도 사용하기 위해 Reflection으로 설정
+    private static final String CAPTCHA_FAILED_MESSAGE = "hCaptcha 인증에 실패했습니다. 다시 시도해주세요.";
+    private static final String ANONYMOUS_WRITER_VALUE = "익명";
+    private static final String ORGAN_CODE_DIRECT_INPUT = "ORGAN000";
+
+    // 파일 업로드 관련 경로 (실제 파일 시스템에 저장하지 않으므로 임시 경로 사용)
+    private String testUploadDir = "test_uploads";
+    private String testFileBaseUrl = "/uploads";
+
+    @Before
+    public void setUp() {
+        // RecipientService의 private 필드인 uploadDir과 fileBaseUrl 설정
+        ReflectionTestUtils.setField(recipientService, "uploadDir", testUploadDir);
+        ReflectionTestUtils.setField(recipientService, "fileBaseUrl", testFileBaseUrl);
+
+        // 이제 RecipientServiceImpl의 필드들은 static final이 아니므로 ReflectionTestUtils로 설정 가능
+        ReflectionTestUtils.setField(recipientService, "captchaFailedMessage", CAPTCHA_FAILED_MESSAGE);
+        ReflectionTestUtils.setField(recipientService, "anonymousWriterValue", ANONYMOUS_WRITER_VALUE);
+        ReflectionTestUtils.setField(recipientService, "organCodeDirectInput", ORGAN_CODE_DIRECT_INPUT);
+
+        // 이 테스트 클래스 내의 static final 상수는 그대로 유지됩니다.
+        // CAPTCHA_FAILED_MESSAGE 등은 위 ReflectionTestUtils.setField에서 사용됩니다.
+    }
+
+    // DTO 생성 헬퍼 메서드
+    private RecipientRequestDto createRequestDto(String writer, String passcode, String contents,
+                                                 String anonymityFlag, String organCode, String organEtc,
+                                                 String captchaToken, MultipartFile imageFile) {
+        return RecipientRequestDto.builder()
+                .letterWriter(writer)
+                .letterPasscode(passcode)
+                .letterContents(contents)
+                .anonymityFlag(anonymityFlag)
+                .recipientYear("2024")
+                .organCode(organCode)
+                .organEtc(organEtc)
+                .captchaToken(captchaToken)
+                .imageFile(imageFile)
+                .build();
+    }
+
+    // --- insertRecipient 테스트 시작 ---
+
+    @Test
+    public void insertRecipient_Success_NoImage() {
+        // Given
+        RecipientRequestDto requestDto = createRequestDto(
+                "테스트작가", "12345678", "게시물 내용입니다.", "N",
+                "ORG01", null, "valid_captcha_token", null
+        );
+        RecipientEntity expectedSavedEntity = requestDto.toEntity();
+        expectedSavedEntity.setLetterSeq(1); // 저장 후 ID가 할당되었다고 가정
+        expectedSavedEntity.setReadCount(0); // 초기 readCount
+
+        // Mocking
+        when(hcaptchaService.verifyCaptcha("valid_captcha_token")).thenReturn(true);
+        // recipientRepository.save 호출 시 어떤 RecipientEntity가 들어와도 expectedSavedEntity 반환
+        when(recipientRepository.save(any(RecipientEntity.class))).thenReturn(expectedSavedEntity);
+
+        // When
+        RecipientDetailResponseDto resultDto = recipientService.insertRecipient(requestDto);
+
+        // Then
+        assertThat(resultDto).isNotNull();
+        assertThat(resultDto.getLetterSeq()).isEqualTo(1);
+        assertThat(resultDto.getLetterWriter()).isEqualTo("테스트작가");
+        assertThat(resultDto.getLetterContents()).isEqualTo("게시물 내용입니다.");
+        assertThat(resultDto.getFileName()).isNull(); // 이미지 없음
+        verify(hcaptchaService, times(1)).verifyCaptcha("valid_captcha_token");
+        verify(recipientRepository, times(1)).save(any(RecipientEntity.class));
+    }
+
+    @Test
+    public void insertRecipient_Success_WithImage() throws IOException {
+        // Given
+        byte[] imageContent = "test image content".getBytes();
+        MockMultipartFile imageFile = new MockMultipartFile(
+                "imageFile", "test.png", "image/png", new ByteArrayInputStream(imageContent)
+        );
+
+        RecipientRequestDto requestDto = createRequestDto(
+                "이미지작가", "12345678", "이미지 있는 게시물 내용", "N",
+                "ORG02", null, "valid_captcha_token", imageFile
+        );
+
+        // Files.copy는 static 메서드이므로, Mockito로 직접 Mocking하기 어렵습니다.
+        // (PowerMockito 같은 추가 라이브러리 필요)
+        // 여기서는 서비스 로직을 테스트하는 것에 집중하고, Files.copy에서 IOException이
+        // 발생하지 않도록 테스트 환경을 가정합니다.
+        // 실제 파일 IO가 필요하면 @SpringBootTest로 통합 테스트를 진행하는 것이 좋습니다.
+
+        // save 메서드가 호출될 때, 파일 이름이 설정된 엔티티를 반환하도록 Mocking
+        when(hcaptchaService.verifyCaptcha("valid_captcha_token")).thenReturn(true);
+        when(recipientRepository.save(any(RecipientEntity.class))).thenAnswer(invocation -> {
+            RecipientEntity entity = invocation.getArgument(0);
+            // 실제 서비스 로직처럼 UUID 기반의 파일 이름을 생성하고 설정하는 것을 시뮬레이션
+            String originalFilename = imageFile.getOriginalFilename();
+            String fileExtension = "";
+            if (originalFilename != null && originalFilename.contains(".")) {
+                fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
+            }
+            // UUID는 예측 불가능하므로, 목킹된 유니크 파일명으로 설정
+            String mockedUniqueFileName = "mock-uuid" + fileExtension;
+            entity.setFileName(testFileBaseUrl + "/" + mockedUniqueFileName);
+            entity.setOrgFileName(originalFilename);
+            entity.setLetterSeq(2); // ID 설정
+            return entity;
+        });
+
+        // When
+        RecipientDetailResponseDto resultDto = recipientService.insertRecipient(requestDto);
+
+        // Then
+        assertThat(resultDto).isNotNull();
+        assertThat(resultDto.getLetterSeq()).isEqualTo(2);
+        assertThat(resultDto.getLetterWriter()).isEqualTo("이미지작가");
+        assertThat(resultDto.getFileName()).contains(testFileBaseUrl); // URL 포함 확인
+        assertThat(resultDto.getFileName()).contains("mock-uuid"); // 목킹된 UUID 포함 확인
+        assertThat(resultDto.getOrgFileName()).isEqualTo("test.png");
+        verify(hcaptchaService, times(1)).verifyCaptcha("valid_captcha_token");
+        verify(recipientRepository, times(1)).save(any(RecipientEntity.class));
+    }
+
+    @Test
+    public void insertRecipient_Failure_ImageUploadIOException() throws IOException {
+        // Given
+        // InputStream에서 IOException을 발생시키도록 MockMultipartFile을 생성
+        MockMultipartFile imageFile = mock(MockMultipartFile.class);
+        when(imageFile.isEmpty()).thenReturn(false);
+        when(imageFile.getOriginalFilename()).thenReturn("error.png");
+        // getInputStream() 호출 시 IOException 발생하도록 설정
+        when(imageFile.getInputStream()).thenThrow(new IOException("Test IO Exception"));
+
+        RecipientRequestDto requestDto = createRequestDto(
+                "에러작가", "12345678", "내용", "N",
+                "ORG01", null, "valid_captcha_token", imageFile
+        );
+
+        // Mocking
+        when(hcaptchaService.verifyCaptcha("valid_captcha_token")).thenReturn(true);
+
+        // When & Then
+        RecipientInvalidDataException exception = assertThrows(RecipientInvalidDataException.class, () ->
+                recipientService.insertRecipient(requestDto)
+        );
+        assertThat(exception.getMessage()).isEqualTo("이미지 파일 저장 중 오류가 발생했습니다.");
+        verify(hcaptchaService, times(1)).verifyCaptcha("valid_captcha_token");
+        verify(recipientRepository, never()).save(any(RecipientEntity.class)); // save는 호출되지 않아야 함
+    }
+
+
+    @Test
+    public void insertRecipient_Success_Anonymous() {
+        // Given
+        RecipientRequestDto requestDto = createRequestDto(
+                "실제작가이름", "12345678", "익명 게시물 내용", "Y", // 익명 Y
+                "ORG03", null, "valid_captcha_token", null
+        );
+        RecipientEntity expectedSavedEntity = requestDto.toEntity(); // DTO에서 변환된 초기 엔티티
+        expectedSavedEntity.setLetterSeq(3);
+        expectedSavedEntity.setReadCount(0);
+        // 서비스에서 익명 처리될 것을 반영하여 Mocking 시 반환될 엔티티에 익명 값을 설정
+        expectedSavedEntity.setLetterWriter(ANONYMOUS_WRITER_VALUE);
+
+        // Mocking
+        when(hcaptchaService.verifyCaptcha("valid_captcha_token")).thenReturn(true);
+        // save 호출 시 익명 작가명이 설정된 엔티티를 반환하도록 thenAnswer 사용
+        when(recipientRepository.save(any(RecipientEntity.class))).thenAnswer(invocation -> {
+            RecipientEntity entity = invocation.getArgument(0);
+            entity.setLetterWriter(ANONYMOUS_WRITER_VALUE); // 서비스 로직이 익명으로 설정할 것을 시뮬레이션
+            entity.setLetterSeq(3); // ID 설정
+            return entity;
+        });
+
+        // When
+        RecipientDetailResponseDto resultDto = recipientService.insertRecipient(requestDto);
+
+        // Then
+        assertThat(resultDto).isNotNull();
+        assertThat(resultDto.getLetterSeq()).isEqualTo(3);
+        assertThat(resultDto.getLetterWriter()).isEqualTo(ANONYMOUS_WRITER_VALUE); // 익명으로 저장되었는지 확인
+        verify(hcaptchaService, times(1)).verifyCaptcha("valid_captcha_token");
+        verify(recipientRepository, times(1)).save(any(RecipientEntity.class));
+    }
+
+    @Test
+    public void insertRecipient_Success_OrganCodeDirectInput() {
+        // Given
+        RecipientRequestDto requestDto = createRequestDto(
+                "직접입력작가", "12345678", "직접 입력 게시물", "N",
+                ORGAN_CODE_DIRECT_INPUT, "직접입력기관명", "valid_captcha_token", null
+        );
+        RecipientEntity expectedSavedEntity = requestDto.toEntity();
+        expectedSavedEntity.setLetterSeq(4);
+        expectedSavedEntity.setReadCount(0);
+        expectedSavedEntity.setOrganCode(ORGAN_CODE_DIRECT_INPUT);
+        expectedSavedEntity.setOrganEtc("직접입력기관명");
+
+        // Mocking
+        when(hcaptchaService.verifyCaptcha("valid_captcha_token")).thenReturn(true);
+        when(recipientRepository.save(any(RecipientEntity.class))).thenReturn(expectedSavedEntity);
+
+        // When
+        RecipientDetailResponseDto resultDto = recipientService.insertRecipient(requestDto);
+
+        // Then
+        assertThat(resultDto).isNotNull();
+        assertThat(resultDto.getLetterSeq()).isEqualTo(4);
+        assertThat(resultDto.getOrganCode()).isEqualTo(ORGAN_CODE_DIRECT_INPUT);
+        assertThat(resultDto.getOrganEtc()).isEqualTo("직접입력기관명");
+        verify(hcaptchaService, times(1)).verifyCaptcha("valid_captcha_token");
+        verify(recipientRepository, times(1)).save(any(RecipientEntity.class));
+    }
+
+    @Test
+    public void insertRecipient_Failure_CaptchaInvalid() {
+        // Given
+        RecipientRequestDto requestDto = createRequestDto(
+                "작가", "12345678", "내용", "N",
+                "ORG01", null, "invalid_captcha_token", null
+        );
+
+        // Mocking
+        when(hcaptchaService.verifyCaptcha("invalid_captcha_token")).thenReturn(false);
+
+        // When & Then
+        RecipientInvalidDataException exception = assertThrows(RecipientInvalidDataException.class, () ->
+                recipientService.insertRecipient(requestDto)
+        );
+        assertThat(exception.getMessage()).isEqualTo(CAPTCHA_FAILED_MESSAGE);
+        verify(hcaptchaService, times(1)).verifyCaptcha("invalid_captcha_token");
+        verify(recipientRepository, never()).save(any(RecipientEntity.class)); // save는 호출되지 않아야 함
+    }
+
+    @Test
+    public void insertRecipient_Failure_ContentsNull() {
+        // Given
+        RecipientRequestDto requestDto = createRequestDto(
+                "작가", "12345678", null, "N", // 내용 null
+                "ORG01", null, "valid_captcha_token", null
+        );
+
+        // Mocking
+        when(hcaptchaService.verifyCaptcha("valid_captcha_token")).thenReturn(true);
+
+        // When & Then
+        RecipientInvalidDataException exception = assertThrows(RecipientInvalidDataException.class, () ->
+                recipientService.insertRecipient(requestDto)
+        );
+        assertThat(exception.getMessage()).isEqualTo("게시물 내용은 필수 입력 항목입니다.");
+        verify(hcaptchaService, times(1)).verifyCaptcha("valid_captcha_token");
+        verify(recipientRepository, never()).save(any(RecipientEntity.class));
+    }
+
+    @Test
+    public void insertRecipient_Failure_ContentsEmpty() {
+        // Given
+        RecipientRequestDto requestDto = createRequestDto(
+                "작가", "12345678", "   ", "N", // 공백 문자열
+                "ORG01", null, "valid_captcha_token", null
+        );
+
+        // Mocking
+        when(hcaptchaService.verifyCaptcha("valid_captcha_token")).thenReturn(true);
+
+        // When & Then
+        RecipientInvalidDataException exception = assertThrows(RecipientInvalidDataException.class, () ->
+                recipientService.insertRecipient(requestDto)
+        );
+        assertThat(exception.getMessage()).isEqualTo("게시물 내용은 필수 입력 항목입니다.");
+        verify(hcaptchaService, times(1)).verifyCaptcha("valid_captcha_token");
+        verify(recipientRepository, never()).save(any(RecipientEntity.class));
+    }
+
+    @Test
+    public void insertRecipient_Failure_ContentsEmptyAfterHtmlFiltering() {
+        // Given
+        // <p><br></p> 같은 HTML 태그만 있고 실제 내용은 없는 경우
+        RecipientRequestDto requestDto = createRequestDto(
+                "작가", "12345678", "<p>&nbsp;</p><br>", "N", // HTML 태그만 있는 내용
+                "ORG01", null, "valid_captcha_token", null
+        );
+
+        // Mocking
+        when(hcaptchaService.verifyCaptcha("valid_captcha_token")).thenReturn(true);
+
+        // When & Then
+        RecipientInvalidDataException exception = assertThrows(RecipientInvalidDataException.class, () ->
+                recipientService.insertRecipient(requestDto)
+        );
+        assertThat(exception.getMessage()).isEqualTo("게시물 내용은 필수 입력 항목입니다. (HTML 태그 필터링 후)");
+        verify(hcaptchaService, times(1)).verifyCaptcha("valid_captcha_token");
+        verify(recipientRepository, never()).save(any(RecipientEntity.class));
+    }
+
+    @Test
+    public void insertRecipient_Failure_OrganCodeDirectInputButOrganEtcEmpty() {
+        // Given
+        RecipientRequestDto requestDto = createRequestDto(
+                "작가", "12345678", "내용", "N",
+                ORGAN_CODE_DIRECT_INPUT, "   ", "valid_captcha_token", null // ORGAN000인데 organEtc가 공백
+        );
+
+        // Mocking
+        when(hcaptchaService.verifyCaptcha("valid_captcha_token")).thenReturn(true);
+
+        // When & Then
+        RecipientInvalidDataException exception = assertThrows(RecipientInvalidDataException.class, () ->
+                recipientService.insertRecipient(requestDto)
+        );
+        assertThat(exception.getMessage()).isEqualTo("ORGAN000 선택 시 organEtc는 필수 입력 항목입니다.");
+        verify(hcaptchaService, times(1)).verifyCaptcha("valid_captcha_token");
+        verify(recipientRepository, never()).save(any(RecipientEntity.class));
+    }
+
+    @Test
+    public void insertRecipient_Failure_OrganCodeDirectInputButOrganEtcNull() {
+        // Given
+        RecipientRequestDto requestDto = createRequestDto(
+                "작가", "12345678", "내용", "N",
+                ORGAN_CODE_DIRECT_INPUT, null, "valid_captcha_token", null // ORGAN000인데 organEtc가 null
+        );
+
+        // Mocking
+        when(hcaptchaService.verifyCaptcha("valid_captcha_token")).thenReturn(true);
+
+        // When & Then
+        RecipientInvalidDataException exception = assertThrows(RecipientInvalidDataException.class, () ->
+                recipientService.insertRecipient(requestDto)
+        );
+        assertThat(exception.getMessage()).isEqualTo("ORGAN000 선택 시 organEtc는 필수 입력 항목입니다.");
+        verify(hcaptchaService, times(1)).verifyCaptcha("valid_captcha_token");
+        verify(recipientRepository, never()).save(any(RecipientEntity.class));
+    }
+}

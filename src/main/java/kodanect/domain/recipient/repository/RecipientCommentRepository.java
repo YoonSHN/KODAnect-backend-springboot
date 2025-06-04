@@ -15,8 +15,12 @@ import java.util.Optional;
 
 @Repository
 public interface RecipientCommentRepository extends JpaRepository<RecipientCommentEntity, Integer>, JpaSpecificationExecutor<RecipientCommentEntity> {
-    // 특정 letterSeq에 해당하는 댓글 목록을 조회 (삭제되지 않은 댓글만, 작성 시간 오름차순)
-    List<RecipientCommentEntity> findByLetterSeqAndDelFlagOrderByWriteTimeAsc(RecipientEntity letterSeq, String delFlag);
+
+    // @Query를 사용한 명시적 정렬 메서드를 추가
+    @Query("SELECT rc FROM RecipientCommentEntity rc WHERE rc.letterSeq = :letterSeq AND rc.delFlag = :delFlag ORDER BY rc.writeTime ASC, rc.commentSeq ASC")
+    List<RecipientCommentEntity> findCommentsByLetterSeqAndDelFlagSorted( // 메서드 이름 변경
+                                                                          @Param("letterSeq") RecipientEntity letterSeq,
+                                                                          @Param("delFlag") String delFlag);
 
     // 특정 commentSeq와 delFlag="N"인 댓글 조회
     Optional<RecipientCommentEntity> findByCommentSeqAndDelFlag(Integer commentSeq, String delFlag);

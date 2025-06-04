@@ -34,12 +34,14 @@ import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.stream.Collectors;
 
+
 @Service("recipientService")
 public class RecipientServiceImpl implements RecipientService {
-    // 상수 정의
-    private static final String ORGAN_CODE_DIRECT_INPUT = "ORGAN000";  // 직접입력 코드
-    private static final String ANONYMOUS_WRITER_VALUE = "익명";
-    private static final String CAPTCHA_FAILED_MESSAGE = "캡차 인증에 실패했습니다. 다시 시도해주세요.";
+
+    // 로거 선언 (가장 먼저)
+    private static final Logger logger = LoggerFactory.getLogger(RecipientServiceImpl.class);
+
+    // 정적(static) 상수 정의
     private static final String RECIPIENT_NOT_FOUND_MESSAGE = "해당 게시물이 존재하지 않거나 이미 삭제되었습니다.";
     private static final int INITIAL_COMMENT_LOAD_LIMIT = 3; // 초기에 로딩할 댓글의 개수
     private static final String LETTER_SEQ = "letterSeq";
@@ -47,26 +49,28 @@ public class RecipientServiceImpl implements RecipientService {
     private static final String COMMENT_SEQ = "commentSeq";
     private static final String WRITE_TIME = "writeTime";
 
-    private final RecipientRepository recipientRepository;
-    private final RecipientCommentRepository recipientCommentRepository;
-    private final HcaptchaService hcaptchaService; // hCaptchaService 주입
-
-    // application.properties의 file.upload-root-dir 경로 주입
+    // @Value 어노테이션을 통한 주입 변수들
+    @Value("${recipient.organ-code-direct-input:ORGAN000}")
+    private String organCodeDirectInput;
+    @Value("${recipient.anonymous-writer-value:익명}")
+    private String anonymousWriterValue;
+    @Value("${recipient.captcha-failed-message:hCaptcha 인증에 실패했습니다. 다시 시도해주세요.}") // properties에서 주입
+    private String captchaFailedMessage;
     @Value("${file.upload-root-dir}")
     private String uploadDir;
-
     @Value("${file.base-url}")
     private String fileBaseUrl;
 
-    // 로거 선언
-    private final Logger logger = LoggerFactory.getLogger(RecipientServiceImpl.class);
+    // 의존성 주입 (final 필드)
+    private final RecipientRepository recipientRepository;
+    private final RecipientCommentRepository recipientCommentRepository;
+    private final HcaptchaService hcaptchaService;
 
     public RecipientServiceImpl(RecipientRepository recipientRepository, RecipientCommentRepository recipientCommentRepository, HcaptchaService hcaptchaService) {
         this.recipientRepository = recipientRepository;
         this.recipientCommentRepository = recipientCommentRepository;
-        this.hcaptchaService = hcaptchaService; // hCaptchaService 초기화
+        this.hcaptchaService = hcaptchaService;
     }
-
 
     // 게시물 비밀번호 확인
     @Override
@@ -87,19 +91,17 @@ public class RecipientServiceImpl implements RecipientService {
     // 게시물 수정
     @Override
     public RecipientDetailResponseDto updateRecipient(Integer letterSeq, String requestPasscode, RecipientRequestDto requestDto) {
-        // --- 0. hCaptcha 인증 검증 추가 ---
-        if (!hcaptchaService.verifyCaptcha(requestDto.getCaptchaToken())) {
-            logger.warn("hCaptcha 인증 실패: 유효하지 않은 캡차 토큰입니다. (수정)");
-            throw new RecipientInvalidDataException(CAPTCHA_FAILED_MESSAGE);
-        }
+
+        // 0. hCaptcha 인증 검증
+        verifyHcaptcha(requestDto.getCaptchaToken(), "수정");
         logger.info("hCaptcha 인증 성공. 게시물 수정 진행.");
 
-        // 게시물 조회 (삭제되지 않은 게시물만 조회)
+        // 1. 게시물 조회 (삭제되지 않은 게시물만 조회)
         RecipientEntity recipientEntityold = recipientRepository.findById(letterSeq)
                 .filter(entity -> "N".equalsIgnoreCase(entity.getDelFlag()))
                 .orElseThrow(() -> new RecipientNotFoundException(RECIPIENT_NOT_FOUND_MESSAGE));
 
-        // 비밀번호 검증 (verifyLetterPassword 메서드 활용)
+        // 2. 비밀번호 검증
         verifyLetterPassword(letterSeq, requestPasscode); // 비밀번호 불일치 시 예외 발생
 
         // 엔티티 필드 업데이트
@@ -108,82 +110,41 @@ public class RecipientServiceImpl implements RecipientService {
         recipientEntityold.setLetterTitle(requestDto.getLetterTitle());
         recipientEntityold.setRecipientYear(requestDto.getRecipientYear());
 
-        // --- 익명 처리 로직 추가 시작 ---
-        String writerToSave;
-        if ("Y".equalsIgnoreCase(requestDto.getAnonymityFlag())) {
-            writerToSave = ANONYMOUS_WRITER_VALUE;
-        }
-        else {
-            writerToSave = requestDto.getLetterWriter();
-        }
+        // 작성자 익명 처리
+        String writerToSave = "Y".equalsIgnoreCase(requestDto.getAnonymityFlag()) ? anonymousWriterValue : requestDto.getLetterWriter();
         recipientEntityold.setLetterWriter(writerToSave);
+        recipientEntityold.setAnonymityFlag(requestDto.getAnonymityFlag());
 
-        // 비밀번호는 수정 시 변경될 수 있으므로, 요청 DTO에 새로운 비밀번호가 있다면 업데이트
+        // 비밀번호 업데이트
         if (requestDto.getLetterPasscode() != null && !requestDto.getLetterPasscode().isEmpty()) {
             recipientEntityold.setLetterPasscode(requestDto.getLetterPasscode());
         }
-        recipientEntityold.setAnonymityFlag(requestDto.getAnonymityFlag());
 
-        // 내용(HTML) 필터링
-        String originalContents = requestDto.getLetterContents();
-        if (originalContents == null || originalContents.trim().isEmpty()) {
-            logger.warn("게시물 내용이 비어있거나 null입니다.");
-            throw new RecipientInvalidDataException("게시물 내용은 필수 입력 항목입니다.");
-        }
-        Safelist safelist = Safelist.relaxed();
-        String cleanContents = Jsoup.clean(originalContents, safelist);
-        String pureTextContents = Jsoup.parse(cleanContents).text();
-        if (pureTextContents.trim().isEmpty()) {
-            logger.warn("게시물 수정 실패: 필터링 후 내용이 비어있음");
-            throw new RecipientInvalidDataException("게시물 내용은 필수 입력 항목입니다. (HTML 태그 필터링 후)");
-        }
-        recipientEntityold.setLetterContents(cleanContents.trim());
+        // 내용(HTML) 필터링 및 유효성 검사
+        recipientEntityold.setLetterContents(cleanAndValidateContents(requestDto.getLetterContents()));
 
-        // --- 파일 업로드 및 교체 로직 추가 ---
+        // --- 파일 업로드 및 교체 ---
         MultipartFile newImageFile = requestDto.getImageFile();
+
         if (newImageFile != null && !newImageFile.isEmpty()) {
-            // 새로운 파일이 업로드된 경우: 기존 파일 삭제 후 새 파일 저장
-            try {
-                // 기존 파일이 있다면 삭제
-                if (recipientEntityold.getFileName() != null && !recipientEntityold.getFileName().isEmpty()) {
-                    String oldFileName = recipientEntityold.getFileName();
-                    // URL에서 파일명만 추출하여 물리적 경로 구성
-                    String oldFilePhysicalName = oldFileName.substring(oldFileName.lastIndexOf("/") + 1);
-                    Path oldFilePath = Paths.get(uploadDir, oldFilePhysicalName).toAbsolutePath().normalize();
-                    try {
-                        Files.deleteIfExists(oldFilePath);
-                        logger.info("기존 이미지 파일 삭제 성공: {}", oldFilePath.toString());
-                    }
-                    catch (IOException e) {
-                        logger.warn("기존 이미지 파일 삭제 실패 (파일 없음 또는 권한 문제): {}", oldFilePath.toString(), e);
-                        // 삭제 실패해도 진행은 가능하도록 (치명적 오류는 아님)
-                    }
-                }
+            // 기존 파일이 있다면 삭제
+            deleteExistingFile(recipientEntityold.getFileName());
 
-                // 새 파일 저장 로직 (insertRecipient와 동일)
-                String originalFilename = newImageFile.getOriginalFilename();
-                String fileExtension = "";
-                if (originalFilename != null && originalFilename.contains(".")) {
-                    fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
-                }
-                String uniqueFileName = UUID.randomUUID().toString() + fileExtension;
+            // 새 파일 저장
+            String[] fileInfo = saveImageFile(newImageFile); // saveImageFile은 fileUrl, orgFileName 반환
+            recipientEntityold.setFileName(fileInfo[0]);
+            recipientEntityold.setOrgFileName(fileInfo[1]);
+        }
 
-                Path fileStoragePath = Paths.get(uploadDir).toAbsolutePath().normalize();
-                Files.createDirectories(fileStoragePath); // 디렉토리 생성
-
-                Path targetLocation = fileStoragePath.resolve(uniqueFileName);
-                Files.copy(newImageFile.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
-                logger.info("새 이미지 파일 저장 성공: {}", targetLocation.toString());
-
-                // 엔티티에 새 파일 정보 업데이트
-                String newImageUrl = fileBaseUrl + "/" + uniqueFileName;
-                recipientEntityold.setFileName(newImageUrl);
-                recipientEntityold.setOrgFileName(originalFilename);
+        // organCode : "ORGAN000" (직접입력) 일 경우 organEtc 설정, 아니면 null
+        if (!organCodeDirectInput.equals(requestDto.getOrganCode())) {
+            recipientEntityold.setOrganEtc(null);
+        } else {
+            if (requestDto.getOrganEtc() == null || requestDto.getOrganEtc().trim().isEmpty()) {
+                logger.warn("ORGAN000 선택 시 organEtc는 필수 입력 항목입니다.");
+                throw new RecipientInvalidDataException("ORGAN000 선택 시 organEtc는 필수 입력 항목입니다.");
             }
-            catch (IOException ex) {
-                logger.error("이미지 파일 저장 또는 삭제 실패: {}", ex.getMessage());
-                throw new RecipientInvalidDataException("이미지 파일 처리 중 오류가 발생했습니다.");
-            }
+            recipientEntityold.setOrganEtc(requestDto.getOrganEtc());
         }
 
         RecipientEntity updatedEntity = recipientRepository.save(recipientEntityold); // 변경사항 저장
@@ -197,11 +158,8 @@ public class RecipientServiceImpl implements RecipientService {
     public void deleteRecipient(Integer letterSeq, String letterPasscode, String captchaToken) {
         logger.info("게시물 삭제 시도: letterSeq={}", letterSeq);
 
-        // --- 0. hCaptcha 인증 검증 추가 ---
-        if (!hcaptchaService.verifyCaptcha(captchaToken)) {
-            logger.warn("hCaptcha 인증 실패: 유효하지 않은 캡차 토큰입니다. (삭제)");
-            throw new RecipientInvalidDataException(CAPTCHA_FAILED_MESSAGE);
-        }
+        // 0. hCaptcha 인증 검증
+        verifyHcaptcha(captchaToken, "삭제");
         logger.info("hCaptcha 인증 성공. 게시물 삭제 진행.");
 
         // 게시물 조회 (삭제되지 않은 게시물만 조회)
@@ -209,18 +167,18 @@ public class RecipientServiceImpl implements RecipientService {
                 .filter(entity -> "N".equalsIgnoreCase(entity.getDelFlag()))
                 .orElseThrow(() -> new RecipientNotFoundException(RECIPIENT_NOT_FOUND_MESSAGE));
 
-        // 게시물 비번이 없거나 or 비밀번호 불일치
-        if (!recipientEntityold.checkPasscode(letterPasscode)) { // 엔티티의 checkPasscode 활용
+        // 게시물 비밀번호 검증
+        if (!recipientEntityold.checkPasscode(letterPasscode)) {
             throw new RecipientInvalidPasscodeException("비밀번호가 일치하지 않습니다.");
         }
 
         // 2. 게시물 소프트 삭제
-        recipientEntityold.softDelete(); // 엔티티의 softDelete 메서드 활용
+        recipientEntityold.softDelete();
         recipientRepository.save(recipientEntityold);
 
         // 3. 해당 게시물의 모든 댓글 소프트 삭제
         List<RecipientCommentEntity> commentsToSoftDelete =
-                recipientCommentRepository.findByLetterSeqAndDelFlagOrderByWriteTimeAsc(recipientEntityold, "N");
+                recipientCommentRepository.findCommentsByLetterSeqAndDelFlagSorted(recipientEntityold, "N");
 
         if (commentsToSoftDelete != null && !commentsToSoftDelete.isEmpty()) {
             for (RecipientCommentEntity comment : commentsToSoftDelete) {
@@ -235,75 +193,29 @@ public class RecipientServiceImpl implements RecipientService {
     // 조건 : letter_writer 한영자 10자 제한, letter_passcode 영숫자 8자 이상, 캡챠 인증
     @Override
     public RecipientDetailResponseDto insertRecipient(RecipientRequestDto requestDto) {
-        // 0. hCaptcha 인증 검증 추가
-        if (!hcaptchaService.verifyCaptcha(requestDto.getCaptchaToken())) {
-            logger.warn("hCaptcha 인증 실패: 유효하지 않은 캡차 토큰입니다.");
-            throw new RecipientInvalidDataException(CAPTCHA_FAILED_MESSAGE);
-        }
+
+        // 0. hCaptcha 인증 검증
+        verifyHcaptcha(requestDto.getCaptchaToken(), "등록");
         logger.info("hCaptcha 인증 성공. 게시물 등록 진행.");
 
         RecipientEntity recipientEntityRequest = requestDto.toEntity(); // DTO를 Entity로 변환
 
         // 1. 첨부파일 등록 관련
-        MultipartFile imageFile = requestDto.getImageFile();
-        if (imageFile != null && !imageFile.isEmpty()) {
-            try {
-                // 1. 파일명 생성 (고유한 UUID 사용)
-                String originalFilename = imageFile.getOriginalFilename();
-                String fileExtension = "";
-                if (originalFilename != null && originalFilename.contains(".")) {
-                    fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
-                }
-                String uniqueFileName = UUID.randomUUID().toString() + fileExtension;
-
-                // 2. 파일 저장 경로 생성
-                Path uploadPath = Paths.get(uploadDir).toAbsolutePath().normalize(); // /app/uploads 경로가 됨
-                Files.createDirectories(uploadPath);
-
-                // 3. 파일 저장
-                Path targetLocation = uploadPath.resolve(uniqueFileName);
-                Files.copy(imageFile.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
-                logger.info("이미지 파일 저장 성공: {}", targetLocation.toString());
-
-                // 4. 엔티티에 파일 정보 저장 _ 클라이언트에서 접근할 수 있는 URL로 변환하여 저장
-                String imageUrl = fileBaseUrl + "/" + uniqueFileName; // /uploads/고유파일명 이 됨
-                recipientEntityRequest.setFileName(imageUrl);
-                recipientEntityRequest.setOrgFileName(originalFilename);
-            } catch (IOException ex) {
-                logger.error("이미지 파일 저장 실패: {}", ex.getMessage());
-                throw new RecipientInvalidDataException("이미지 파일 저장 중 오류가 발생했습니다.");
-            }
+        String[] fileInfo = saveImageFile(requestDto.getImageFile());
+        if (fileInfo != null) {
+            recipientEntityRequest.setFileName(fileInfo[0]);
+            recipientEntityRequest.setOrgFileName(fileInfo[1]);
         }
 
         // 2. Jsoup을 사용하여 HTML 필터링 및 내용 유효성 검사
-        String originalContents = recipientEntityRequest.getLetterContents();
+        recipientEntityRequest.setLetterContents(cleanAndValidateContents(recipientEntityRequest.getLetterContents()));
 
-        // letterContents가 null이거나 비어있는 경우 InvalidRecipientDataException 발생
-        if (originalContents == null || originalContents.trim().isEmpty()) {
-            logger.warn("게시물 내용이 비어있거나 null입니다."); // 로깅 추가
-            throw new RecipientInvalidDataException("게시물 내용은 필수 입력 항목입니다.");
-        }
-        Safelist safelist = Safelist.relaxed();
-        String cleanContents = Jsoup.clean(originalContents, safelist);
-        logger.debug("Cleaned contents before trim: '{}'", cleanContents); // 디버깅용
-        // 필터링 후 HTML 태그를 포함한 내용이 아니라, 순수 텍스트 내용이 비어있는지 확인
-        String pureTextContents = Jsoup.parse(cleanContents).text();
-        if (pureTextContents.trim().isEmpty()) { // 필터링 후 내용이 실질적으로 비어있는지 다시 확인
-            logger.warn("게시물 작성 실패: 필터링 후 내용이 비어있음"); // 로깅 추가
-            throw new RecipientInvalidDataException("게시물 내용은 필수 입력 항목입니다. (HTML 태그 필터링 후)");
-        }
-        recipientEntityRequest.setLetterContents(cleanContents.trim()); // 필터링되고 트림된 내용으로 설정
-        logger.debug("Cleaned contents after trim: '{}'", recipientEntityRequest.getLetterContents()); // 디버깅용
-
-        // 3. 익명 처리 로직 및 작성자(letterWriter) 유효성 검사
-        String writerToSave = requestDto.getLetterWriter();
-        if ("Y".equalsIgnoreCase(requestDto.getAnonymityFlag())) {
-            writerToSave = ANONYMOUS_WRITER_VALUE;
-        }
+        // 3. 익명 처리 로직 및 작성자(letterWriter) 설정
+        String writerToSave = "Y".equalsIgnoreCase(requestDto.getAnonymityFlag()) ? anonymousWriterValue : requestDto.getLetterWriter();
         recipientEntityRequest.setLetterWriter(writerToSave);
 
-        // 4. organCode가 "ORGAN000" (직접입력) 일 경우 organEtc 설정, 아니면 null
-        if (!ORGAN_CODE_DIRECT_INPUT.equals(requestDto.getOrganCode())) {
+        // 4. organCode : "ORGAN000" (직접입력) 일 경우 organEtc 설정, 아니면 null
+        if (!organCodeDirectInput.equals(requestDto.getOrganCode())) {
             recipientEntityRequest.setOrganEtc(null);
         }
         else {
@@ -529,6 +441,93 @@ public class RecipientServiceImpl implements RecipientService {
         }
         catch (Exception e) {
             throw new InvalidIntegerConversionException("Unexpected error during conversion of " + fieldName, e);
+        }
+    }
+
+    /**
+     * hCaptcha 인증을 검증하는 공통 메서드.
+     * @param captchaToken 요청에서 받은 hCaptcha 토큰.
+     * @param operationType 로깅을 위한 작업 유형 (예: "수정", "삭제", "등록").
+     * @throws RecipientInvalidDataException hCaptcha 인증 실패 시 발생.
+     */
+    private void verifyHcaptcha(String captchaToken, String operationType) {
+        if (!hcaptchaService.verifyCaptcha(captchaToken)) {
+            logger.warn("hCaptcha 인증 실패: 유효하지 않은 캡차 토큰입니다. ({})", operationType);
+            throw new RecipientInvalidDataException(captchaFailedMessage);
+        }
+        logger.info("hCaptcha 인증 성공. 게시물 {} 진행.", operationType);
+    }
+
+    /**
+     * Jsoup을 사용하여 HTML 내용을 정제하고 유효성을 검사하는 공통 메서드.
+     * @param originalContents 원본 HTML 내용.
+     * @return 정제되고 트림된 내용.
+     * @throws RecipientInvalidDataException 내용이 null이거나 비어있거나, 필터링 후 비어있을 경우 발생.
+     */
+    private String cleanAndValidateContents(String originalContents) {
+        if (originalContents == null || originalContents.trim().isEmpty()) {
+            logger.warn("게시물 내용이 비어있거나 null입니다.");
+            throw new RecipientInvalidDataException("게시물 내용은 필수 입력 항목입니다.");
+        }
+        Safelist safelist = Safelist.relaxed();
+        String cleanContents = Jsoup.clean(originalContents, safelist);
+        String pureTextContents = Jsoup.parse(cleanContents).text();
+        if (pureTextContents.trim().isEmpty()) {
+            logger.warn("게시물 작업 실패: 필터링 후 내용이 비어있음");
+            throw new RecipientInvalidDataException("게시물 내용은 필수 입력 항목입니다. (HTML 태그 필터링 후)");
+        }
+        return cleanContents.trim();
+    }
+
+    /**
+     * 이미지 파일을 저장하고, 저장된 파일의 URL과 원본 파일명을 반환하는 공통 메서드.
+     * @param imageFile 업로드할 MultipartFile.
+     * @return [파일 URL, 원본 파일명]을 포함하는 String 배열 또는 파일이 없으면 null.
+     * @throws RecipientInvalidDataException 파일 저장 실패 시 발생.
+     */
+    private String[] saveImageFile(MultipartFile imageFile) {
+        if (imageFile == null || imageFile.isEmpty()) {
+            return null; // 저장할 파일이 없음
+        }
+        try {
+            String originalFilename = imageFile.getOriginalFilename();
+            String fileExtension = "";
+            if (originalFilename != null && originalFilename.contains(".")) {
+                fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
+            }
+            String uniqueFileName = UUID.randomUUID().toString() + fileExtension;
+
+            Path uploadPath = Paths.get(uploadDir).toAbsolutePath().normalize();
+            Files.createDirectories(uploadPath); // 디렉토리가 없으면 생성
+
+            Path targetLocation = uploadPath.resolve(uniqueFileName);
+            Files.copy(imageFile.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
+            logger.info("이미지 파일 저장 성공: {}", targetLocation.toString());
+
+            String imageUrl = fileBaseUrl + "/" + uniqueFileName;
+            return new String[]{imageUrl, originalFilename};
+        } catch (IOException ex) {
+            logger.error("이미지 파일 저장 실패: {}", ex.getMessage());
+            throw new RecipientInvalidDataException("이미지 파일 저장 중 오류가 발생했습니다.");
+        }
+    }
+
+    /**
+     * 기존 파일을 물리적으로 삭제하는 공통 메서드.
+     * @param fileUrl 삭제할 파일의 URL.
+     */
+    private void deleteExistingFile(String fileUrl) {
+        if (fileUrl != null && !fileUrl.isEmpty()) {
+            try {
+                // URL에서 파일명만 추출하여 물리적 경로 구성
+                String fileName = fileUrl.substring(fileUrl.lastIndexOf("/") + 1);
+                Path filePath = Paths.get(uploadDir, fileName).toAbsolutePath().normalize();
+                Files.deleteIfExists(filePath);
+                logger.info("기존 이미지 파일 삭제 성공: {}", filePath.toString());
+            } catch (IOException e) {
+                logger.warn("기존 이미지 파일 삭제 실패 (파일 없음 또는 권한 문제): {}", fileUrl, e);
+                // 삭제 실패해도 진행은 가능하도록 (치명적 오류는 아님)
+            }
         }
     }
 
