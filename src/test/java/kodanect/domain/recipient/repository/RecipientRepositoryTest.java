@@ -11,12 +11,10 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.ActiveProfiles;
-//import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,8 +28,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @DataJpaTest
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE) // 실제 데이터베이스 사용
-//@ContextConfiguration(classes = kodanect.KodanectBootApplication.class) // 여러분의 메인 애플리케이션 클래스로 교체하세요.
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @ActiveProfiles("test")
 public class RecipientRepositoryTest {
     @Autowired
@@ -255,24 +252,9 @@ public class RecipientRepositoryTest {
         assertThat(deletedRecipientOptional).isPresent();
         assertThat(deletedRecipientOptional.get().getDelFlag()).isEqualTo("Y");
 
-        // 2. 연결된 댓글들도 delFlag가 'Y'인지 확인 (JPA 연관관계로 인해 RecipientCommentEntity도 필요)
-        // RecipientCommentRepository를 직접 주입받아 조회하는 것이 더 정확합니다.
-        // 테스트 편의를 위해 findByIdWithComments로 다시 가져와 확인합니다.
-        // (findByIdWithComments 쿼리 자체는 delFlag='N'만 가져오지만, 여기서는 delFlag='Y'로 변경되었음을 확인하기 위함)
-        // 실제로는 RecipientCommentRepository를 사용하여 직접 댓글의 delFlag를 확인해야 합니다.
-        // 여기서는 RecipientEntity를 다시 조회하여 comments 컬렉션이 비어있는 것을 확인합니다.
-        // (comments 컬렉션에 대한 @Query의 delFlag='N' 조건 때문에)
-
-        // 삭제된 게시물은 findByIdWithComments 쿼리에서 가져오지 않도록 설정되어 있으므로,
-        // 이 쿼리를 사용하면 Optional이 비어있어야 합니다.
+        // 삭제된 게시물은 findByIdWithComments 쿼리에서 가져오지 않도록 설정되어 있으므로,이 쿼리를 사용하면 Optional이 비어있어야 합니다.
         Optional<RecipientEntity> foundAfterSoftDelete = recipientRepository.findByIdWithComments(recipient.getLetterSeq());
         assertThat(foundAfterSoftDelete).isNotPresent(); // 게시물 자체가 delFlag='Y'이므로 조회되지 않아야 함
-
-        // (선택 사항) 만약 RecipientCommentRepository가 있다면, 아래와 같이 댓글의 delFlag를 직접 검증할 수 있습니다.
-        // @Autowired private RecipientCommentRepository commentRepository;
-        // Optional<RecipientCommentEntity> foundComment1 = commentRepository.findById(comment1.getCommentSeq());
-        // assertThat(foundComment1).isPresent();
-        // assertThat(foundComment1.get().getDelFlag()).isEqualTo("Y");
     }
 
     @Test

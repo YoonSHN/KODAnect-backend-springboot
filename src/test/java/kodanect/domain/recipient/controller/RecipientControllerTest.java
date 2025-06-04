@@ -76,6 +76,7 @@ public class RecipientControllerTest {
     // @Before 어노테이션은 각 테스트 메서드 실행 전에 초기화 작업을 수행합니다.
     @Before
     public void setup() {
+        // 현재 테스트를 위해 특별히 초기화할 내용이 없으므로 비워둡니다.
     }
 
     // --- 게시물 목록 조회 테스트 ---

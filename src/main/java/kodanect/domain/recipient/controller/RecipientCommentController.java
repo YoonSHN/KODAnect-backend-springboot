@@ -44,9 +44,6 @@ public class RecipientCommentController {
     public ResponseEntity<ApiResponse<RecipientCommentResponseDto>> updateComment(@PathVariable("letterSeq") int letterSeq,
                                                                                   @PathVariable("commentSeq") int commentSeq,
                                                                                   @Valid @RequestBody RecipientCommentRequestDto requestDto) {
-        // 참고: 현재 recipientCommentService.updateComment 메서드는 letterSeq를 파라미터로 받지 않습니다.
-        // 만약 update 로직에서 letterSeq가 필요하다면 서비스 메서드 시그니처를 변경해야 합니다.
-        // 예: recipientCommentService.updateComment(letterSeq, commentSeq, requestDto.getCommentContents(), ...);
         RecipientCommentResponseDto updatedComment = recipientCommentService.updateComment(
                 commentSeq, // 댓글 시퀀스
                 requestDto.getCommentContents(), // 업데이트할 내용

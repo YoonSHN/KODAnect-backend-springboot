@@ -6,7 +6,6 @@ import kodanect.domain.recipient.entity.RecipientEntity;
 import kodanect.domain.recipient.exception.RecipientInvalidDataException;
 import kodanect.domain.recipient.repository.RecipientRepository;
 import kodanect.common.util.HcaptchaService;
-import kodanect.domain.recipient.service.RecipientService;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -19,10 +18,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -36,12 +31,6 @@ public class insertRecipientServiceImplTest {
 
     @Mock
     private HcaptchaService hcaptchaService;
-
-    // Jsoup.clean()과 Files.copy()는 static 메서드이므로 직접 Mocking이 어렵습니다.
-    // Files.copy의 IOException 테스트를 위해서는 MockMultipartFile의 getInputStream()을
-    // IOException을 던지도록 만들거나, PowerMockito 같은 라이브러리를 사용해야 합니다.
-    // 여기서는 일반적인 시나리오만 테스트하고, Files.copy의 IOException은 MockMultipartFile
-    // 내부에서 발생하도록 하여 간접적으로 테스트합니다. (실제 운영 환경에서는 발생 가능한 에러이므로 중요)
 
     @InjectMocks
     private RecipientServiceImpl recipientService;
@@ -130,12 +119,6 @@ public class insertRecipientServiceImplTest {
                 "이미지작가", "12345678", "이미지 있는 게시물 내용", "N",
                 "ORG02", null, "valid_captcha_token", imageFile
         );
-
-        // Files.copy는 static 메서드이므로, Mockito로 직접 Mocking하기 어렵습니다.
-        // (PowerMockito 같은 추가 라이브러리 필요)
-        // 여기서는 서비스 로직을 테스트하는 것에 집중하고, Files.copy에서 IOException이
-        // 발생하지 않도록 테스트 환경을 가정합니다.
-        // 실제 파일 IO가 필요하면 @SpringBootTest로 통합 테스트를 진행하는 것이 좋습니다.
 
         // save 메서드가 호출될 때, 파일 이름이 설정된 엔티티를 반환하도록 Mocking
         when(hcaptchaService.verifyCaptcha("valid_captcha_token")).thenReturn(true);

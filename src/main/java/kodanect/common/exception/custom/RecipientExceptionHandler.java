@@ -87,13 +87,10 @@ public class RecipientExceptionHandler {
 
         log.warn("Validation failed (400): {}", errorMessage.toString().trim());
 
-        try {
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .body(ApiResponse.fail(HttpStatus.BAD_REQUEST, errorMessage.toString().trim()));
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        // 불필요한 try-catch 블록 제거
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.fail(HttpStatus.BAD_REQUEST, errorMessage.toString().trim()));
     }
 
     /**

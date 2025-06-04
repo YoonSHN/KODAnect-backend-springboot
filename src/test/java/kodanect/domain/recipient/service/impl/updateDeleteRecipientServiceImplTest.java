@@ -10,7 +10,6 @@ import kodanect.domain.recipient.exception.RecipientInvalidPasscodeException;
 import kodanect.domain.recipient.exception.RecipientNotFoundException;
 import kodanect.domain.recipient.repository.RecipientCommentRepository;
 import kodanect.domain.recipient.repository.RecipientRepository;
-import kodanect.domain.recipient.service.RecipientService;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -24,7 +23,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
@@ -199,12 +197,6 @@ public class updateDeleteRecipientServiceImplTest {
             return savedEntity;
         });
 
-        // Mocking을 통해 Files.deleteIfExists와 Files.copy 대신,
-        // recipientService 내부의 private 메서드인 saveImageFile과 deleteExistingFile이
-        // 적절히 호출되었음을 확인하는 것이 더 현실적인 단위 테스트 방법입니다.
-        // 하지만 private 메서드 Mocking은 PowerMockito 같은 추가 라이브러리가 필요하므로,
-        // 여기서는 해당 메서드가 성공적으로 실행되었다고 가정하고 결과 엔티티의 파일 정보를 검증합니다.
-
         // When
         RecipientDetailResponseDto resultDto = recipientService.updateRecipient(letterSeq, requestPasscode, requestDto);
 
@@ -217,55 +209,7 @@ public class updateDeleteRecipientServiceImplTest {
         verify(recipientRepository, times(2)).findById(letterSeq); // 2번 호출 확인
         verify(recipientRepository, times(1)).save(any(RecipientEntity.class));
 
-        // 실제 파일 삭제 및 저장을 모킹할 수 없으므로, 파일이 실제로 삭제되었는지 저장되었는지 직접 검증하는 것은 불가능합니다.
-        // 대신, 서비스가 엔티티의 파일 정보를 올바르게 업데이트했는지 확인합니다.
     }
-
-
-    // 이미지 삭제 기능이 없어졌으므로, 해당 테스트 제거 또는 수정 필요.
-    // 만약 사용자가 이미지를 '없음' 상태로 바꾸는 기능이 필요하다면,
-    // DTO에 'isImageRemoved' 플래그를 다시 추가하거나, 'imageFile'을 비어있는 상태로 보내고
-    // 이를 서비스에서 '삭제'로 해석하는 별도의 로직이 필요합니다.
-    // 현재 코드에서는 'newImageFile'이 없으면 기존 파일을 유지하므로,
-    // 이미지를 삭제하는 시나리오는 이 테스트 클래스에서 다룰 수 없습니다.
-    /*
-    @Test
-    public void updateRecipient_Success_ImageDelete() {
-        // Given
-        Integer letterSeq = 3;
-        String requestPasscode = "delete_pass";
-        String oldFileName = "old-image-to-delete.jpg";
-        String oldFileUrl = testFileBaseUrl + "/" + oldFileName;
-        RecipientEntity existingEntity = createRecipientEntity(letterSeq, "삭제작가", requestPasscode, "내용", "N", oldFileUrl, oldFileName);
-
-        RecipientRequestDto requestDto = createRequestDto(
-                "삭제작가", requestPasscode, "내용", "N",
-                "ORG01", null, "valid_captcha_token", null
-        );
-        requestDto.setImageRemoved(true); // 이미지 삭제 플래그 설정 (DTO에 isImageRemoved 필드 필요)
-
-        when(hcaptchaService.verifyCaptcha("valid_captcha_token")).thenReturn(true);
-        when(recipientRepository.findById(letterSeq)).thenReturn(Optional.of(existingEntity));
-        when(recipientRepository.save(any(RecipientEntity.class))).thenAnswer(invocation -> {
-            RecipientEntity savedEntity = invocation.getArgument(0);
-            savedEntity.setLetterSeq(letterSeq);
-            return savedEntity;
-        });
-
-        // When
-        RecipientDetailResponseDto resultDto = recipientService.updateRecipient(letterSeq, requestPasscode, requestDto);
-
-        // Then
-        assertThat(resultDto).isNotNull();
-        assertThat(resultDto.getLetterSeq()).isEqualTo(letterSeq);
-        assertThat(resultDto.getFileName()).isNull(); // 파일 URL이 null인지 확인
-        assertThat(resultDto.getOrgFileName()).isNull(); // 원본 파일명이 null인지 확인
-        verify(hcaptchaService, times(1)).verifyCaptcha("valid_captcha_token");
-        verify(recipientRepository, times(2)).findById(letterSeq);
-        verify(recipientRepository, times(1)).save(any(RecipientEntity.class));
-    }
-    */
-
 
     @Test
     public void updateRecipient_Success_AnonymousUpdate() {

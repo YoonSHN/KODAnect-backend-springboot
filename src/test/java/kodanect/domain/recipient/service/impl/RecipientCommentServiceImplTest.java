@@ -89,17 +89,6 @@ public class RecipientCommentServiceImplTest {
                 .build();
         // checkPasscode 메서드를 모의하기 위해 실제 비밀번호를 설정
         activeComment.setCommentPasscode("pass1234"); // 실제로는 해싱된 비밀번호여야 함. 테스트를 위해 임시 설정
-
-        // deletedComment는 현재 테스트 시나리오에서 직접 사용되지 않아 주석 처리합니다.
-        // deletedComment = RecipientCommentEntity.builder()
-        //         .commentSeq(101)
-        //         .letterSeq(activeRecipient)
-        //         .commentContents("Deleted Comment")
-        //         .commentWriter("Deleted Tester")
-        //         .commentPasscode("delpass1234")
-        //         .delFlag("Y")
-        //         .regDt(LocalDateTime.now())
-        //         .build();
     }
 
     // --- selectRecipientCommentByLetterSeq 테스트 ---

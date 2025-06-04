@@ -409,41 +409,6 @@ public class RecipientServiceImpl implements RecipientService {
         return commentCountMap;
     }
 
-    // 다양한 타입(Object)에서 안전하게 Integer 추출
-    private Integer extractAsInteger(Object obj, String fieldName) {
-        if (obj == null) {
-            logger.warn("Null value encountered for field '{}'", fieldName);
-            return null;
-        }
-
-        try {
-            if (obj instanceof Number number) {
-                return number.intValue();
-            }
-
-            if (obj instanceof String str) {
-                str = str.trim();
-                if (str.isEmpty()) {
-                    throw new InvalidIntegerConversionException("Empty or blank string cannot be converted to Integer for field: " + fieldName);
-                }
-                return Integer.parseInt(str);
-            }
-
-            throw new InvalidIntegerConversionException(
-                    "Unsupported type for Integer conversion. Field: " + fieldName + ", Type: " + obj.getClass().getName()
-            );
-        }
-        catch (NumberFormatException e) {
-            throw new InvalidIntegerConversionException("Invalid number format for field: " + fieldName + ", value: " + obj, e);
-        }
-        catch (InvalidIntegerConversionException e) {
-            throw e;
-        }
-        catch (Exception e) {
-            throw new InvalidIntegerConversionException("Unexpected error during conversion of " + fieldName, e);
-        }
-    }
-
     /**
      * hCaptcha 인증을 검증하는 공통 메서드.
      * @param captchaToken 요청에서 받은 hCaptcha 토큰.
@@ -482,12 +447,12 @@ public class RecipientServiceImpl implements RecipientService {
     /**
      * 이미지 파일을 저장하고, 저장된 파일의 URL과 원본 파일명을 반환하는 공통 메서드.
      * @param imageFile 업로드할 MultipartFile.
-     * @return [파일 URL, 원본 파일명]을 포함하는 String 배열 또는 파일이 없으면 null.
+     * @return [파일 URL, 원본 파일명]을 포함하는 String 배열 또는 파일이 없으면 빈 배열.
      * @throws RecipientInvalidDataException 파일 저장 실패 시 발생.
      */
     private String[] saveImageFile(MultipartFile imageFile) {
         if (imageFile == null || imageFile.isEmpty()) {
-            return null; // 저장할 파일이 없음
+            return new String[]{}; // 저장할 파일이 없으면 빈 배열 반환
         }
         try {
             String originalFilename = imageFile.getOriginalFilename();
@@ -502,7 +467,11 @@ public class RecipientServiceImpl implements RecipientService {
 
             Path targetLocation = uploadPath.resolve(uniqueFileName);
             Files.copy(imageFile.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
-            logger.info("이미지 파일 저장 성공: {}", targetLocation.toString());
+
+            // 로깅 레벨 확인 후 메서드 호출
+            if (logger.isInfoEnabled()) {
+                logger.info("이미지 파일 저장 성공: {}", targetLocation);
+            }
 
             String imageUrl = fileBaseUrl + "/" + uniqueFileName;
             return new String[]{imageUrl, originalFilename};
@@ -523,7 +492,10 @@ public class RecipientServiceImpl implements RecipientService {
                 String fileName = fileUrl.substring(fileUrl.lastIndexOf("/") + 1);
                 Path filePath = Paths.get(uploadDir, fileName).toAbsolutePath().normalize();
                 Files.deleteIfExists(filePath);
-                logger.info("기존 이미지 파일 삭제 성공: {}", filePath.toString());
+                // 로깅 레벨 확인 및 .toString() 호출 제거
+                if (logger.isInfoEnabled()) {
+                    logger.info("기존 이미지 파일 삭제 성공: {}", filePath);
+                }
             } catch (IOException e) {
                 logger.warn("기존 이미지 파일 삭제 실패 (파일 없음 또는 권한 문제): {}", fileUrl, e);
                 // 삭제 실패해도 진행은 가능하도록 (치명적 오류는 아님)

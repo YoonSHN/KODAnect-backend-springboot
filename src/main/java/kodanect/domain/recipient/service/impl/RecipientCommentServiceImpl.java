@@ -26,9 +26,6 @@ import java.util.List;
 @RequiredArgsConstructor // final 필드에 대한 생성자 주입
 public class RecipientCommentServiceImpl implements RecipientCommentService {
 
-    // 비밀번호 영숫자 8자 이상 (현재 사용되지 않음)
-    // private static final String COMMENT_PASSCODE_PATTERN = "^(?=.*[a-zA-Z])(?=.*[0-9]).{8,}$";
-
     // 중복되는 에러 메시지
     private static final String COMMENT_NOT_FOUND_MESSAGE = "댓글을 찾을 수 없거나 이미 삭제되었습니다.";
 
