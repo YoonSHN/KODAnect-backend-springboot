@@ -4,7 +4,6 @@ import kodanect.domain.recipient.dto.*;
 import kodanect.domain.recipient.exception.RecipientInvalidPasscodeException;
 import kodanect.domain.recipient.exception.RecipientInvalidDataException;
 import kodanect.domain.recipient.exception.RecipientNotFoundException;
-import kodanect.common.exception.custom.InvalidIntegerConversionException;
 import kodanect.common.util.HcaptchaService;
 import kodanect.domain.recipient.entity.RecipientCommentEntity;
 import kodanect.domain.recipient.entity.RecipientEntity;
