@@ -62,7 +62,7 @@ public class RecipientControllerTest {
     private RecipientService recipientService;
 
     @MockBean
-    private MessageSourceAccessor messageSourceAccessor; // MessageSourceAccessor Mocking
+    private MessageSourceAccessor messageSourceAccessor;
 
     @MockBean
     private RecipientRepository recipientRepository;
