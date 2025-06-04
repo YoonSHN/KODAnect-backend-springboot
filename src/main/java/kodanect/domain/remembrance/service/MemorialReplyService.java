@@ -19,11 +19,16 @@ public interface MemorialReplyService {
                     MemorialNotFoundException;
     /* 게시글 댓글 수정 */
     void updateReply(Integer donateSeq, Integer replySeq, MemorialReplyUpdateRequest memorialReplyUpdateRequest)
-            throws  InvalidDonateSeqException,
+            throws  ReplyPostMismatchException,
+                    ReplyIdMismatchException,
+                    InvalidDonateSeqException,
+                    MissingReplyPasswordException,
+                    ReplyPasswordMismatchException,
                     MissingReplyContentException,
                     MemorialReplyNotFoundException,
                     MemorialNotFoundException,
-                    InvalidReplySeqException;
+                    InvalidReplySeqException,
+                    ReplyAlreadyDeleteException;
     /* 게시글 댓글 삭제 del_flag = 'Y' 설정 */
     void deleteReply(Integer donateSeq, Integer replySeq, MemorialReplyDeleteRequest memorialReplyDeleteRequest)
             throws  ReplyPostMismatchException,
