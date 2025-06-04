@@ -1,5 +1,6 @@
 package kodanect.domain.recipient.service.impl;
 
+import kodanect.common.config.GlobalsProperties;
 import kodanect.domain.recipient.dto.*;
 import kodanect.domain.recipient.exception.RecipientInvalidPasscodeException;
 import kodanect.domain.recipient.exception.RecipientInvalidDataException;
@@ -48,27 +49,30 @@ public class RecipientServiceImpl implements RecipientService {
     private static final String COMMENT_SEQ = "commentSeq";
     private static final String WRITE_TIME = "writeTime";
 
-    // @Value 어노테이션을 통한 주입 변수들
-    @Value("${recipient.organ-code-direct-input:ORGAN000}")
-    private String organCodeDirectInput;
-    @Value("${recipient.anonymous-writer-value:익명}")
-    private String anonymousWriterValue;
-    @Value("${recipient.captcha-failed-message:hCaptcha 인증에 실패했습니다. 다시 시도해주세요.}") // properties에서 주입
-    private String captchaFailedMessage;
-    @Value("${file.upload-root-dir}")
-    private String uploadDir;
-    @Value("${file.base-url}")
-    private String fileBaseUrl;
-
     // 의존성 주입 (final 필드)
+    private final String organCodeDirectInput;
+    private final String anonymousWriterValue;
+    private final String captchaFailedMessage;
     private final RecipientRepository recipientRepository;
     private final RecipientCommentRepository recipientCommentRepository;
     private final HcaptchaService hcaptchaService;
+    private final GlobalsProperties globalsProperties; // GlobalsProperties 주입
 
-    public RecipientServiceImpl(RecipientRepository recipientRepository, RecipientCommentRepository recipientCommentRepository, HcaptchaService hcaptchaService) {
+    public RecipientServiceImpl(
+            RecipientRepository recipientRepository,
+            RecipientCommentRepository recipientCommentRepository,
+            HcaptchaService hcaptchaService,
+            GlobalsProperties globalsProperties,
+            @Value("${recipient.organ-code-direct-input:ORGAN000}") String organCodeDirectInput,
+            @Value("${recipient.anonymous-writer-value:익명}") String anonymousWriterValue,
+            @Value("${recipient.captcha-failed-message:hCaptcha 인증에 실패했습니다. 다시 시도해주세요.}") String captchaFailedMessage) {
         this.recipientRepository = recipientRepository;
         this.recipientCommentRepository = recipientCommentRepository;
         this.hcaptchaService = hcaptchaService;
+        this.globalsProperties = globalsProperties;
+        this.organCodeDirectInput = organCodeDirectInput;
+        this.anonymousWriterValue = anonymousWriterValue;
+        this.captchaFailedMessage = captchaFailedMessage;
     }
 
     // 게시물 비밀번호 확인
@@ -480,7 +484,7 @@ public class RecipientServiceImpl implements RecipientService {
             }
             String uniqueFileName = UUID.randomUUID().toString() + fileExtension;
 
-            Path uploadPath = Paths.get(uploadDir).toAbsolutePath().normalize();
+            Path uploadPath = Paths.get(globalsProperties.getFileStorePath()).toAbsolutePath().normalize();
             Files.createDirectories(uploadPath); // 디렉토리가 없으면 생성
 
             Path targetLocation = uploadPath.resolve(uniqueFileName);
@@ -490,8 +494,8 @@ public class RecipientServiceImpl implements RecipientService {
             if (logger.isInfoEnabled()) {
                 logger.info("이미지 파일 저장 성공: {}", targetLocation);
             }
-
-            String imageUrl = fileBaseUrl + "/" + uniqueFileName;
+            // GlobalsProperties에서 fileBaseUrl 사용
+            String imageUrl = globalsProperties.getFileBaseUrl() + "/" + uniqueFileName;
             return new String[]{imageUrl, originalFilename};
         } catch (IOException ex) {
             logger.error("이미지 파일 저장 실패: {}", ex.getMessage());
@@ -508,7 +512,7 @@ public class RecipientServiceImpl implements RecipientService {
             try {
                 // URL에서 파일명만 추출하여 물리적 경로 구성
                 String fileName = fileUrl.substring(fileUrl.lastIndexOf("/") + 1);
-                Path filePath = Paths.get(uploadDir, fileName).toAbsolutePath().normalize();
+                Path filePath = Paths.get(globalsProperties.getFileStorePath(), fileName).toAbsolutePath().normalize();
                 Files.deleteIfExists(filePath);
                 // 로깅 레벨 확인 및 .toString() 호출 제거
                 if (logger.isInfoEnabled()) {

@@ -1,5 +1,6 @@
 package kodanect.domain.recipient.service.impl;
 
+import kodanect.common.config.GlobalsProperties;
 import kodanect.common.util.HcaptchaService;
 import kodanect.domain.recipient.dto.RecipientCommentResponseDto;
 import kodanect.domain.recipient.dto.RecipientDetailResponseDto;
@@ -55,10 +56,18 @@ public class pagingSearchRecipientServiceImplTest {
     @Mock
     private HcaptchaService hcaptchaService;
 
+    @Mock
+    private GlobalsProperties globalsProperties;
+
     @InjectMocks
     private RecipientServiceImpl recipientService; // @InjectMocks를 사용하여 의존성 주입
+    // @Value 필드들의 기본값
+    private static final String ORGAN_CODE_DIRECT_INPUT = "ORGAN000";
+    private static final String ANONYMOUS_WRITER_VALUE = "익명";
+    private static final String CAPTCHA_FAILED_MESSAGE = "hCaptcha 인증에 실패했습니다. 다시 시도해주세요.";
 
     private static final String RECIPIENT_NOT_FOUND_MESSAGE = "해당 게시물이 존재하지 않거나 이미 삭제되었습니다.";
+    private static final int INITIAL_COMMENT_LOAD_LIMIT = 3; // 서비스 코드의 INITIAL_COMMENT_LOAD_LIMIT와 동일
 
     // 파일 업로드 관련 경로 (실제 파일 시스템에 저장하지 않으므로 임시 경로 사용)
     private String testUploadDir = "test_uploads";
@@ -67,16 +76,16 @@ public class pagingSearchRecipientServiceImplTest {
 
     @Before
     public void setUp() throws IOException {
-
-        ReflectionTestUtils.setField(recipientService, "uploadDir", testUploadDir);
-        ReflectionTestUtils.setField(recipientService, "fileBaseUrl", testFileBaseUrl);
-
-        // 테스트를 위해 임시 디렉토리 생성 (실제 파일 시스템에 영향 주지 않음)
-        // 기존 deleteRecipient_Failure_NotFound 테스트에서 생성되는 부분이 있으므로, 중복 방지를 위해 확인 후 생성
-        Path path = Paths.get(testUploadDir);
-        if (!Files.exists(path)) {
-            Files.createDirectories(path);
-        }
+        // @InjectMocks 대신 생성자를 직접 호출하여 수동으로 주입합니다.
+        recipientService = new RecipientServiceImpl(
+                recipientRepository,
+                recipientCommentRepository,
+                hcaptchaService,
+                globalsProperties, // Mock GlobalsProperties 주입
+                ORGAN_CODE_DIRECT_INPUT,
+                ANONYMOUS_WRITER_VALUE,
+                CAPTCHA_FAILED_MESSAGE
+        );
     }
 
     // RecipientEntity 생성 헬퍼 메서드
@@ -124,7 +133,7 @@ public class pagingSearchRecipientServiceImplTest {
         int letterSeq = 1;
         RecipientEntity recipient = createRecipientEntity(letterSeq, "테스트 제목", "테스트 내용", "테스트 작가", "1234", "N", 5);
 
-        // 댓글 총 개수 Mocking
+        // Mocking
         when(recipientRepository.findById(letterSeq)).thenReturn(Optional.of(recipient));
         when(recipientRepository.countCommentsByLetterSeq(letterSeq)).thenReturn(5); // 5개의 댓글이 있다고 가정
 
@@ -138,7 +147,8 @@ public class pagingSearchRecipientServiceImplTest {
         assertThat(result.getReadCount()).isEqualTo(6); // 조회수 1 증가 확인
 
         assertThat(result.getCommentCount()).isEqualTo(5);
-        // RecipientServiceImpl에서 INITIAL_COMMENT_LOAD_LIMIT를 3으로 가정하면, 5개는 3보다 많으므로 true
+        // RecipientServiceImpl에서 INITIAL_COMMENT_LOAD_LIMIT는 static final로 3입니다.
+        // 5개의 댓글은 3보다 많으므로 hasMoreComments는 true여야 합니다.
         assertThat(result.isHasMoreComments()).isTrue();
 
         verify(recipientRepository, times(1)).findById(letterSeq);

@@ -1,9 +1,11 @@
 package kodanect.domain.recipient.service.impl;
 
+import kodanect.common.config.GlobalsProperties;
 import kodanect.domain.recipient.dto.RecipientDetailResponseDto;
 import kodanect.domain.recipient.dto.RecipientRequestDto;
 import kodanect.domain.recipient.entity.RecipientEntity;
 import kodanect.domain.recipient.exception.RecipientInvalidDataException;
+import kodanect.domain.recipient.repository.RecipientCommentRepository;
 import kodanect.domain.recipient.repository.RecipientRepository;
 import kodanect.common.util.HcaptchaService;
 import org.junit.Before;
@@ -32,6 +34,9 @@ public class insertRecipientServiceImplTest {
     @Mock
     private HcaptchaService hcaptchaService;
 
+    @Mock
+    private GlobalsProperties globalsProperties;
+
     @InjectMocks
     private RecipientServiceImpl recipientService;
 
@@ -46,17 +51,18 @@ public class insertRecipientServiceImplTest {
 
     @Before
     public void setUp() {
-        // RecipientService의 private 필드인 uploadDir과 fileBaseUrl 설정
-        ReflectionTestUtils.setField(recipientService, "uploadDir", testUploadDir);
-        ReflectionTestUtils.setField(recipientService, "fileBaseUrl", testFileBaseUrl);
-
-        // 이제 RecipientServiceImpl의 필드들은 static final이 아니므로 ReflectionTestUtils로 설정 가능
-        ReflectionTestUtils.setField(recipientService, "captchaFailedMessage", CAPTCHA_FAILED_MESSAGE);
-        ReflectionTestUtils.setField(recipientService, "anonymousWriterValue", ANONYMOUS_WRITER_VALUE);
-        ReflectionTestUtils.setField(recipientService, "organCodeDirectInput", ORGAN_CODE_DIRECT_INPUT);
-
-        // 이 테스트 클래스 내의 static final 상수는 그대로 유지됩니다.
-        // CAPTCHA_FAILED_MESSAGE 등은 위 ReflectionTestUtils.setField에서 사용됩니다.
+        when(globalsProperties.getFileStorePath()).thenReturn("/test/uploads");
+        when(globalsProperties.getFileBaseUrl()).thenReturn("/test-uploads");
+        // 서비스의 @Value 필드들을 수동으로 설정
+        recipientService = new RecipientServiceImpl(
+                recipientRepository,
+                mock(RecipientCommentRepository.class), // recipientCommentRepository가 필요한 경우 mock
+                hcaptchaService,
+                globalsProperties,
+                ORGAN_CODE_DIRECT_INPUT,
+                ANONYMOUS_WRITER_VALUE,
+                CAPTCHA_FAILED_MESSAGE
+        );
     }
 
     // DTO 생성 헬퍼 메서드
@@ -91,7 +97,6 @@ public class insertRecipientServiceImplTest {
 
         // Mocking
         when(hcaptchaService.verifyCaptcha("valid_captcha_token")).thenReturn(true);
-        // recipientRepository.save 호출 시 어떤 RecipientEntity가 들어와도 expectedSavedEntity 반환
         when(recipientRepository.save(any(RecipientEntity.class))).thenReturn(expectedSavedEntity);
 
         // When
@@ -266,6 +271,8 @@ public class insertRecipientServiceImplTest {
     @Test
     public void insertRecipient_Failure_OrganCodeDirectInputButOrganEtcEmpty() {
         // Given
+        // ORGAN_CODE_DIRECT_INPUT 상수는 이 테스트 클래스 내에서 정의된 값을 사용합니다.
+        // RecipientServiceImpl은 Mocking된 globalsProperties.getOrganCodeDirectInput()을 사용합니다.
         RecipientRequestDto requestDto = createRequestDto(
                 "작가", "12345678", "내용", "N",
                 ORGAN_CODE_DIRECT_INPUT, "   ", "valid_captcha_token", null // ORGAN000인데 organEtc가 공백
@@ -273,6 +280,7 @@ public class insertRecipientServiceImplTest {
 
         // Mocking
         when(hcaptchaService.verifyCaptcha("valid_captcha_token")).thenReturn(true);
+        // setUp() 메서드에서 globalsProperties.getOrganCodeDirectInput()은 이미 "ORGAN000"으로 Mocking 되었습니다.
 
         // When & Then
         RecipientInvalidDataException exception = assertThrows(RecipientInvalidDataException.class, () ->

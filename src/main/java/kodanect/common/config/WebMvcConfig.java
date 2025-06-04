@@ -16,12 +16,11 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class WebMvcConfig implements WebMvcConfigurer {
 
-    // application.properties의 file.upload-root-dir 경로 주입
-    @Value("${file.upload-root-dir}")
-    private String uploadDir;
+    private final GlobalsProperties globalsProperties;
 
-    @Value("${file.base-url}")
-    private String fileBaseUrl;
+    public WebMvcConfig(GlobalsProperties globalsProperties) {
+        this.globalsProperties = globalsProperties;
+    }
 
     /**
      * CORS 설정
@@ -48,8 +47,8 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
         // Recipient 게시판 이미지 파일 핸들러
         // file.base-url (예: /uploads/**) 요청을 file:uploadRootDir (예: file:/app/uploads/) 경로로 매핑
-        registry.addResourceHandler(fileBaseUrl + "/**")
-                .addResourceLocations("file:" + uploadDir + "/");
+        registry.addResourceHandler(globalsProperties.getFileBaseUrl() + "/**")
+                .addResourceLocations("file:" + globalsProperties.getFileStorePath() + "/");
     }
 }
 

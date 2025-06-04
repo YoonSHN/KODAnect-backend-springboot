@@ -1,6 +1,7 @@
 package kodanect.domain.recipient.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import kodanect.common.config.GlobalsProperties;
 import kodanect.common.exception.custom.RecipientExceptionHandler;
 import kodanect.domain.recipient.exception.RecipientInvalidDataException;
 import kodanect.domain.recipient.exception.RecipientInvalidPasscodeException;
@@ -68,6 +69,9 @@ public class RecipientCommentControllerTest {
 
     @MockBean
     private org.springframework.data.jpa.mapping.JpaMetamodelMappingContext jpaMappingContext;
+
+    @MockBean
+    private GlobalsProperties globalsProperties;
 
     @Before
     public void setup() {
