@@ -3,10 +3,7 @@ package kodanect.domain.remembrance.controller;
 import kodanect.common.exception.config.GlobalExcepHndlr;
 import kodanect.domain.remembrance.exception.*;
 import kodanect.domain.remembrance.service.MemorialService;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.MethodOrderer;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -25,11 +22,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(controllers = MemorialController.class)
 @Import(GlobalExcepHndlr.class)
 @TestMethodOrder(MethodOrderer.DisplayName.class)
-public class MemorialControllerExceptionTest {
+class MemorialControllerExceptionTest {
 
-    private static final Integer invalidDonateSeq = -1;
+    private static final Integer INVALID_DONATE_SEQUENCE = -1;
     private static final String BAD_REQUEST_MESSAGE = "잘못된 요청입니다.";
-    private static final String NOT_FOUND_MESSAGE = "요청한 리소스를 찾을 수 없습니다.";
+    private static final String NOT_FOUND_MESSAGE = "요청한 자원을 찾을 수 없습니다.";
 
     @Autowired
     MockMvc mockMvc;
@@ -40,6 +37,21 @@ public class MemorialControllerExceptionTest {
     @MockBean
     private MessageSourceAccessor messageSourceAccessor;
 
+    @BeforeEach
+    void setUpMessageSource() {
+        // NOT_FOUND
+        when(messageSourceAccessor.getMessage("error.notfound", "요청한 자원을 찾을 수 없습니다."))
+                .thenReturn("요청한 자원을 찾을 수 없습니다.");
+        when(messageSourceAccessor.getMessage("error.notfound"))
+                .thenReturn("요청한 자원을 찾을 수 없습니다.");
+
+        // BAD_REQUEST
+        when(messageSourceAccessor.getMessage("잘못된 요청입니다."))
+                .thenReturn("잘못된 요청입니다.");
+        when(messageSourceAccessor.getMessage("error.badrequest", "잘못된 요청입니다."))
+                .thenReturn("잘못된 요청입니다.");
+    }
+
     /*
     *
     * 추모관 게시글 리스트 조회
@@ -48,7 +60,7 @@ public class MemorialControllerExceptionTest {
 
     @Test
     @DisplayName("추모관 게시글 리스트 조회 : 유효하지 않은 페이징 범위를 요청한 경우 - 400")
-    public void getMemorialListInvalidPaginationRangeException() throws Exception {
+    void getMemorialListInvalidPaginationRangeException() throws Exception {
 
         Integer invalidCursor = -1;
         int invalidSize = -1;
@@ -73,12 +85,12 @@ public class MemorialControllerExceptionTest {
 
     @Test
     @DisplayName("추모관 게시글 상세 조회 : 존재하지 않는 게시글을 요청한 경우 - 404")
-    public void getMemorialByDonateSeqMemorialNotFoundException() throws Exception {
+    void getMemorialByDonateSeqMemorialNotFoundException() throws Exception {
 
-        when(memorialService.getMemorialByDonateSeq(invalidDonateSeq))
+        when(memorialService.getMemorialByDonateSeq(INVALID_DONATE_SEQUENCE))
                 .thenThrow(new MemorialNotFoundException());
 
-        mockMvc.perform(get("/remembrance/{donateSeq}", invalidDonateSeq))
+        mockMvc.perform(get("/remembrance/{donateSeq}", INVALID_DONATE_SEQUENCE))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.code").value(404))
@@ -87,12 +99,12 @@ public class MemorialControllerExceptionTest {
 
     @Test
     @DisplayName("추모관 게시글 상세 조회 : 유효하지 않은 게시글 번호를 요청한 경우 - 400")
-    public void getMemorialByDonateSeqInvalidDonateSeqException() throws Exception {
+    void getMemorialByDonateSeqInvalidDonateSeqException() throws Exception {
 
-        when(memorialService.getMemorialByDonateSeq(invalidDonateSeq))
+        when(memorialService.getMemorialByDonateSeq(INVALID_DONATE_SEQUENCE))
                 .thenThrow(new InvalidDonateSeqException());
 
-        mockMvc.perform(get("/remembrance/{donateSeq}", invalidDonateSeq))
+        mockMvc.perform(get("/remembrance/{donateSeq}", INVALID_DONATE_SEQUENCE))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.code").value(400))
@@ -107,7 +119,7 @@ public class MemorialControllerExceptionTest {
 
     @Test
     @DisplayName("추모관 게시글 리스트 검색 조회 : 유효하지 않은 페이징 범위를 요청한 경우 - 400")
-    public void getSearchMemorialListInvalidPaginationRangeException() throws Exception {
+    void getSearchMemorialListInvalidPaginationRangeException() throws Exception {
 
         when(memorialService.getSearchMemorialList(anyString(), anyString(), anyString(), anyInt(), anyInt()))
                 .thenThrow(new InvalidPaginationRangeException());
@@ -126,7 +138,7 @@ public class MemorialControllerExceptionTest {
 
     @Test
     @DisplayName("추모관 게시글 리스트 검색 조회 : 날짜 검색 파라미터가 누락된 경우 - 400")
-    public void getSearchMemorialListMissingSearchDateParameterException() throws Exception {
+    void getSearchMemorialListMissingSearchDateParameterException() throws Exception {
 
         when(memorialService.getSearchMemorialList(anyString(), anyString(), anyString(), anyInt(), anyInt()))
                 .thenThrow(new MissingSearchDateParameterException());
@@ -145,7 +157,7 @@ public class MemorialControllerExceptionTest {
 
     @Test
     @DisplayName("추모관 게시글 리스트 검색 조회 : 유효하지 않은 날짜 형식을 요청한 경우 - 400")
-    public void getSearchMemorialListInvalidSearchDateFormatException() throws Exception {
+    void getSearchMemorialListInvalidSearchDateFormatException() throws Exception {
 
         when(memorialService.getSearchMemorialList(anyString(), anyString(), anyString(), anyInt(), anyInt()))
                 .thenThrow(new InvalidSearchDateFormatException());
@@ -164,7 +176,7 @@ public class MemorialControllerExceptionTest {
 
     @Test
     @DisplayName("추모관 게시글 리스트 검색 조회 : 유효하지 않은 날짜 범위를 요청한 경우 - 400")
-    public void getSearchMemorialListInvalidSearchDateRangeException() throws Exception {
+    void getSearchMemorialListInvalidSearchDateRangeException() throws Exception {
 
         when(memorialService.getSearchMemorialList(anyString(), anyString(), anyString(), anyInt(), anyInt()))
                 .thenThrow(new InvalidSearchDateRangeException());
@@ -189,7 +201,7 @@ public class MemorialControllerExceptionTest {
 
     @Test
     @DisplayName("추모관 이모지 카운팅 : 유효하지 않은 이모지를 요청한 경우 - 400")
-    public void updateMemorialLikeCountInvalidEmotionTypeException() throws Exception {
+    void updateMemorialLikeCountInvalidEmotionTypeException() throws Exception {
 
         Integer validDonateSeq = 1;
         String invalidEmotion = "angry";
@@ -207,15 +219,15 @@ public class MemorialControllerExceptionTest {
 
     @Test
     @DisplayName("추모관 이모지 카운팅 : 존재하지 않는 게시글을 요청한 경우 - 404")
-    public void updateMemorialLikeCountMemorialNotFoundException() throws Exception {
+    void updateMemorialLikeCountMemorialNotFoundException() throws Exception {
 
         String invalidEmotion = "angry";
 
         doThrow(new MemorialNotFoundException())
                 .when(memorialService)
-                .emotionCountUpdate(invalidDonateSeq, invalidEmotion);
+                .emotionCountUpdate(INVALID_DONATE_SEQUENCE, invalidEmotion);
 
-        mockMvc.perform(patch("/remembrance/{donateSeq}/{emotion}", invalidDonateSeq, invalidEmotion))
+        mockMvc.perform(patch("/remembrance/{donateSeq}/{emotion}", INVALID_DONATE_SEQUENCE, invalidEmotion))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.code").value(404))
@@ -224,15 +236,15 @@ public class MemorialControllerExceptionTest {
 
     @Test
     @DisplayName("추모관 이모지 카운팅 : 유효하지 않은 게시글 번호를 요청한 경우 - 400")
-    public void updateMemorialLikeCountInvalidDonateSeqException() throws Exception {
+    void updateMemorialLikeCountInvalidDonateSeqException() throws Exception {
 
         String invalidEmotion = "angry";
 
         doThrow(new InvalidDonateSeqException())
                 .when(memorialService)
-                .emotionCountUpdate(invalidDonateSeq, invalidEmotion);
+                .emotionCountUpdate(INVALID_DONATE_SEQUENCE, invalidEmotion);
 
-        mockMvc.perform(patch("/remembrance/{donateSeq}/{emotion}", invalidDonateSeq, invalidEmotion))
+        mockMvc.perform(patch("/remembrance/{donateSeq}/{emotion}", INVALID_DONATE_SEQUENCE, invalidEmotion))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.code").value(400))

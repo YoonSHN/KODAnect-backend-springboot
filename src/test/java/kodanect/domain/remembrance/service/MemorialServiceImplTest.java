@@ -13,7 +13,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
@@ -26,7 +25,7 @@ import static org.mockito.Mockito.*;
 
 
 @RunWith(org.mockito.junit.MockitoJUnitRunner.class)
-public class MemorialServiceImplTest {
+class MemorialServiceImplTest {
 
     @InjectMocks
     private MemorialServiceImpl memorialService;
@@ -42,7 +41,7 @@ public class MemorialServiceImplTest {
 
     @Test
     @DisplayName("추모관 이모지 카운팅")
-    public void 추모관_이모지_카운팅() throws Exception {
+    void 추모관_이모지_카운팅() throws Exception {
         /* emotionCountUpdate */
 
         Integer donateSeq = 1;
@@ -81,7 +80,7 @@ public class MemorialServiceImplTest {
                 .delFlag("N")
                 .build();
 
-        when(memorialFinder.findByIdOrThrow(eq(donateSeq))).thenReturn(memorial);
+        when(memorialFinder.findByIdOrThrow(donateSeq)).thenReturn(memorial);
         doNothing().when(memorialRepository).incrementFlower(donateSeq);
         doNothing().when(memorialRepository).incrementHard(donateSeq);
         doNothing().when(memorialRepository).incrementLove(donateSeq);
@@ -110,7 +109,7 @@ public class MemorialServiceImplTest {
 
     @Test
     @DisplayName("추모관 게시글 검색 조회")
-    public void 추모관_게시글_검색_조회() throws Exception {
+    void 추모관_게시글_검색_조회() throws Exception {
         /* getSearchMemorialList */
         Integer cursor = 1;
         int size = 20;
@@ -142,13 +141,12 @@ public class MemorialServiceImplTest {
 
     @Test
     @DisplayName("추모관 게시글 리스트 조회")
-    public void 추모관_게시글_리스트_조회() throws Exception {
+    void 추모관_게시글_리스트_조회() throws Exception {
         /* getMemorialList */
 
         Integer cursor = 1;
         int size = 20;
 
-        Pageable pageable = PageRequest.of(0,20);
         List<MemorialResponse> content = List.of(
                 new MemorialResponse(1, "홍길동", "N", "20230101", "M", 40, 5),
                 new MemorialResponse(2, "김길동", "Y", "20230102", "F", 20, 2)
@@ -183,11 +181,10 @@ public class MemorialServiceImplTest {
 
     @Test
     @DisplayName("추모관 게시글 상세 조회")
-    public void 추모관_게시글_상세_조회() throws Exception {
+    void 추모관_게시글_상세_조회() throws Exception {
         /* getMemorialByDonateSeq */
 
         Integer donateSeq = 1;
-        Integer cursor = 1;
         int size = 3;
 
         Memorial memorial = Memorial.builder()
@@ -226,8 +223,8 @@ public class MemorialServiceImplTest {
                         .build()
         );
 
-        when(memorialFinder.findByIdOrThrow(eq(donateSeq))).thenReturn(memorial);
-        when(memorialReplyService.getMemorialReplyList(eq(donateSeq), eq(null), eq(size+1))).thenReturn(page);
+        when(memorialFinder.findByIdOrThrow(donateSeq)).thenReturn(memorial);
+        when(memorialReplyService.getMemorialReplyList(donateSeq, null, size+1)).thenReturn(page);
 
         MemorialDetailResponse result = memorialService.getMemorialByDonateSeq(donateSeq);
 

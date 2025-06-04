@@ -7,10 +7,7 @@ import kodanect.domain.remembrance.dto.MemorialReplyDeleteRequest;
 import kodanect.domain.remembrance.dto.MemorialReplyUpdateRequest;
 import kodanect.domain.remembrance.exception.*;
 import kodanect.domain.remembrance.service.MemorialReplyService;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.MethodOrderer;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -23,6 +20,7 @@ import javax.ws.rs.core.MediaType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -30,12 +28,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(controllers = MemorialReplyController.class)
 @Import(GlobalExcepHndlr.class)
 @TestMethodOrder(MethodOrderer.DisplayName.class)
-public class MemorialReplyControllerExceptionTest {
+class MemorialReplyControllerExceptionTest {
 
-    private static final Integer donateSeq = 1;
-    private static final Integer replySeq = 1;
+    private static final Integer DONATE_SEQUENCE = 1;
+    private static final Integer REPLY_SEQUENCE = 1;
     private static final String BAD_REQUEST_MESSAGE = "잘못된 요청입니다.";
-    private static final String NOT_FOUND_MESSAGE = "요청한 리소스를 찾을 수 없습니다.";
+    private static final String NOT_FOUND_MESSAGE = "요청한 자원을 찾을 수 없습니다.";
 
     @Autowired
     MockMvc mockMvc;
@@ -49,6 +47,21 @@ public class MemorialReplyControllerExceptionTest {
     @MockBean
     MessageSourceAccessor messageSourceAccessor;
 
+    @BeforeEach
+    void setUp() {
+        when(messageSourceAccessor.getMessage("error.notfound", "요청한 자원을 찾을 수 없습니다."))
+                .thenReturn("요청한 자원을 찾을 수 없습니다.");
+
+        when(messageSourceAccessor.getMessage("error.internal", "서버 내부 오류가 발생했습니다."))
+                .thenReturn("서버 내부 오류가 발생했습니다.");
+
+        when(messageSourceAccessor.getMessage("reply.password.mismatch"))
+                .thenReturn("비밀번호가 일치하지 않습니다.");
+
+        when(messageSourceAccessor.getMessage("error.notfound"))
+                .thenReturn("요청한 자원을 찾을 수 없습니다.");
+    }
+
     /*
     *
     * 댓글 더보기
@@ -57,7 +70,7 @@ public class MemorialReplyControllerExceptionTest {
 
     @Test
     @DisplayName("댓글 더보기 : 존재하지 않는 게시글을 요청한 경우 - 404")
-    public void moreMemorialNotFoundException() throws Exception {
+    void moreMemorialNotFoundException() throws Exception {
 
         Integer cursor = 1;
         int size = 3;
@@ -78,7 +91,7 @@ public class MemorialReplyControllerExceptionTest {
 
     @Test
     @DisplayName("댓글 더보기 : 유효하지 않은 게시글 번호를 요청한 경우 - 404")
-    public void moreInvalidDonateSeqException() throws Exception {
+    void moreInvalidDonateSeqException() throws Exception {
 
         Integer cursor = 1;
         int size = 3;
@@ -105,12 +118,12 @@ public class MemorialReplyControllerExceptionTest {
 
     @Test
     @DisplayName("댓글 생성 : 내용이 입력되지 않은 경우 - 400")
-    public void createMissingReplyContentException() throws Exception {
+    void createMissingReplyContentException() throws Exception {
 
         MemorialReplyCreateRequest request =
                 MemorialReplyCreateRequest
                         .builder()
-                        .donateSeq(donateSeq)
+                        .donateSeq(DONATE_SEQUENCE)
                         .replyContents("")
                         .replyPassword("1234")
                         .replyWriter("홍길동")
@@ -120,7 +133,7 @@ public class MemorialReplyControllerExceptionTest {
                 .when(memorialReplyService)
                 .createReply(anyInt(), any());
 
-        mockMvc.perform(post("/remembrance/{donateSeq}/replies", donateSeq)
+        mockMvc.perform(post("/remembrance/{donateSeq}/replies", DONATE_SEQUENCE)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
@@ -131,12 +144,12 @@ public class MemorialReplyControllerExceptionTest {
 
     @Test
     @DisplayName("댓글 생성 : 작성자가 입력되지 않은 경우 - 400")
-    public void createMissingReplyWriterException() throws Exception {
+    void createMissingReplyWriterException() throws Exception {
 
         MemorialReplyCreateRequest request =
                 MemorialReplyCreateRequest
                         .builder()
-                        .donateSeq(donateSeq)
+                        .donateSeq(DONATE_SEQUENCE)
                         .replyContents("내용")
                         .replyPassword("1234")
                         .replyWriter("")
@@ -146,7 +159,7 @@ public class MemorialReplyControllerExceptionTest {
                 .when(memorialReplyService)
                 .createReply(anyInt(), any());
 
-        mockMvc.perform(post("/remembrance/{donateSeq}/replies", donateSeq)
+        mockMvc.perform(post("/remembrance/{donateSeq}/replies", DONATE_SEQUENCE)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
@@ -157,12 +170,12 @@ public class MemorialReplyControllerExceptionTest {
 
     @Test
     @DisplayName("댓글 생성 : 비밀번호가 입력되지 않은 경우 - 400")
-    public void createMissingReplyPasswordException() throws Exception {
+    void createMissingReplyPasswordException() throws Exception {
 
         MemorialReplyCreateRequest request =
                 MemorialReplyCreateRequest
                         .builder()
-                        .donateSeq(donateSeq)
+                        .donateSeq(DONATE_SEQUENCE)
                         .replyContents("내용")
                         .replyPassword("")
                         .replyWriter("홍길동")
@@ -172,7 +185,7 @@ public class MemorialReplyControllerExceptionTest {
                 .when(memorialReplyService)
                 .createReply(anyInt(), any());
 
-        mockMvc.perform(post("/remembrance/{donateSeq}/replies", donateSeq)
+        mockMvc.perform(post("/remembrance/{donateSeq}/replies", DONATE_SEQUENCE)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
@@ -183,7 +196,7 @@ public class MemorialReplyControllerExceptionTest {
 
     @Test
     @DisplayName("댓글 생성 : 유효하지 않은 게시글 번호를 요청한 경우 - 400")
-    public void createInvalidDonateSeqException() throws Exception {
+    void createInvalidDonateSeqException() throws Exception {
 
         MemorialReplyCreateRequest request =
                 MemorialReplyCreateRequest
@@ -198,7 +211,7 @@ public class MemorialReplyControllerExceptionTest {
                 .when(memorialReplyService)
                 .createReply(anyInt(), any());
 
-        mockMvc.perform(post("/remembrance/{donateSeq}/replies", donateSeq)
+        mockMvc.perform(post("/remembrance/{donateSeq}/replies", DONATE_SEQUENCE)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
@@ -209,7 +222,7 @@ public class MemorialReplyControllerExceptionTest {
 
     @Test
     @DisplayName("댓글 생성 : 존재하지 않는 게시글을 요청한 경우 - 404")
-    public void createMemorialNotFoundException() throws Exception {
+    void createMemorialNotFoundException() throws Exception {
 
         MemorialReplyCreateRequest request =
                 MemorialReplyCreateRequest
@@ -224,7 +237,7 @@ public class MemorialReplyControllerExceptionTest {
                 .when(memorialReplyService)
                 .createReply(anyInt(), any());
 
-        mockMvc.perform(post("/remembrance/{donateSeq}/replies", donateSeq)
+        mockMvc.perform(post("/remembrance/{donateSeq}/replies", DONATE_SEQUENCE)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isNotFound())
@@ -241,13 +254,13 @@ public class MemorialReplyControllerExceptionTest {
 
     @Test
     @DisplayName("댓글 수정 : 댓글이 해당 게시글에 속하지 않는 경우 (게시글 ID 불일치) - 400")
-    public void updateReplyPostMismatchException() throws Exception {
+    void updateReplyPostMismatchException() throws Exception {
 
         MemorialReplyUpdateRequest request =
                 MemorialReplyUpdateRequest
                         .builder()
                         .donateSeq(0)
-                        .replySeq(replySeq)
+                        .replySeq(REPLY_SEQUENCE)
                         .replyContents("내용")
                         .replyPassword("1234")
                         .build();
@@ -256,7 +269,7 @@ public class MemorialReplyControllerExceptionTest {
                 .when(memorialReplyService)
                 .updateReply(anyInt(), anyInt(), any());
 
-        mockMvc.perform(put("/remembrance/{donateSeq}/replies/{replySeq}", donateSeq, replySeq)
+        mockMvc.perform(put("/remembrance/{donateSeq}/replies/{replySeq}", DONATE_SEQUENCE, REPLY_SEQUENCE)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
@@ -267,12 +280,12 @@ public class MemorialReplyControllerExceptionTest {
 
     @Test
     @DisplayName("댓글 수정 : 요청된 댓글 ID가 URL 또는 본문과 일치하지 않는 경우 - 400")
-    public void updateReplyIdMismatchException() throws Exception {
+    void updateReplyIdMismatchException() throws Exception {
 
         MemorialReplyUpdateRequest request =
                 MemorialReplyUpdateRequest
                         .builder()
-                        .donateSeq(donateSeq)
+                        .donateSeq(DONATE_SEQUENCE)
                         .replySeq(0)
                         .replyContents("내용")
                         .replyPassword("1234")
@@ -282,7 +295,7 @@ public class MemorialReplyControllerExceptionTest {
                 .when(memorialReplyService)
                 .updateReply(anyInt(), anyInt(), any());
 
-        mockMvc.perform(put("/remembrance/{donateSeq}/replies/{replySeq}", donateSeq, replySeq)
+        mockMvc.perform(put("/remembrance/{donateSeq}/replies/{replySeq}", DONATE_SEQUENCE, REPLY_SEQUENCE)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
@@ -293,13 +306,13 @@ public class MemorialReplyControllerExceptionTest {
 
     @Test
     @DisplayName("댓글 수정 : 댓글 비밀번호가 입력되지 않은 경우 - 400")
-    public void updateMissingReplyPasswordException() throws Exception {
+    void updateMissingReplyPasswordException() throws Exception {
 
         MemorialReplyUpdateRequest request =
                 MemorialReplyUpdateRequest
                         .builder()
-                        .donateSeq(donateSeq)
-                        .replySeq(replySeq)
+                        .donateSeq(DONATE_SEQUENCE)
+                        .replySeq(REPLY_SEQUENCE)
                         .replyContents("내용")
                         .replyPassword("")
                         .build();
@@ -308,7 +321,7 @@ public class MemorialReplyControllerExceptionTest {
                 .when(memorialReplyService)
                 .updateReply(anyInt(), anyInt(), any());
 
-        mockMvc.perform(put("/remembrance/{donateSeq}/replies/{replySeq}", donateSeq, replySeq)
+        mockMvc.perform(put("/remembrance/{donateSeq}/replies/{replySeq}", DONATE_SEQUENCE, REPLY_SEQUENCE)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
@@ -319,13 +332,13 @@ public class MemorialReplyControllerExceptionTest {
 
     @Test
     @DisplayName("댓글 수정 : 댓글 비밀번호가 일치하지 않는 경우 - 403")
-    public void updateReplyPasswordMismatchException() throws Exception {
+    void updateReplyPasswordMismatchException() throws Exception {
 
         MemorialReplyUpdateRequest request =
                 MemorialReplyUpdateRequest
                         .builder()
-                        .donateSeq(donateSeq)
-                        .replySeq(replySeq)
+                        .donateSeq(DONATE_SEQUENCE)
+                        .replySeq(REPLY_SEQUENCE)
                         .replyContents("내용")
                         .replyPassword("123")
                         .build();
@@ -334,7 +347,7 @@ public class MemorialReplyControllerExceptionTest {
                 .when(memorialReplyService)
                 .updateReply(anyInt(), anyInt(), any());
 
-        mockMvc.perform(put("/remembrance/{donateSeq}/replies/{replySeq}", donateSeq, replySeq)
+        mockMvc.perform(put("/remembrance/{donateSeq}/replies/{replySeq}", DONATE_SEQUENCE, REPLY_SEQUENCE)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isForbidden())
@@ -345,13 +358,13 @@ public class MemorialReplyControllerExceptionTest {
 
     @Test
     @DisplayName("댓글 수정 : 유효하지 않은 게시글 번호를 요청한 경우 - 400")
-    public void updateInvalidDonateSeqException() throws Exception {
+    void updateInvalidDonateSeqException() throws Exception {
 
         MemorialReplyUpdateRequest request =
                 MemorialReplyUpdateRequest
                         .builder()
                         .donateSeq(0)
-                        .replySeq(replySeq)
+                        .replySeq(REPLY_SEQUENCE)
                         .replyContents("")
                         .replyPassword("1234")
                         .build();
@@ -360,7 +373,7 @@ public class MemorialReplyControllerExceptionTest {
                 .when(memorialReplyService)
                 .updateReply(anyInt(), anyInt(), any());
 
-        mockMvc.perform(put("/remembrance/{donateSeq}/replies/{replySeq}", 0, replySeq)
+        mockMvc.perform(put("/remembrance/{donateSeq}/replies/{replySeq}", 0, REPLY_SEQUENCE)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
@@ -371,13 +384,13 @@ public class MemorialReplyControllerExceptionTest {
 
     @Test
     @DisplayName("댓글 수정 : 내용이 입력되지 않은 경우 - 400")
-    public void updateMissingReplyContentException() throws Exception {
+    void updateMissingReplyContentException() throws Exception {
 
         MemorialReplyUpdateRequest request =
                 MemorialReplyUpdateRequest
                         .builder()
-                        .donateSeq(donateSeq)
-                        .replySeq(replySeq)
+                        .donateSeq(DONATE_SEQUENCE)
+                        .replySeq(REPLY_SEQUENCE)
                         .replyContents("")
                         .replyPassword("1234")
                         .build();
@@ -386,7 +399,7 @@ public class MemorialReplyControllerExceptionTest {
                 .when(memorialReplyService)
                 .updateReply(anyInt(), anyInt(), any());
 
-        mockMvc.perform(put("/remembrance/{donateSeq}/replies/{replySeq}", donateSeq, replySeq)
+        mockMvc.perform(put("/remembrance/{donateSeq}/replies/{replySeq}", DONATE_SEQUENCE, REPLY_SEQUENCE)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
@@ -397,12 +410,12 @@ public class MemorialReplyControllerExceptionTest {
 
     @Test
     @DisplayName("댓글 수정 : 존재하지 않는 댓글을 요청한 경우 - 404")
-    public void updateMemorialReplyNotFoundException() throws Exception {
+    void updateMemorialReplyNotFoundException() throws Exception {
 
         MemorialReplyUpdateRequest request =
                 MemorialReplyUpdateRequest
                         .builder()
-                        .donateSeq(donateSeq)
+                        .donateSeq(DONATE_SEQUENCE)
                         .replySeq(0)
                         .replyContents("내용")
                         .replyPassword("1234")
@@ -412,7 +425,7 @@ public class MemorialReplyControllerExceptionTest {
                 .when(memorialReplyService)
                 .updateReply(anyInt(), anyInt(), any());
 
-        mockMvc.perform(put("/remembrance/{donateSeq}/replies/{replySeq}", donateSeq, 0)
+        mockMvc.perform(put("/remembrance/{donateSeq}/replies/{replySeq}", DONATE_SEQUENCE, 0)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isNotFound())
@@ -423,13 +436,13 @@ public class MemorialReplyControllerExceptionTest {
 
     @Test
     @DisplayName("댓글 수정 : 존재하지 않는 게시글을 요청한 경우 - 404")
-    public void updateMemorialNotFoundException() throws Exception {
+    void updateMemorialNotFoundException() throws Exception {
 
         MemorialReplyUpdateRequest request =
                 MemorialReplyUpdateRequest
                         .builder()
                         .donateSeq(0)
-                        .replySeq(replySeq)
+                        .replySeq(REPLY_SEQUENCE)
                         .replyContents("내용")
                         .replyPassword("1234")
                         .build();
@@ -438,7 +451,7 @@ public class MemorialReplyControllerExceptionTest {
                 .when(memorialReplyService)
                 .updateReply(anyInt(), anyInt(), any());
 
-        mockMvc.perform(put("/remembrance/{donateSeq}/replies/{replySeq}", 0, replySeq)
+        mockMvc.perform(put("/remembrance/{donateSeq}/replies/{replySeq}", 0, REPLY_SEQUENCE)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isNotFound())
@@ -449,12 +462,12 @@ public class MemorialReplyControllerExceptionTest {
 
     @Test
     @DisplayName("댓글 수정 : 유효하지 않은 댓글 번호를 요청한 경우 - 400")
-    public void updateInvalidReplySeqException() throws Exception {
+    void updateInvalidReplySeqException() throws Exception {
 
         MemorialReplyUpdateRequest request =
                 MemorialReplyUpdateRequest
                         .builder()
-                        .donateSeq(donateSeq)
+                        .donateSeq(DONATE_SEQUENCE)
                         .replySeq(0)
                         .replyContents("")
                         .replyPassword("1234")
@@ -464,7 +477,7 @@ public class MemorialReplyControllerExceptionTest {
                 .when(memorialReplyService)
                 .updateReply(anyInt(), anyInt(), any());
 
-        mockMvc.perform(put("/remembrance/{donateSeq}/replies/{replySeq}", donateSeq, 0)
+        mockMvc.perform(put("/remembrance/{donateSeq}/replies/{replySeq}", DONATE_SEQUENCE, 0)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
@@ -475,13 +488,13 @@ public class MemorialReplyControllerExceptionTest {
 
     @Test
     @DisplayName("댓글 수정 : 이미 삭제된 댓글을 다시 삭제하거나 수정하려는 경우 - 409")
-    public void updateReplyAlreadyDeleteException() throws Exception {
+    void updateReplyAlreadyDeleteException() throws Exception {
 
         MemorialReplyUpdateRequest request =
                 MemorialReplyUpdateRequest
                         .builder()
-                        .donateSeq(donateSeq)
-                        .replySeq(replySeq)
+                        .donateSeq(DONATE_SEQUENCE)
+                        .replySeq(REPLY_SEQUENCE)
                         .replyContents("내용")
                         .replyPassword("1234")
                         .build();
@@ -490,7 +503,7 @@ public class MemorialReplyControllerExceptionTest {
                 .when(memorialReplyService)
                 .updateReply(anyInt(), anyInt(), any());
 
-        mockMvc.perform(put("/remembrance/{donateSeq}/replies/{replySeq}", donateSeq, replySeq)
+        mockMvc.perform(put("/remembrance/{donateSeq}/replies/{replySeq}", DONATE_SEQUENCE, REPLY_SEQUENCE)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isConflict())
@@ -508,13 +521,13 @@ public class MemorialReplyControllerExceptionTest {
 
     @Test
     @DisplayName("댓글 삭제 : 댓글이 해당 게시글에 속하지 않는 경우 (게시글 ID 불일치) - 400")
-    public void deleteReplyPostMismatchException() throws Exception {
+    void deleteReplyPostMismatchException() throws Exception {
 
         MemorialReplyDeleteRequest request =
                 MemorialReplyDeleteRequest
                         .builder()
                         .donateSeq(0)
-                        .replySeq(replySeq)
+                        .replySeq(REPLY_SEQUENCE)
                         .replyPassword("1234")
                         .build();
 
@@ -522,7 +535,7 @@ public class MemorialReplyControllerExceptionTest {
                 .when(memorialReplyService)
                 .deleteReply(anyInt(), anyInt(), any());
 
-        mockMvc.perform(delete("/remembrance/{donateSeq}/replies/{replySeq}", 0, replySeq)
+        mockMvc.perform(delete("/remembrance/{donateSeq}/replies/{replySeq}", 0, REPLY_SEQUENCE)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
@@ -533,12 +546,12 @@ public class MemorialReplyControllerExceptionTest {
 
     @Test
     @DisplayName("댓글 삭제 : 요청된 댓글 ID가 URL 또는 본문과 일치하지 않는 경우 - 400")
-    public void deleteReplyIdMismatchException() throws Exception {
+    void deleteReplyIdMismatchException() throws Exception {
 
         MemorialReplyDeleteRequest request =
                 MemorialReplyDeleteRequest
                         .builder()
-                        .donateSeq(donateSeq)
+                        .donateSeq(DONATE_SEQUENCE)
                         .replySeq(0)
                         .replyPassword("1234")
                         .build();
@@ -547,7 +560,7 @@ public class MemorialReplyControllerExceptionTest {
                 .when(memorialReplyService)
                 .deleteReply(anyInt(), anyInt(), any());
 
-        mockMvc.perform(delete("/remembrance/{donateSeq}/replies/{replySeq}", donateSeq, replySeq)
+        mockMvc.perform(delete("/remembrance/{donateSeq}/replies/{replySeq}", DONATE_SEQUENCE, REPLY_SEQUENCE)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
@@ -558,13 +571,13 @@ public class MemorialReplyControllerExceptionTest {
 
     @Test
     @DisplayName("댓글 삭제 : 비밀번호가 입력되지 않은 경우 - 400")
-    public void deleteMissingReplyPasswordException() throws Exception {
+    void deleteMissingReplyPasswordException() throws Exception {
 
         MemorialReplyDeleteRequest request =
                 MemorialReplyDeleteRequest
                         .builder()
-                        .donateSeq(donateSeq)
-                        .replySeq(replySeq)
+                        .donateSeq(DONATE_SEQUENCE)
+                        .replySeq(REPLY_SEQUENCE)
                         .replyPassword("")
                         .build();
 
@@ -572,7 +585,7 @@ public class MemorialReplyControllerExceptionTest {
                 .when(memorialReplyService)
                 .deleteReply(anyInt(), anyInt(), any());
 
-        mockMvc.perform(delete("/remembrance/{donateSeq}/replies/{replySeq}", donateSeq, replySeq)
+        mockMvc.perform(delete("/remembrance/{donateSeq}/replies/{replySeq}", DONATE_SEQUENCE, REPLY_SEQUENCE)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
@@ -583,13 +596,13 @@ public class MemorialReplyControllerExceptionTest {
 
     @Test
     @DisplayName("댓글 삭제 : 댓글 비밀번호가 일치하지 않는 경우 - 403")
-    public void deleteReplyPasswordMismatchException() throws Exception {
+    void deleteReplyPasswordMismatchException() throws Exception {
 
         MemorialReplyDeleteRequest request =
                 MemorialReplyDeleteRequest
                         .builder()
-                        .donateSeq(donateSeq)
-                        .replySeq(replySeq)
+                        .donateSeq(DONATE_SEQUENCE)
+                        .replySeq(REPLY_SEQUENCE)
                         .replyPassword("일치하지 않는 비밀번호")
                         .build();
 
@@ -597,7 +610,7 @@ public class MemorialReplyControllerExceptionTest {
                 .when(memorialReplyService)
                 .deleteReply(anyInt(), anyInt(), any());
 
-        mockMvc.perform(delete("/remembrance/{donateSeq}/replies/{replySeq}", donateSeq, replySeq)
+        mockMvc.perform(delete("/remembrance/{donateSeq}/replies/{replySeq}", DONATE_SEQUENCE, REPLY_SEQUENCE)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isForbidden())
@@ -608,12 +621,12 @@ public class MemorialReplyControllerExceptionTest {
 
     @Test
     @DisplayName("댓글 삭제 : 존재하지 않는 댓글을 요청한 경우 - 404")
-    public void deleteMemorialReplyNotFoundException() throws Exception {
+    void deleteMemorialReplyNotFoundException() throws Exception {
 
         MemorialReplyDeleteRequest request =
                 MemorialReplyDeleteRequest
                         .builder()
-                        .donateSeq(donateSeq)
+                        .donateSeq(DONATE_SEQUENCE)
                         .replySeq(0)
                         .replyPassword("1234")
                         .build();
@@ -622,7 +635,7 @@ public class MemorialReplyControllerExceptionTest {
                 .when(memorialReplyService)
                 .deleteReply(anyInt(), anyInt(), any());
 
-        mockMvc.perform(delete("/remembrance/{donateSeq}/replies/{replySeq}", donateSeq, 0)
+        mockMvc.perform(delete("/remembrance/{donateSeq}/replies/{replySeq}", DONATE_SEQUENCE, 0)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isNotFound())
@@ -633,13 +646,13 @@ public class MemorialReplyControllerExceptionTest {
 
     @Test
     @DisplayName("댓글 삭제 : 존재하지 않는 게시글을 요청한 경우 - 404")
-    public void deleteMemorialNotFoundException() throws Exception {
+    void deleteMemorialNotFoundException() throws Exception {
 
         MemorialReplyDeleteRequest request =
                 MemorialReplyDeleteRequest
                         .builder()
                         .donateSeq(0)
-                        .replySeq(replySeq)
+                        .replySeq(REPLY_SEQUENCE)
                         .replyPassword("1234")
                         .build();
 
@@ -647,7 +660,7 @@ public class MemorialReplyControllerExceptionTest {
                 .when(memorialReplyService)
                 .deleteReply(anyInt(), anyInt(), any());
 
-        mockMvc.perform(delete("/remembrance/{donateSeq}/replies/{replySeq}", 0, replySeq)
+        mockMvc.perform(delete("/remembrance/{donateSeq}/replies/{replySeq}", 0, REPLY_SEQUENCE)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isNotFound())
@@ -658,12 +671,12 @@ public class MemorialReplyControllerExceptionTest {
 
     @Test
     @DisplayName("댓글 삭제 : 유효하지 않은 댓글 번호를 요청한 경우 - 400")
-    public void deleteInvalidReplySeqException() throws Exception {
+    void deleteInvalidReplySeqException() throws Exception {
 
         MemorialReplyDeleteRequest request =
                 MemorialReplyDeleteRequest
                         .builder()
-                        .donateSeq(donateSeq)
+                        .donateSeq(DONATE_SEQUENCE)
                         .replySeq(0)
                         .replyPassword("1234")
                         .build();
@@ -672,7 +685,7 @@ public class MemorialReplyControllerExceptionTest {
                 .when(memorialReplyService)
                 .deleteReply(anyInt(), anyInt(), any());
 
-        mockMvc.perform(delete("/remembrance/{donateSeq}/replies/{replySeq}", donateSeq, 0)
+        mockMvc.perform(delete("/remembrance/{donateSeq}/replies/{replySeq}", DONATE_SEQUENCE, 0)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
@@ -683,13 +696,13 @@ public class MemorialReplyControllerExceptionTest {
 
     @Test
     @DisplayName("댓글 삭제 : 유효하지 않은 게시글 번호를 요청한 경우 - 400")
-    public void deleteInvalidDonateSeqException() throws Exception {
+    void deleteInvalidDonateSeqException() throws Exception {
 
         MemorialReplyDeleteRequest request =
                 MemorialReplyDeleteRequest
                         .builder()
                         .donateSeq(0)
-                        .replySeq(replySeq)
+                        .replySeq(REPLY_SEQUENCE)
                         .replyPassword("1234")
                         .build();
 
@@ -697,7 +710,7 @@ public class MemorialReplyControllerExceptionTest {
                 .when(memorialReplyService)
                 .deleteReply(anyInt(), anyInt(), any());
 
-        mockMvc.perform(delete("/remembrance/{donateSeq}/replies/{replySeq}", 0, replySeq)
+        mockMvc.perform(delete("/remembrance/{donateSeq}/replies/{replySeq}", 0, REPLY_SEQUENCE)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
@@ -708,13 +721,13 @@ public class MemorialReplyControllerExceptionTest {
 
     @Test
     @DisplayName("댓글 삭제 : 이미 삭제된 댓글을 다시 삭제하거나 수정하려는 경우 - 409")
-    public void deleteReplyAlreadyDeleteException() throws Exception {
+    void deleteReplyAlreadyDeleteException() throws Exception {
 
         MemorialReplyDeleteRequest request =
                 MemorialReplyDeleteRequest
                         .builder()
                         .donateSeq(0)
-                        .replySeq(replySeq)
+                        .replySeq(REPLY_SEQUENCE)
                         .replyPassword("1234")
                         .build();
 
@@ -722,7 +735,7 @@ public class MemorialReplyControllerExceptionTest {
                 .when(memorialReplyService)
                 .deleteReply(anyInt(), anyInt(), any());
 
-        mockMvc.perform(delete("/remembrance/{donateSeq}/replies/{replySeq}", 0, replySeq)
+        mockMvc.perform(delete("/remembrance/{donateSeq}/replies/{replySeq}", 0, REPLY_SEQUENCE)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isConflict())

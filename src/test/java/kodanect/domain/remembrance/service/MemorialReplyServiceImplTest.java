@@ -28,7 +28,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
-public class MemorialReplyServiceImplTest {
+class MemorialReplyServiceImplTest {
 
     @InjectMocks
     private MemorialReplyServiceImpl memorialReplyService;
@@ -45,7 +45,7 @@ public class MemorialReplyServiceImplTest {
 
     @Test
     @DisplayName("추모관 댓글 생성")
-    public void 추모관_댓글_생성() {
+    void 추모관_댓글_생성() {
 
         Integer donateSeq = 1;
 
@@ -67,7 +67,7 @@ public class MemorialReplyServiceImplTest {
 
     @Test
     @DisplayName("추모관 댓글 수정")
-    public void 추모관_댓글_수정() {
+    void 추모관_댓글_수정() {
 
         Integer donateSeq = 1;
         Integer replySeq = 1;
@@ -95,12 +95,12 @@ public class MemorialReplyServiceImplTest {
 
         memorialReplyService.updateReply(donateSeq, replySeq, request);
 
-        verify(memorialReplyRepository, times(1)).updateReplyContents(eq(replySeq), eq("수정 내용"));
+        verify(memorialReplyRepository, times(1)).updateReplyContents(replySeq,"수정 내용");
     }
 
     @Test
     @DisplayName("추모관 댓글 삭제")
-    public void 추모관_댓글_삭제() {
+    void 추모관_댓글_삭제() {
 
         Integer donateSeq = 1;
         Integer replySeq = 1;
@@ -132,7 +132,7 @@ public class MemorialReplyServiceImplTest {
 
     @Test
     @DisplayName("추모관 댓글 조회")
-    public void 추모관_댓글_조회() {
+    void 추모관_댓글_조회() {
 
         Integer donateSeq = 1;
         Integer cursor = 1;
@@ -165,7 +165,7 @@ public class MemorialReplyServiceImplTest {
 
     @Test
     @DisplayName("추모관 댓글 더보기")
-    public void 추모관_댓글_더보기() {
+    void 추모관_댓글_더보기() {
 
         Integer donateSeq = 1;
         Integer cursor = 1;

@@ -112,7 +112,7 @@ public class GlobalExcepHndlr {
         String msg = messageSourceAccessor.getMessage("error.notfound", "요청한 자원을 찾을 수 없습니다.");
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
-                .   body(ApiResponse.fail(HttpStatus.NOT_FOUND, msg));
+                .body(ApiResponse.fail(HttpStatus.NOT_FOUND, msg));
     }
 
 
