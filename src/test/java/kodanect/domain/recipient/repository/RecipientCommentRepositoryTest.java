@@ -135,24 +135,32 @@ public class RecipientCommentRepositoryTest {
         // comment2 (첫 번째 댓글)를 먼저 persist 하여 가장 작은 commentSeq를 할당받게 합니다.
         RecipientCommentEntity comment2 = createComment(recipient, "첫 번째 댓글", "C1", "N", time1); // 가장 이른 시간
         RecipientCommentEntity comment1 = createComment(recipient, "두 번째 댓글", "C2", "N", time2); // 중간 시간
-        RecipientCommentEntity comment3_deleted = createComment(recipient, "삭제된 댓글", "CD", "Y", time3); // 가장 늦은 시간
+        RecipientCommentEntity comment3Deleted = createComment(recipient, "삭제된 댓글", "CD", "Y", time3); // 가장 늦은 시간 (변수명 수정됨)
 
-        // persist 순서 조정: comment2 -> comment1 -> comment3_deleted
-        entityManager.persist(comment2); // 첫 번째 댓글을 먼저 저장
-        entityManager.persist(comment1); // 두 번째 댓글 저장
-        entityManager.persist(comment3_deleted); // 삭제된 댓글 저장
-        entityManager.flush();
-        entityManager.clear(); // 영속성 컨텍스트 초기화
+        // 댓글들을 저장합니다.
+        recipientCommentRepository.saveAll(Arrays.asList(comment2, comment1, comment3Deleted));
+        entityManager.flush(); // DB에 즉시 반영
 
         // When
-        List<RecipientCommentEntity> comments = recipientCommentRepository.findCommentsByLetterSeqAndDelFlagSorted(recipient, "N");
+        // letterSeq가 일치하고 delFlag가 'N'인 댓글들을 writeTime 오름차순으로 조회
+        // Repository의 @Query 메서드 이름을 사용하고, RecipientEntity 객체를 직접 전달
+        List<RecipientCommentEntity> foundComments =
+                recipientCommentRepository.findCommentsByLetterSeqAndDelFlagSorted(
+                        recipient, // RecipientEntity 객체 자체를 전달 (letterSeq 필드 대신)
+                        "N"
+                );
 
         // Then
-        assertThat(comments).isNotNull().hasSize(2); // 삭제된 댓글 제외
-        // 이제 순서가 올바를 것으로 예상됩니다.
-        assertThat(comments.get(0).getCommentContents()).isEqualTo("첫 번째 댓글"); // 작성 시간 오름차순
-        assertThat(comments.get(1).getCommentContents()).isEqualTo("두 번째 댓글");
-        assertThat(comments.get(0).getWriteTime()).isBefore(comments.get(1).getWriteTime());
+        // 조회된 댓글이 두 개인지 확인 (삭제된 댓글 제외)
+        assertThat(foundComments).hasSize(2);
+
+        // writeTime 기준으로 올바르게 정렬되었는지 확인
+        assertThat(foundComments.get(0).getCommentContents()).isEqualTo("첫 번째 댓글"); // time1
+        assertThat(foundComments.get(1).getCommentContents()).isEqualTo("두 번째 댓글"); // time2
+
+        // 각 댓글의 delFlag가 'N'인지 확인
+        assertThat(foundComments.get(0).getDelFlag()).isEqualTo("N");
+        assertThat(foundComments.get(1).getDelFlag()).isEqualTo("N");
     }
 
     @Test
@@ -163,23 +171,29 @@ public class RecipientCommentRepositoryTest {
         entityManager.flush();
 
         RecipientCommentEntity comment1 = createComment(recipient, "조회할 댓글", "Finder", "N", LocalDateTime.now());
-        RecipientCommentEntity comment2_deleted = createComment(recipient, "조회 안될 댓글", "NoFinder", "Y", LocalDateTime.now().plusHours(1));
+        // 변수명 수정: comment2_deleted -> comment2Deleted
+        RecipientCommentEntity comment2Deleted = createComment(recipient, "조회 안될 댓글", "NoFinder", "Y", LocalDateTime.now().plusHours(1));
 
-        comment1 = entityManager.persist(comment1); // ID를 받기 위해 persist 후 할당
-        comment2_deleted = entityManager.persist(comment2_deleted);
+        // 댓글들을 persist하여 ID를 할당받도록 합니다.
+        comment1 = entityManager.persist(comment1);
+        comment2Deleted = entityManager.persist(comment2Deleted); // 수정된 변수명 사용
         entityManager.flush();
         entityManager.clear();
 
         // When
-        Optional<RecipientCommentEntity> foundCommentOptional = recipientCommentRepository.findByCommentSeqAndDelFlag(comment1.getCommentSeq(), "N");
-        Optional<RecipientCommentEntity> notFoundCommentOptional = recipientCommentRepository.findByCommentSeqAndDelFlag(comment2_deleted.getCommentSeq(), "N"); // delFlag='Y'이므로 조회 안됨
+        // delFlag가 'N'인 comment1을 commentSeq로 조회
+        Optional<RecipientCommentEntity> foundComment = recipientCommentRepository.findByCommentSeqAndDelFlag(comment1.getCommentSeq(), "N");
+        // delFlag가 'Y'인 comment2를 commentSeq로 조회 (찾을 수 없어야 함)
+        Optional<RecipientCommentEntity> notFoundComment = recipientCommentRepository.findByCommentSeqAndDelFlag(comment2Deleted.getCommentSeq(), "N");
 
         // Then
-        assertThat(foundCommentOptional).isPresent();
-        assertThat(foundCommentOptional.get().getCommentContents()).isEqualTo("조회할 댓글");
-        assertThat(foundCommentOptional.get().getDelFlag()).isEqualTo("N");
+        // comment1은 찾을 수 있어야 하며, 내용이 일치해야 합니다.
+        assertThat(foundComment).isPresent();
+        assertThat(foundComment.get().getCommentContents()).isEqualTo("조회할 댓글");
+        assertThat(foundComment.get().getDelFlag()).isEqualTo("N");
 
-        assertThat(notFoundCommentOptional).isNotPresent(); // 삭제된 댓글은 조회되지 않아야 함
+        // comment2는 delFlag가 'N'이 아니므로 찾을 수 없어야 합니다.
+        assertThat(notFoundComment).isNotPresent();
     }
 
     @Test
@@ -187,11 +201,12 @@ public class RecipientCommentRepositoryTest {
         // Given
         RecipientEntity recipient1 = createRecipient("게시물A", "aaaa", "작가A", "N", "ORG01", LocalDateTime.now().minusDays(3));
         RecipientEntity recipient2 = createRecipient("게시물B", "bbbb", "작가B", "N", "ORG02", LocalDateTime.now().minusDays(2));
-        RecipientEntity recipient3_deletedPost = createRecipient("게시물C (삭제된 게시물)", "cccc", "작가C", "Y", "ORG03", LocalDateTime.now().minusDays(1)); // 게시물 자체는 삭제됨
+        // 변수명 수정: recipient3_deletedPost -> recipient3DeletedPost
+        RecipientEntity recipient3DeletedPost = createRecipient("게시물C (삭제된 게시물)", "cccc", "작가C", "Y", "ORG03", LocalDateTime.now().minusDays(1)); // 게시물 자체는 삭제됨
 
         recipient1 = recipientRepository.save(recipient1);
         recipient2 = recipientRepository.save(recipient2);
-        recipient3_deletedPost = recipientRepository.save(recipient3_deletedPost);
+        recipient3DeletedPost = recipientRepository.save(recipient3DeletedPost);
         entityManager.flush();
 
         // recipient1에 댓글 2개 (N, N)
@@ -204,12 +219,12 @@ public class RecipientCommentRepositoryTest {
 
         // recipient3 (삭제된 게시물)에 댓글 1개 (N)
         // 이 댓글은 댓글 자체의 delFlag가 'N'이므로 쿼리에서 카운트되어야 함.
-        entityManager.persist(createComment(recipient3_deletedPost, "R3 댓글1", "C3-1", "N", LocalDateTime.now().minusMinutes(10)));
+        entityManager.persist(createComment(recipient3DeletedPost, "R3 댓글1", "C3-1", "N", LocalDateTime.now().minusMinutes(10)));
 
         entityManager.flush();
         entityManager.clear();
 
-        List<Integer> letterSeqs = Arrays.asList(recipient1.getLetterSeq(), recipient2.getLetterSeq(), recipient3_deletedPost.getLetterSeq());
+        List<Integer> letterSeqs = Arrays.asList(recipient1.getLetterSeq(), recipient2.getLetterSeq(), recipient3DeletedPost.getLetterSeq());
 
         // When
         List<Object[]> commentCounts = recipientCommentRepository.countCommentsByLetterSeqs(letterSeqs);
@@ -235,7 +250,7 @@ public class RecipientCommentRepositoryTest {
             } else if (letterSeq.equals(recipient2.getLetterSeq())) {
                 assertThat(count).isEqualTo(1L);
                 foundR2 = true;
-            } else if (letterSeq.equals(recipient3_deletedPost.getLetterSeq())) {
+            } else if (letterSeq.equals(recipient3DeletedPost.getLetterSeq())) {
                 assertThat(count).isEqualTo(1L);
                 foundR3 = true;
             }
@@ -252,27 +267,36 @@ public class RecipientCommentRepositoryTest {
         recipient = recipientRepository.save(recipient);
         entityManager.flush();
 
-        // 6개의 댓글 생성 (시간 순서대로)
+        // 6개의 활성 댓글 생성 (시간 순서대로)
         for (int i = 0; i < 6; i++) {
             entityManager.persist(createComment(recipient, "댓글 " + i, "Writer" + i, "N", LocalDateTime.now().plusMinutes(i)));
         }
+        // 삭제된 댓글 생성
         entityManager.persist(createComment(recipient, "삭제된 댓글", "Del", "Y", LocalDateTime.now().plusMinutes(100))); // 삭제된 댓글
+
         entityManager.flush();
         entityManager.clear();
 
-        // 첫 번째 페이지 (3개)
+        // 첫 번째 페이지를 요청 (페이지 번호: 0, 페이지당 항목 수: 3)
         Pageable pageable = PageRequest.of(0, 3);
 
         // When
+        // 게시물 ID와 'N' (활성) delFlag로 댓글 목록을 페이징하여 조회
         Page<RecipientCommentEntity> firstPage = recipientCommentRepository.findByLetterSeqAndDelFlag(recipient, "N", pageable);
 
         // Then
+        // 조회 결과가 null이 아닌지 확인
         assertThat(firstPage).isNotNull();
-        assertThat(firstPage.getTotalElements()).isEqualTo(6); // 삭제된 댓글 제외한 총 활성 댓글 수
-        assertThat(firstPage.getTotalPages()).isEqualTo(2); // 6개 / 3개 = 2 페이지
-        assertThat(firstPage.getNumber()).isEqualTo(0); // 현재 페이지 0
+        // 삭제된 댓글을 제외한 총 활성 댓글 수가 6개인지 확인
+        assertThat(firstPage.getTotalElements()).isEqualTo(6);
+        // 총 페이지 수가 2개인지 확인 (6개 / 3개 = 2 페이지)
+        assertThat(firstPage.getTotalPages()).isEqualTo(2);
+        // 현재 페이지 번호가 0인지 확인 (isZero() 사용)
+        assertThat(firstPage.getNumber()).isZero(); // isEqualTo(0) -> isZero()로 수정
+        // 현재 페이지의 댓글 수가 3개인지 확인
         assertThat(firstPage.getContent()).hasSize(3);
-        assertThat(firstPage.getContent().get(0).getCommentContents()).isEqualTo("댓글 0"); // 시간 오름차순 (기본 JPA 쿼리 정렬)
+        // 첫 번째 댓글의 내용이 "댓글 0"인지 확인 (시간 오름차순 정렬 가정)
+        assertThat(firstPage.getContent().get(0).getCommentContents()).isEqualTo("댓글 0");
 
         // 두 번째 페이지 (3개)
         pageable = PageRequest.of(1, 3);
@@ -291,13 +315,17 @@ public class RecipientCommentRepositoryTest {
         recipient = recipientRepository.save(recipient);
         entityManager.flush();
 
-        // 댓글들을 생성하고 ID를 할당받음 (laterComment는 ID가 더 높음)
-        RecipientCommentEntity comment1 = entityManager.persist(createComment(recipient, "첫 댓글", "C1", "N", LocalDateTime.now().minusHours(3)));
-        RecipientCommentEntity comment2 = entityManager.persist(createComment(recipient, "두 번째 댓글", "C2", "N", LocalDateTime.now().minusHours(2)));
-        RecipientCommentEntity comment3 = entityManager.persist(createComment(recipient, "세 번째 댓글", "C3", "N", LocalDateTime.now().minusHours(1)));
-        RecipientCommentEntity comment4_deleted = entityManager.persist(createComment(recipient, "삭제 댓글", "CD", "Y", LocalDateTime.now().minusMinutes(30))); // 삭제된 댓글
-        RecipientCommentEntity comment5 = entityManager.persist(createComment(recipient, "네 번째 댓글", "C4", "N", LocalDateTime.now().minusMinutes(20)));
-        RecipientCommentEntity comment6 = entityManager.persist(createComment(recipient, "마지막 댓글", "C5", "N", LocalDateTime.now().minusMinutes(10)));
+        // 댓글들을 생성하고 ID를 할당받음.
+        // 모든 개별 comment 변수들은 이제 직접 사용되지 않으므로, 선언하지 않고 persist만 수행합니다.
+        entityManager.persist(createComment(recipient, "첫 댓글", "C1", "N", LocalDateTime.now().minusHours(3)));
+        entityManager.persist(createComment(recipient, "두 번째 댓글", "C2", "N", LocalDateTime.now().minusHours(2)));
+        entityManager.persist(createComment(recipient, "세 번째 댓글", "C3", "N", LocalDateTime.now().minusHours(1)));
+
+        // 삭제된 댓글도 변수 선언 없이 persist만 수행합니다.
+        entityManager.persist(createComment(recipient, "삭제 댓글", "CD", "Y", LocalDateTime.now().minusMinutes(30)));
+
+        entityManager.persist(createComment(recipient, "네 번째 댓글", "C4", "N", LocalDateTime.now().minusMinutes(20)));
+        entityManager.persist(createComment(recipient, "마지막 댓글", "C5", "N", LocalDateTime.now().minusMinutes(10)));
 
         entityManager.flush();
         entityManager.clear();
@@ -307,7 +335,7 @@ public class RecipientCommentRepositoryTest {
         // When (첫 페이지 조회 - lastCommentId = null)
         List<RecipientCommentEntity> firstPageComments = recipientCommentRepository.findPaginatedComments(recipient, null, pageable);
 
-        // Then (첫 페이지 결과 검증: comment1, comment2, comment3)
+        // Then (첫 페이지 결과 검증: "첫 댓글", "두 번째 댓글", "세 번째 댓글")
         assertThat(firstPageComments).isNotNull().hasSize(3);
         assertThat(firstPageComments.get(0).getCommentContents()).isEqualTo("첫 댓글");
         assertThat(firstPageComments.get(1).getCommentContents()).isEqualTo("두 번째 댓글");
@@ -317,8 +345,8 @@ public class RecipientCommentRepositoryTest {
         Integer lastCommentIdOfFirstPage = firstPageComments.get(firstPageComments.size() - 1).getCommentSeq();
         List<RecipientCommentEntity> secondPageComments = recipientCommentRepository.findPaginatedComments(recipient, lastCommentIdOfFirstPage, pageable);
 
-        // Then (두 번째 페이지 결과 검증: comment5, comment6)
-        // comment4_deleted는 delFlag='Y'이므로 포함되지 않음
+        // Then (두 번째 페이지 결과 검증: "네 번째 댓글", "마지막 댓글")
+        // 삭제된 댓글은 delFlag='Y'이므로 포함되지 않음
         assertThat(secondPageComments).isNotNull().hasSize(2);
         assertThat(secondPageComments.get(0).getCommentContents()).isEqualTo("네 번째 댓글");
         assertThat(secondPageComments.get(1).getCommentContents()).isEqualTo("마지막 댓글");

@@ -197,6 +197,10 @@ public class RecipientServiceImpl implements RecipientService {
         verifyHcaptcha(requestDto.getCaptchaToken(), "등록");
         logger.info("hCaptcha 인증 성공. 게시물 등록 진행.");
 
+        // DTO의 letterContents를 먼저 정제하고 유효성 검사합니다. (이렇게 하면 toEntity() 전에 문제가 되는 내용을 걸러낼 수 있습니다)
+        String validatedAndCleanedContents = cleanAndValidateContents(requestDto.getLetterContents());
+        requestDto.setLetterContents(validatedAndCleanedContents); // 정제된 내용을 DTO에 다시 설정
+
         RecipientEntity recipientEntityRequest = requestDto.toEntity(); // DTO를 Entity로 변환
 
         // 1. 첨부파일 등록 관련
@@ -429,17 +433,21 @@ public class RecipientServiceImpl implements RecipientService {
      * @throws RecipientInvalidDataException 내용이 null이거나 비어있거나, 필터링 후 비어있을 경우 발생.
      */
     private String cleanAndValidateContents(String originalContents) {
+        // 1. 초기 null 또는 공백 검사 (가장 먼저 수행)
         if (originalContents == null || originalContents.trim().isEmpty()) {
             logger.warn("게시물 내용이 비어있거나 null입니다.");
             throw new RecipientInvalidDataException("게시물 내용은 필수 입력 항목입니다.");
         }
+        // 2. Jsoup을 사용하여 HTML 필터링
         Safelist safelist = Safelist.relaxed();
         String cleanContents = Jsoup.clean(originalContents, safelist);
+        // 3. 필터링된 HTML에서 순수 텍스트 추출 후 최종 유효성 검사
         String pureTextContents = Jsoup.parse(cleanContents).text();
         if (pureTextContents.trim().isEmpty()) {
             logger.warn("게시물 작업 실패: 필터링 후 내용이 비어있음");
             throw new RecipientInvalidDataException("게시물 내용은 필수 입력 항목입니다. (HTML 태그 필터링 후)");
         }
+        // 최종적으로 정제된 HTML 내용 반환
         return cleanContents.trim();
     }
 

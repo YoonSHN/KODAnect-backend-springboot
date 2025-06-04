@@ -230,26 +230,25 @@ public class RecipientCommentControllerTest {
 
         RecipientCommentResponseDto mockResponseDto = RecipientCommentResponseDto.builder()
                 .commentSeq(commentSeq)
-                .letterSeq(letterSeq) // 수정 시 letterSeq는 DTO에 포함되지 않지만, 응답 DTO에는 있을 수 있음
+                .letterSeq(letterSeq)
                 .commentContents(requestDto.getCommentContents())
                 .commentWriter(requestDto.getCommentWriter())
                 .writeTime(LocalDateTime.now()) // 수정 시간은 새로 찍힐 수 있음
                 .build();
 
-        // 서비스 Mocking
+        // 서비스 Mocking (eq()는 제거해도 잘 동작할 것입니다. 위에서 논의된 대로)
         when(recipientCommentService.updateComment(
-                eq(commentSeq),
-                eq(requestDto.getCommentContents()),
-                eq(requestDto.getCommentWriter()),
-                eq(requestDto.getCommentPasscode()),
-                eq(requestDto.getCaptchaToken())
+                commentSeq,
+                requestDto.getCommentContents(),
+                requestDto.getCommentWriter(),
+                requestDto.getCommentPasscode(),
+                requestDto.getCaptchaToken()
         )).thenReturn(mockResponseDto);
 
         // when
         ResultActions actions = mockMvc.perform(put("/recipientLetters/{letterSeq}/comments/{commentSeq}", letterSeq, commentSeq)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestDto))
-                .accept(MediaType.APPLICATION_JSON));
+                .content(objectMapper.writeValueAsString(requestDto))); // 이 줄 추가: requestDto를 JSON 문자열로 변환하여 본문에 포함
 
         // then
         actions.andExpect(status().isOk())
@@ -259,13 +258,13 @@ public class RecipientCommentControllerTest {
                 .andExpect(jsonPath("$.data.commentContents").value(mockResponseDto.getCommentContents()))
                 .andDo(print());
 
-        // 서비스 메서드 호출 검증
+        // 서비스 메서드 호출 검증 (eq()는 제거해도 잘 동작할 것입니다. 위에 논의된 대로)
         verify(recipientCommentService).updateComment(
-                eq(commentSeq),
-                eq(requestDto.getCommentContents()),
-                eq(requestDto.getCommentWriter()),
-                eq(requestDto.getCommentPasscode()),
-                eq(requestDto.getCaptchaToken())
+                commentSeq,
+                requestDto.getCommentContents(),
+                requestDto.getCommentWriter(),
+                requestDto.getCommentPasscode(),
+                requestDto.getCaptchaToken()
         );
     }
 

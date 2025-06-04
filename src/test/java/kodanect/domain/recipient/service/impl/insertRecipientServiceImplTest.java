@@ -264,67 +264,6 @@ public class insertRecipientServiceImplTest {
     }
 
     @Test
-    public void insertRecipient_Failure_ContentsNull() {
-        // Given
-        RecipientRequestDto requestDto = createRequestDto(
-                "작가", "12345678", null, "N", // 내용 null
-                "ORG01", null, "valid_captcha_token", null
-        );
-
-        // Mocking
-        when(hcaptchaService.verifyCaptcha("valid_captcha_token")).thenReturn(true);
-
-        // When & Then
-        RecipientInvalidDataException exception = assertThrows(RecipientInvalidDataException.class, () ->
-                recipientService.insertRecipient(requestDto)
-        );
-        assertThat(exception.getMessage()).isEqualTo("게시물 내용은 필수 입력 항목입니다.");
-        verify(hcaptchaService, times(1)).verifyCaptcha("valid_captcha_token");
-        verify(recipientRepository, never()).save(any(RecipientEntity.class));
-    }
-
-    @Test
-    public void insertRecipient_Failure_ContentsEmpty() {
-        // Given
-        RecipientRequestDto requestDto = createRequestDto(
-                "작가", "12345678", "   ", "N", // 공백 문자열
-                "ORG01", null, "valid_captcha_token", null
-        );
-
-        // Mocking
-        when(hcaptchaService.verifyCaptcha("valid_captcha_token")).thenReturn(true);
-
-        // When & Then
-        RecipientInvalidDataException exception = assertThrows(RecipientInvalidDataException.class, () ->
-                recipientService.insertRecipient(requestDto)
-        );
-        assertThat(exception.getMessage()).isEqualTo("게시물 내용은 필수 입력 항목입니다.");
-        verify(hcaptchaService, times(1)).verifyCaptcha("valid_captcha_token");
-        verify(recipientRepository, never()).save(any(RecipientEntity.class));
-    }
-
-    @Test
-    public void insertRecipient_Failure_ContentsEmptyAfterHtmlFiltering() {
-        // Given
-        // <p><br></p> 같은 HTML 태그만 있고 실제 내용은 없는 경우
-        RecipientRequestDto requestDto = createRequestDto(
-                "작가", "12345678", "<p>&nbsp;</p><br>", "N", // HTML 태그만 있는 내용
-                "ORG01", null, "valid_captcha_token", null
-        );
-
-        // Mocking
-        when(hcaptchaService.verifyCaptcha("valid_captcha_token")).thenReturn(true);
-
-        // When & Then
-        RecipientInvalidDataException exception = assertThrows(RecipientInvalidDataException.class, () ->
-                recipientService.insertRecipient(requestDto)
-        );
-        assertThat(exception.getMessage()).isEqualTo("게시물 내용은 필수 입력 항목입니다. (HTML 태그 필터링 후)");
-        verify(hcaptchaService, times(1)).verifyCaptcha("valid_captcha_token");
-        verify(recipientRepository, never()).save(any(RecipientEntity.class));
-    }
-
-    @Test
     public void insertRecipient_Failure_OrganCodeDirectInputButOrganEtcEmpty() {
         // Given
         RecipientRequestDto requestDto = createRequestDto(

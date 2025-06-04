@@ -102,18 +102,20 @@ public class RecipientControllerTest {
         List<RecipientListResponseDto> mockList = Arrays.asList(dto1, dto2);
 
         // 서비스에 전달될 RecipientSearchCondition 객체를 명시적으로 생성
-        // 이 클래스에 @EqualsAndHashCode 어노테이션이 적용되어 있어야 합니다.
+        // 이 클래스에 @EqualsAndHashCode 어노테이션이 적용되어 있어야 합니다. (매우 중요!)
         RecipientSearchCondition searchCondition = new RecipientSearchCondition();
         searchCondition.setSearchType(SearchType.TITLE);
         searchCondition.setSearchKeyword("Test");
-        ArgumentCaptor<RecipientSearchCondition> captor = ArgumentCaptor.forClass(RecipientSearchCondition.class);
 
-        // Mocking 조건에 생성한 searchCondition 객체를 eq()로 사용
+        // ArgumentCaptor는 더 이상 사용되지 않으므로 제거합니다.
+        // ArgumentCaptor<RecipientSearchCondition> captor = ArgumentCaptor.forClass(RecipientSearchCondition.class);
+
+        // Mocking 조건에 생성한 searchCondition 객체를 직접 사용 (eq() 제거)
         when(recipientService.selectRecipientList(
-                eq(searchCondition),
-                eq(null),    // 이렇게 직접 null 처리해도 됨
-                eq(10))
-        ).thenReturn(mockList);
+                searchCondition, // eq(searchCondition) -> searchCondition
+                null,            // eq(null) -> null
+                10               // eq(10) -> 10
+        )).thenReturn(mockList);
 
         // when
         ResultActions actions = mockMvc.perform(get("/recipientLetters")
@@ -131,8 +133,8 @@ public class RecipientControllerTest {
                 .andExpect(jsonPath("$.data[1].letterSeq").value(2))
                 .andDo(print());
 
-        // 서비스 메서드 호출 검증
-        verify(recipientService).selectRecipientList(eq(searchCondition), eq(null), eq(10));
+        // 서비스 메서드 호출 검증 (eq() 제거)
+        verify(recipientService).selectRecipientList(searchCondition, null, 10);
     }
 
     @Test
@@ -328,10 +330,12 @@ public class RecipientControllerTest {
                 .writeTime(LocalDateTime.now()) // 필드명 변경
                 .build();
 
+        // anyInt()는 Mocking 시 어떤 int 값이라도 받아들이도록 설정합니다.
         when(recipientService.selectRecipient(anyInt())).thenReturn(responseDto);
 
         // when
         ResultActions actions = mockMvc.perform(get("/recipientLetters/{letterSeq}", 1));
+
 
         // then
         actions.andExpect(status().isOk())
@@ -340,65 +344,105 @@ public class RecipientControllerTest {
                 .andExpect(jsonPath("$.data.letterSeq").value(1))
                 .andExpect(jsonPath("$.data.letterTitle").value("View Title"))
                 .andDo(print());
-        verify(recipientService).selectRecipient(eq(1));
+
+        // 서비스 메서드 호출 검증
+        // eq(1) 대신 직접 1을 전달하여 코드를 간결하게 만듭니다.
+        verify(recipientService).selectRecipient(1); // eq(1) -> 1로 수정
     }
 
     @Test
     public void view_notFound() throws Exception {
-        // given
         when(recipientService.selectRecipient(anyInt()))
                 .thenThrow(new RecipientNotFoundException("게시물을 찾을 수 없습니다."));
 
         // when
+        // 존재하지 않는 게시물(letterSeq 999)에 대한 GET 요청을 수행합니다.
         ResultActions actions = mockMvc.perform(get("/recipientLetters/{letterSeq}", 999));
 
         // then
+        // HTTP 상태 코드가 404 Not Found인지 검증합니다.
         actions.andExpect(status().isNotFound())
+                // 응답 JSON의 'code' 필드가 HttpStatus.NOT_FOUND의 값과 일치하는지 검증합니다.
                 .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
+                // 응답 JSON의 'message' 필드가 예상 메시지와 일치하는지 검증합니다.
                 .andExpect(jsonPath("$.message").value("게시물을 찾을 수 없습니다."))
+                // 요청 및 응답 상세 정보를 콘솔에 출력합니다.
                 .andDo(print());
-        verify(recipientService).selectRecipient(eq(999));
+
+        // 서비스 메서드 호출 검증:
+        // recipientService의 selectRecipient 메서드가 정확히 999를 인자로 받아 호출되었는지 검증합니다.
+        // eq(999) 대신 직접 999를 전달하여 코드를 간결하게 만듭니다.
+        verify(recipientService).selectRecipient(999);
     }
 
-    // --- 게시물 수정을 위한 비밀번호 인증 테스트 ---
     @Test
     public void verifyPassword_success() throws Exception {
         // given
+        // 요청 본문에 담을 비밀번호 맵 생성
         Map<String, String> requestBody = Collections.singletonMap("letterPasscode", "correctPasscode");
+
+        // recipientService의 verifyLetterPassword 메서드가 어떤 int 값과 어떤 String 값을 받으면
+        // true를 반환하도록 mocking합니다.
         when(recipientService.verifyLetterPassword(anyInt(), anyString())).thenReturn(true);
 
         // when
+        // 게시물 ID 1에 대한 비밀번호 확인 POST 요청을 수행합니다.
+        // 요청 본문은 JSON 타입으로 설정하고, requestBody 맵을 JSON 문자열로 변환하여 보냅니다.
         ResultActions actions = mockMvc.perform(post("/recipientLetters/{letterSeq}/verifyPwd", 1)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestBody)));
+                .content(objectMapper.writeValueAsString(requestBody))); // objectMapper가 잘 초기화되어 있어야 함
 
         // then
+        // HTTP 상태 코드가 200 OK인지 검증합니다.
         actions.andExpect(status().isOk())
+                // 응답 JSON의 'code' 필드가 HttpStatus.OK의 값과 일치하는지 검증합니다.
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
+                // 응답 JSON의 'message' 필드가 예상 메시지와 일치하는지 검증합니다.
                 .andExpect(jsonPath("$.message").value("비밀번호 확인 결과"))
+                // 응답 JSON의 'data' 필드가 true인지 검증합니다.
                 .andExpect(jsonPath("$.data").value(true))
+                // 요청 및 응답 상세 정보를 콘솔에 출력합니다.
                 .andDo(print());
-        verify(recipientService).verifyLetterPassword(eq(1), eq("correctPasscode"));
+
+        // 서비스 메서드 호출 검증:
+        // recipientService의 verifyLetterPassword 메서드가 정확히 1과 "correctPasscode"를 인자로 받아 호출되었는지 검증합니다.
+        // eq()를 제거하여 코드를 간결하게 만듭니다.
+        verify(recipientService).verifyLetterPassword(1, "correctPasscode"); // eq(1), eq("correctPasscode") -> 1, "correctPasscode"로 수정
     }
 
     @Test
     public void verifyPassword_failure() throws Exception {
         // given
+        // 요청 본문에 담을 잘못된 비밀번호 맵 생성
         Map<String, String> requestBody = Collections.singletonMap("letterPasscode", "wrongPasscode");
+
+        // recipientService의 verifyLetterPassword 메서드가 어떤 int 값과 어떤 String 값을 받으면
+        // false를 반환하도록 mocking합니다. (비밀번호 검증 실패 상황)
         when(recipientService.verifyLetterPassword(anyInt(), anyString())).thenReturn(false);
 
         // when
+        // 게시물 ID 1에 대한 비밀번호 확인 POST 요청을 수행합니다.
+        // 요청 본문은 JSON 타입으로 설정하고, requestBody 맵을 JSON 문자열로 변환하여 보냅니다.
         ResultActions actions = mockMvc.perform(post("/recipientLetters/{letterSeq}/verifyPwd", 1)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestBody)));
+                .content(objectMapper.writeValueAsString(requestBody))); // objectMapper가 잘 초기화되어 있어야 함
 
         // then
+        // HTTP 상태 코드가 200 OK인지 검증합니다. (비밀번호 확인 결과는 200 OK로 전달되는 경우가 많음)
         actions.andExpect(status().isOk())
+                // 응답 JSON의 'code' 필드가 HttpStatus.OK의 값과 일치하는지 검증합니다.
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
+                // 응답 JSON의 'message' 필드가 예상 메시지와 일치하는지 검증합니다.
                 .andExpect(jsonPath("$.message").value("비밀번호 확인 결과"))
+                // 응답 JSON의 'data' 필드가 false인지 검증합니다. (비밀번호 불일치)
                 .andExpect(jsonPath("$.data").value(false))
+                // 요청 및 응답 상세 정보를 콘솔에 출력합니다.
                 .andDo(print());
-        verify(recipientService).verifyLetterPassword(eq(1), eq("wrongPasscode"));
+
+        // 서비스 메서드 호출 검증:
+        // recipientService의 verifyLetterPassword 메서드가 정확히 1과 "wrongPasscode"를 인자로 받아 호출되었는지 검증합니다.
+        // eq()를 제거하여 코드를 간결하게 만듭니다.
+        verify(recipientService).verifyLetterPassword(1, "wrongPasscode"); // eq(1), eq("wrongPasscode") -> 1, "wrongPasscode"로 수정
     }
 
     @Test
@@ -587,66 +631,123 @@ public class RecipientControllerTest {
     @Test
     public void delete_success() throws Exception {
         // given
+        // 삭제할 게시물의 시퀀스(ID) 설정
         Integer letterSeq = 1;
+        // 삭제 요청에 필요한 DTO 생성 (비밀번호와 캡챠 토큰 포함)
         RecipientDeleteRequestDto requestDto = new RecipientDeleteRequestDto("correctPasscode", "captchaResponse");
 
+        // recipientService의 deleteRecipient 메서드가 어떤 int, String, String 값을 받더라도
+        // 아무것도 하지 않도록(void 메서드 mocking) 설정합니다.
         doNothing().when(recipientService).deleteRecipient(anyInt(), anyString(), anyString());
 
         // when
+        // 지정된 게시물 ID에 대한 DELETE 요청을 수행합니다.
+        // 요청 본문은 JSON 타입으로 설정하고, requestDto 객체를 JSON 문자열로 변환하여 보냅니다.
         ResultActions actions = mockMvc.perform(delete("/recipientLetters/{letterSeq}", letterSeq)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestDto)));
+                .content(objectMapper.writeValueAsString(requestDto))); // objectMapper가 잘 초기화되어 있어야 함
 
         // then
+        // HTTP 상태 코드가 200 OK인지 검증합니다.
         actions.andExpect(status().isOk())
+                // 응답 JSON의 'code' 필드가 HttpStatus.OK의 값과 일치하는지 검증합니다.
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
+                // 응답 JSON의 'message' 필드가 예상 메시지와 일치하는지 검증합니다.
                 .andExpect(jsonPath("$.message").value("게시물이 성공적으로 삭제되었습니다."))
+                // 요청 및 응답 상세 정보를 콘솔에 출력합니다.
                 .andDo(print());
-        verify(recipientService).deleteRecipient(eq(letterSeq), eq(requestDto.getLetterPasscode()), eq(requestDto.getCaptchaToken()));
+
+        // 서비스 메서드 호출 검증:
+        // recipientService의 deleteRecipient 메서드가 정확히 letterSeq, requestDto.getLetterPasscode(),
+        // requestDto.getCaptchaToken()을 인자로 받아 호출되었는지 검증합니다.
+        // eq()를 제거하여 코드를 간결하게 만듭니다.
+        verify(recipientService).deleteRecipient(
+                letterSeq,                       // eq(letterSeq) -> letterSeq로 수정
+                requestDto.getLetterPasscode(),  // eq(requestDto.getLetterPasscode()) -> requestDto.getLetterPasscode()로 수정
+                requestDto.getCaptchaToken()     // eq(requestDto.getCaptchaToken()) -> requestDto.getCaptchaToken()로 수정
+        );
     }
 
     @Test
     public void delete_invalidPasscode() throws Exception {
         // given
+        // 삭제할 게시물의 시퀀스(ID) 설정
         Integer letterSeq = 1;
+        // 잘못된 비밀번호를 포함한 삭제 요청 DTO 생성
         RecipientDeleteRequestDto requestDto = new RecipientDeleteRequestDto("wrongPasscode", "captchaResponse");
 
+        // recipientService의 deleteRecipient 메서드가 어떤 int, String, String 값을 받더라도
+        // RecipientInvalidPasscodeException을 던지도록 mocking합니다.
         doThrow(new RecipientInvalidPasscodeException("비밀번호가 일치하지 않습니다."))
                 .when(recipientService).deleteRecipient(anyInt(), anyString(), anyString());
 
         // when
+        // 지정된 게시물 ID에 대한 DELETE 요청을 수행합니다.
+        // 요청 본문은 JSON 타입으로 설정하고, requestDto 객체를 JSON 문자열로 변환하여 보냅니다.
         ResultActions actions = mockMvc.perform(delete("/recipientLetters/{letterSeq}", letterSeq)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestDto)));
+                .content(objectMapper.writeValueAsString(requestDto))); // objectMapper가 잘 초기화되어 있어야 함
 
         // then
+        // HTTP 상태 코드가 401 Unauthorized인지 검증합니다. (비밀번호 불일치 시)
         actions.andExpect(status().isUnauthorized())
+                // 응답 JSON의 'code' 필드가 HttpStatus.UNAUTHORIZED의 값과 일치하는지 검증합니다.
                 .andExpect(jsonPath("$.code").value(HttpStatus.UNAUTHORIZED.value()))
+                // 응답 JSON의 'message' 필드가 예상 메시지와 일치하는지 검증합니다.
                 .andExpect(jsonPath("$.message").value("비밀번호가 일치하지 않습니다."))
+                // 요청 및 응답 상세 정보를 콘솔에 출력합니다.
                 .andDo(print());
-        verify(recipientService).deleteRecipient(eq(letterSeq), eq(requestDto.getLetterPasscode()), eq(requestDto.getCaptchaToken()));
+
+        // 서비스 메서드 호출 검증:
+        // recipientService의 deleteRecipient 메서드가 정확히 letterSeq, requestDto.getLetterPasscode(),
+        // requestDto.getCaptchaToken()을 인자로 받아 호출되었는지 검증합니다.
+        // eq()를 제거하여 코드를 간결하게 만듭니다.
+        verify(recipientService).deleteRecipient(
+                letterSeq,                       // eq(letterSeq) -> letterSeq로 수정
+                requestDto.getLetterPasscode(),  // eq(requestDto.getLetterPasscode()) -> requestDto.getLetterPasscode()로 수정
+                requestDto.getCaptchaToken()     // eq(requestDto.getCaptchaToken()) -> requestDto.getCaptchaToken()로 수정
+        );
     }
 
     @Test
     public void delete_recipientNotFound() throws Exception {
         // given
+        // 존재하지 않는 게시물의 시퀀스(ID) 설정
         Integer letterSeq = 999;
+        // 삭제 요청 DTO 생성 (비밀번호와 캡챠 토큰 포함)
         RecipientDeleteRequestDto requestDto = new RecipientDeleteRequestDto("anyPasscode", "captchaResponse");
 
+        // recipientService의 deleteRecipient 메서드가 어떤 int, String, String 값을 받더라도
+        // RecipientNotFoundException을 던지도록 mocking합니다.
         doThrow(new RecipientNotFoundException("게시물을 찾을 수 없습니다."))
                 .when(recipientService).deleteRecipient(anyInt(), anyString(), anyString());
 
         // when
+        // 지정된 게시물 ID에 대한 DELETE 요청을 수행합니다.
+        // 요청 본문은 JSON 타입으로 설정하고, requestDto 객체를 JSON 문자열로 변환하여 보냅니다.
         ResultActions actions = mockMvc.perform(delete("/recipientLetters/{letterSeq}", letterSeq)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestDto)));
+                .content(objectMapper.writeValueAsString(requestDto))); // objectMapper가 잘 초기화되어 있어야 함
 
         // then
+        // HTTP 상태 코드가 404 Not Found인지 검증합니다. (게시물을 찾을 수 없을 때)
         actions.andExpect(status().isNotFound())
+                // 응답 JSON의 'code' 필드가 HttpStatus.NOT_FOUND의 값과 일치하는지 검증합니다.
                 .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
+                // 응답 JSON의 'message' 필드가 예상 메시지와 일치하는지 검증합니다.
                 .andExpect(jsonPath("$.message").value("게시물을 찾을 수 없습니다."))
+                // 요청 및 응답 상세 정보를 콘솔에 출력합니다.
                 .andDo(print());
-        verify(recipientService).deleteRecipient(eq(letterSeq), eq(requestDto.getLetterPasscode()), eq(requestDto.getCaptchaToken()));
+
+        // 서비스 메서드 호출 검증:
+        // recipientService의 deleteRecipient 메서드가 정확히 letterSeq, requestDto.getLetterPasscode(),
+        // requestDto.getCaptchaToken()을 인자로 받아 호출되었는지 검증합니다.
+        // eq()를 제거하여 코드를 간결하게 만듭니다.
+        verify(recipientService).deleteRecipient(
+                letterSeq,                       // eq(letterSeq) -> letterSeq로 수정
+                requestDto.getLetterPasscode(),  // eq(requestDto.getLetterPasscode()) -> requestDto.getLetterPasscode()로 수정
+                requestDto.getCaptchaToken()     // eq(requestDto.getCaptchaToken()) -> requestDto.getCaptchaToken()로 수정
+        );
     }
 
     // --- 특정 게시물의 "더보기" 댓글 조회 API 테스트 ---
@@ -669,6 +770,7 @@ public class RecipientControllerTest {
                 .commentWriter("Writer X")
                 .writeTime(LocalDateTime.now())
                 .build();
+
         RecipientCommentResponseDto comment2 = RecipientCommentResponseDto.builder()
                 .commentSeq(102)
                 .letterSeq(1)
@@ -676,16 +778,15 @@ public class RecipientControllerTest {
                 .commentWriter("Writer Y")
                 .writeTime(LocalDateTime.now())
                 .build();
+
         List<RecipientCommentResponseDto> mockComments = Arrays.asList(comment1, comment2);
 
         // 서비스 Mocking
-        // letterSeq: 1 (int), lastCommentId: null (Integer), size: 3 (int)
-        // Mockito는 모든 인자에 매처를 사용해야 합니다.
-        // eq(null)은 Integer 타입의 null에 정확히 매칭됩니다.
+        // 이제 eq() 없이 직접 값들을 전달합니다.
         when(recipientService.selectPaginatedCommentsForRecipient(
-                eq(letterSeqValue),    // letterSeq: int -> eq(1)
-                eq(lastCommentIdValue),// lastCommentId: Integer -> eq(null)
-                eq(sizeValue)          // size: int -> eq(3)
+                letterSeqValue,     // eq(letterSeqValue) 제거
+                lastCommentIdValue, // eq(lastCommentIdValue) 제거
+                sizeValue           // eq(sizeValue) 제거
         )).thenReturn(mockComments);
 
         // when
@@ -702,11 +803,11 @@ public class RecipientControllerTest {
                 .andDo(print());
 
         // 서비스 메서드 호출 검증
-        // Mocking 조건과 동일하게 정확한 인자를 eq()로 검증합니다.
+        // Mocking 조건과 동일하게, eq() 없이 직접 인자를 전달합니다.
         verify(recipientService).selectPaginatedCommentsForRecipient(
-                eq(letterSeqValue),
-                eq(lastCommentIdValue),
-                eq(sizeValue)
+                letterSeqValue,     // eq(letterSeqValue) 제거
+                lastCommentIdValue, // eq(lastCommentIdValue) 제거
+                sizeValue           // eq(sizeValue) 제거
         );
     }
 
