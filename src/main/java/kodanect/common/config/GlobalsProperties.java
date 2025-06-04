@@ -19,13 +19,13 @@ import org.springframework.stereotype.Component;
 public class GlobalsProperties {
 
     /** 파일 저장 경로 */
-    private String fileStorePath;
+    private String fileStorePath = "/app/uploads/";
 
     /** 업로드 허용 파일 크기 */
     private Long posblAtchFileSize;
 
     /** 업로드 파일 접근 URL */
-    private String fileBaseUrl;
+    private String fileBaseUrl= "/uploads/";
 
 }
 
