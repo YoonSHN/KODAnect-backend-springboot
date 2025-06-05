@@ -1,5 +1,6 @@
 package kodanect.domain.remembrance.dto;
 
+import kodanect.common.util.FormatUtils;
 import kodanect.domain.remembrance.entity.Memorial;
 import lombok.*;
 
@@ -75,6 +76,11 @@ public class MemorialDetailResponse {
     private boolean replyHasNext;
 
     /* 편지 리스트 */
+
+    /** 20101212 -> 2010-12-12 형식 변경 */
+    public String getDonateDate() {
+        return FormatUtils.formatDonateDate(this.donateDate);
+    }
 
     /* 기증자 상세 조회 */
     public static MemorialDetailResponse of(

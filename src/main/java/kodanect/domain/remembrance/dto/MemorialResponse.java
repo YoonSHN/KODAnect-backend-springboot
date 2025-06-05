@@ -1,12 +1,14 @@
 package kodanect.domain.remembrance.dto;
 
+import kodanect.common.util.CursorIdentifiable;
+import kodanect.common.util.FormatUtils;
 import lombok.*;
 
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter @ToString
-public class MemorialResponse {
+public class MemorialResponse implements CursorIdentifiable<Integer> {
 
     /* 기증자 일련번호 */
     private Integer donateSeq;
@@ -28,5 +30,16 @@ public class MemorialResponse {
 
     /* 댓글 개수 조회 */
     private long replyCount;
+
+    /** 20101212 -> 2010-12-12 형식 변경 */
+    public String getDonateDate() {
+        return FormatUtils.formatDonateDate(this.donateDate);
+    }
+
+    @Override
+    public Integer getCursorId() {
+        return donateSeq;
+    }
+
 }
 
