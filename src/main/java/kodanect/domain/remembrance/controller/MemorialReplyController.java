@@ -62,7 +62,11 @@ public class MemorialReplyController {
             @PathVariable Integer donateSeq,
             @PathVariable Integer replySeq,
             @RequestBody MemorialReplyUpdateRequest memorialReplyUpdateRequest)
-            throws  InvalidDonateSeqException,
+            throws  ReplyPostMismatchException,
+                    ReplyIdMismatchException,
+                    MissingReplyPasswordException,
+                    ReplyPasswordMismatchException,
+                    InvalidDonateSeqException,
                     MissingReplyContentException,
                     MemorialReplyNotFoundException,
                     MemorialNotFoundException,

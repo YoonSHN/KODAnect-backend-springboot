@@ -26,7 +26,9 @@ public class MemorialController {
     @GetMapping
     public ResponseEntity<ApiResponse<CursorPaginationResponse<MemorialResponse>>> getMemorialList(
             @RequestParam(required = false) Integer cursor,
-            @RequestParam(defaultValue = "20") int size) throws InvalidPaginationRangeException {
+            @RequestParam(defaultValue = "20") int size)
+            throws  InvalidPaginationRangeException
+    {
         /* 게시글 리스트 조회 */
 
         String successMessage = messageSourceAccessor.getMessage("board.read.success", new Object[] {});
@@ -38,7 +40,7 @@ public class MemorialController {
     public ResponseEntity<ApiResponse<MemorialDetailResponse>> getMemorialByDonateSeq(
             @PathVariable Integer donateSeq)
             throws  MemorialNotFoundException,
-                    InvalidDonateSeqException
+            InvalidDonateSeqException
     {
         /* 게시글 상세 조회 */
 
@@ -55,14 +57,14 @@ public class MemorialController {
             @RequestParam(required = false) Integer cursor,
             @RequestParam(defaultValue = "20") int size)
             throws  InvalidPaginationRangeException,
-                    MissingSearchDateParameterException,
-                    InvalidSearchDateFormatException,
-                    InvalidSearchDateRangeException
+            MissingSearchDateParameterException,
+            InvalidSearchDateFormatException,
+            InvalidSearchDateRangeException
     {
         /* 게시글 검색 조건 조회 */
 
         String successMessage = messageSourceAccessor.getMessage("board.search.read.success", new Object[] {});
-        CursorPaginationResponse<MemorialResponse> memorialResponses = memorialService.getSearchMemorialList(cursor, size, startDate, endDate, searchWord);
+        CursorPaginationResponse<MemorialResponse> memorialResponses = memorialService.getSearchMemorialList(startDate, endDate, searchWord, cursor, size);
         return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, successMessage, memorialResponses));
     }
 
@@ -71,8 +73,8 @@ public class MemorialController {
             @PathVariable Integer donateSeq,
             @PathVariable String emotion)
             throws  InvalidEmotionTypeException,
-                    MemorialNotFoundException,
-                    InvalidDonateSeqException
+            MemorialNotFoundException,
+            InvalidDonateSeqException
     {
         /* 이모지 카운트 수 업데이트 */
         /* flower, love, see, miss, proud, hard, sad */

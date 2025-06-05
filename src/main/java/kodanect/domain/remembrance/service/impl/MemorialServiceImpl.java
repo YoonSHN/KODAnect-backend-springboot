@@ -55,8 +55,8 @@ public class MemorialServiceImpl implements MemorialService {
     @Override
     public void emotionCountUpdate(Integer donateSeq, String emotion)
             throws  InvalidEmotionTypeException,
-                    MemorialNotFoundException,
-                    InvalidDonateSeqException
+            MemorialNotFoundException,
+            InvalidDonateSeqException
     {
         /* 이모지 카운트 수 업데이트 */
         /* 게시글 마다 락을 개별 쓰기 락 객체로 관리 */
@@ -81,11 +81,11 @@ public class MemorialServiceImpl implements MemorialService {
 
     @Override
     public CursorPaginationResponse<MemorialResponse> getSearchMemorialList(
-            Integer cursor, int size, String startDate, String endDate, String searchWord)
+            String startDate, String endDate, String searchWord, Integer cursor, int size)
             throws  InvalidPaginationRangeException,
-                    MissingSearchDateParameterException,
-                    InvalidSearchDateFormatException,
-                    InvalidSearchDateRangeException
+            MissingSearchDateParameterException,
+            InvalidSearchDateFormatException,
+            InvalidSearchDateRangeException
     {
         /* 게시글 검색 조건 조회 */
 
@@ -126,7 +126,7 @@ public class MemorialServiceImpl implements MemorialService {
     @Override
     public MemorialDetailResponse getMemorialByDonateSeq(Integer donateSeq)
             throws  MemorialNotFoundException,
-                    InvalidDonateSeqException
+            InvalidDonateSeqException
     {
         /* 게시글 상세 조회 */
 

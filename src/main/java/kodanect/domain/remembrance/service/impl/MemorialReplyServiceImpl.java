@@ -85,7 +85,11 @@ public class MemorialReplyServiceImpl implements MemorialReplyService {
 
     @Override
     public void updateReply(Integer donateSeq, Integer replySeq, MemorialReplyUpdateRequest memorialReplyUpdateRequest)
-            throws  InvalidDonateSeqException,
+            throws  ReplyPostMismatchException,
+                    ReplyIdMismatchException,
+                    InvalidDonateSeqException,
+                    MissingReplyPasswordException,
+                    ReplyPasswordMismatchException,
                     MissingReplyContentException,
                     MemorialReplyNotFoundException,
                     MemorialNotFoundException,
