@@ -21,7 +21,7 @@ public interface MemorialRepository extends JpaRepository<Memorial, Integer> {
             LEFT JOIN MemorialReply r ON m.donateSeq = r.donateSeq
             WHERE m.delFlag = 'N' AND (:cursor IS NULL OR m.donateSeq < :cursor)
             GROUP BY m.donateSeq
-            ORDER BY m.writeTime DESC
+            ORDER BY m.donateDate DESC
         """
     )
     List<MemorialResponse> findByCursor(@Param("cursor") Integer cursor, Pageable pageable);
@@ -36,7 +36,7 @@ public interface MemorialRepository extends JpaRepository<Memorial, Integer> {
             WHERE m.delFlag = 'N' AND (:cursor IS NULL OR m.donateSeq < :cursor)
                     AND m.donateDate BETWEEN :startDate AND :endDate AND m.donorName LIKE :searchWord
             GROUP BY m.donateSeq
-            ORDER BY m.writeTime DESC
+            ORDER BY m.donateDate DESC
         """
     )
     List<MemorialResponse> findSearchByCursor(
