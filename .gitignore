@@ -56,7 +56,6 @@ coverage/
 *.cache
 *.sql~
 *.db
-/test_uploads/**
 
 KODAnect-backend-springboot.git/
 KODAnect-backend-springboot.git.bfg-report/
