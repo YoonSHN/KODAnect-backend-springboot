@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.MessageSourceAccessor;
 import org.springframework.context.support.ReloadableResourceBundleMessageSource;
 import org.springframework.util.AntPathMatcher;
+import org.springframework.web.client.RestTemplate; // RestTemplate 임포트 추가
 
 /**
  * 공통 설정
@@ -101,6 +102,17 @@ public class EgovConfigCommon {
 		LeaveaTrace leaveaTrace = new LeaveaTrace();
 		leaveaTrace.setTraceHandlerServices(new TraceHandlerService[]{traceHandlerService()});
 		return leaveaTrace;
+	}
+
+	/**
+	 * RestTemplate Bean
+	 *
+	 * HTTP 요청을 수행하기 위한 RestTemplate 인스턴스 등록
+	 * hCaptcha 등 외부 API 호출에 사용될 수 있습니다.
+	 */
+	@Bean
+	public RestTemplate restTemplate() {
+		return new RestTemplate();
 	}
 
 }

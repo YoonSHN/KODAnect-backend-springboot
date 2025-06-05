@@ -15,6 +15,12 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class WebMvcConfig implements WebMvcConfigurer {
 
+    private final GlobalsProperties globalsProperties;
+
+    public WebMvcConfig(GlobalsProperties globalsProperties) {
+        this.globalsProperties = globalsProperties;
+    }
+
     /**
      * CORS 설정
      * - 특정 도메인에서 오는 요청을 허용
@@ -37,6 +43,11 @@ public class WebMvcConfig implements WebMvcConfigurer {
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         registry.addResourceHandler("/admin/kindeditor/attached/**")
                 .addResourceLocations("file:/app/uploads/admin/kindeditor/attached/");
+
+        // Recipient 게시판 이미지 파일 핸들러
+        // file.base-url (예: /uploads/**) 요청을 file:uploadRootDir (예: file:/app/uploads/) 경로로 매핑
+        registry.addResourceHandler(globalsProperties.getFileBaseUrl() + "/**")
+                .addResourceLocations("file:" + globalsProperties.getFileStorePath() + "/");
     }
 }
 
