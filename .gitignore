@@ -50,6 +50,7 @@ logs/
 # === 테스트 및 커버리지 ===
 test-output/
 coverage/
+test_uploads/
 
 # === 기타 ===
 *.class
