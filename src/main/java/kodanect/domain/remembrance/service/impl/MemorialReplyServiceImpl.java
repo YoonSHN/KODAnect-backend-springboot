@@ -189,7 +189,7 @@ public class MemorialReplyServiceImpl implements MemorialReplyService {
 
     }
 
-    public CursorReplyPaginationResponse<MemorialReplyResponse> getMoreReplyList(Integer donateSeq, Integer cursor, int size)
+    public CursorReplyPaginationResponse<MemorialReplyResponse, Integer> getMoreReplyList(Integer donateSeq, Integer cursor, int size)
             throws  MemorialNotFoundException,
                     InvalidDonateSeqException
     {

@@ -44,7 +44,7 @@ public interface MemorialReplyService {
             throws  MemorialNotFoundException,
                     InvalidDonateSeqException;
     /* 댓글 더보기 */
-    CursorReplyPaginationResponse<MemorialReplyResponse> getMoreReplyList(Integer donateSeq, Integer cursor, int size)
+    CursorReplyPaginationResponse<MemorialReplyResponse, Integer> getMoreReplyList(Integer donateSeq, Integer cursor, int size)
             throws  MemorialNotFoundException,
                     InvalidDonateSeqException;
 }

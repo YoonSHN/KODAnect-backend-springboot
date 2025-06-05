@@ -125,7 +125,7 @@ class MemorialServiceImplTest {
                 eq(cursor), any(Pageable.class), eq("20230101"), eq("20240101"), eq("%홍길동%"))
         ).thenReturn(content);
 
-        CursorPaginationResponse<MemorialResponse> result
+        CursorPaginationResponse<MemorialResponse, Integer> result
                 = memorialService.getSearchMemorialList(startDate, endDate, searchWord, cursor, size);
 
         assertNotNull(result);
@@ -154,7 +154,7 @@ class MemorialServiceImplTest {
 
         when(memorialRepository.findByCursor(eq(cursor), any(Pageable.class))).thenReturn(content);
 
-        CursorPaginationResponse<MemorialResponse> page = memorialService.getMemorialList(cursor, size);
+        CursorPaginationResponse<MemorialResponse, Integer> page = memorialService.getMemorialList(cursor, size);
 
         assertNotNull(page);
         assertEquals(2, page.getContent().size());

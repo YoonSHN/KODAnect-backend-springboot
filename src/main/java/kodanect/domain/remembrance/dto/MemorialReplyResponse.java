@@ -1,5 +1,6 @@
 package kodanect.domain.remembrance.dto;
 
+import kodanect.common.util.CursorIdentifiable;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -8,7 +9,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter @ToString
-public class MemorialReplyResponse {
+public class MemorialReplyResponse implements CursorIdentifiable<Integer> {
 
     /* 댓글 일련번호 */
     private Integer replySeq;
@@ -21,5 +22,10 @@ public class MemorialReplyResponse {
 
     /* 댓글 등록일시 */
     private LocalDateTime replyWriteTime;
+
+    @Override
+    public Integer getCursorId() {
+        return replySeq;
+    }
 }
 
