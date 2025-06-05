@@ -2,7 +2,6 @@ package kodanect.common.util;
 
 import kodanect.common.response.CursorPaginationResponse;
 import kodanect.common.response.CursorReplyPaginationResponse;
-import kodanect.domain.remembrance.dto.MemorialReplyResponse;
 
 import java.util.List;
 
@@ -57,20 +56,20 @@ public class CursorFormatter {
     /**
      * 댓글 목록 응답 포맷 생성
      *
-     * @param memorialReplyResponses 전체 댓글 응답 대상 목록
+     * @param responses 전체 댓글 응답 대상 목록
      * @param size 클라이언트 요청 size
      * @return 다음 커서 정보를 포함한 CursorReplyPaginationResponse
      */
 
-    public static CursorReplyPaginationResponse<MemorialReplyResponse> cursorReplyFormat(List<MemorialReplyResponse> memorialReplyResponses, int size) {
+    public static <T extends CursorIdentifiable<C>, C> CursorReplyPaginationResponse<T, C> cursorReplyFormat(List<T> responses, int size) {
         /* 댓글 cursor 포맷 */
-        boolean hasNext = memorialReplyResponses.size() > size;
+        boolean hasNext = responses.size() > size;
 
-        List<MemorialReplyResponse> content = memorialReplyResponses.stream().limit(size).toList();
+        List<T> content = responses.stream().limit(size).toList();
 
-        Integer nextCursor = hasNext ? content.get(content.size() - 1).getReplySeq() : null;
+        C nextCursor = hasNext ? content.get(content.size() - 1).getCursorId() : null;
 
-        return CursorReplyPaginationResponse.<MemorialReplyResponse>builder()
+        return CursorReplyPaginationResponse.<T, C>builder()
                 .content(content)
                 .replyNextCursor(nextCursor)
                 .replyHasNext(hasNext)

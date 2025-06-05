@@ -148,7 +148,7 @@ public class MemorialServiceImpl implements MemorialService {
         List<MemorialReplyResponse> memorialReplyResponses = memorialReplyService.getMemorialReplyList(donateSeq, null, DEFAULT_SIZE + 1);
 
         /* 댓글 리스트 페이징 포매팅 */
-        CursorReplyPaginationResponse<MemorialReplyResponse> cursoredReplies = CursorFormatter.cursorReplyFormat(memorialReplyResponses, DEFAULT_SIZE);
+        CursorReplyPaginationResponse<MemorialReplyResponse, Integer> cursoredReplies = CursorFormatter.cursorReplyFormat(memorialReplyResponses, DEFAULT_SIZE);
 
         /* 하늘나라 편지 리스트 조회 예정 */
 

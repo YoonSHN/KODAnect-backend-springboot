@@ -27,7 +27,7 @@ public class MemorialReplyController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<CursorReplyPaginationResponse<MemorialReplyResponse>>> getMoreReplies(
+    public ResponseEntity<ApiResponse<CursorReplyPaginationResponse<MemorialReplyResponse, Integer>>> getMoreReplies(
             @PathVariable Integer donateSeq,
             @RequestParam Integer cursor, @RequestParam(defaultValue = "3") int size)
             throws  MemorialNotFoundException,
@@ -36,7 +36,7 @@ public class MemorialReplyController {
         /* 댓글 더보기 */
 
         String successMessage = messageSourceAccessor.getMessage("board.reply.read.success", new Object[] {});
-        CursorReplyPaginationResponse<MemorialReplyResponse> memorialReplyResponses = memorialReplyService.getMoreReplyList(donateSeq, cursor, size);
+        CursorReplyPaginationResponse<MemorialReplyResponse, Integer> memorialReplyResponses = memorialReplyService.getMoreReplyList(donateSeq, cursor, size);
         return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, successMessage, memorialReplyResponses));
     }
 

@@ -8,5 +8,7 @@
     <suppress checks=".*" files=".*application.*\.properties"/>
     <suppress checks="MagicNumberCheck" files=".*domain/.*?/entity/.*"/>
     <suppress checks="MagicNumberCheck" files=".*domain/.*/dto/.*"/>
+    <suppress checks="MagicNumberCheck" files=".*domain\.*?\entity\.*"/>
+    <suppress checks="MagicNumberCheck" files=".*domain\.*\dto\.*"/>
 </suppressions>
 

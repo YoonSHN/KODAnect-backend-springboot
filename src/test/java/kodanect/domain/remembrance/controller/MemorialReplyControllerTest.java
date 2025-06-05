@@ -90,8 +90,8 @@ class MemorialReplyControllerTest {
                         .build()
         );
 
-        CursorReplyPaginationResponse<MemorialReplyResponse> page =
-                CursorReplyPaginationResponse.<MemorialReplyResponse>builder()
+        CursorReplyPaginationResponse<MemorialReplyResponse, Integer> page =
+                CursorReplyPaginationResponse.<MemorialReplyResponse, Integer>builder()
                         .content(content)
                         .replyNextCursor(null)
                         .replyHasNext(false)

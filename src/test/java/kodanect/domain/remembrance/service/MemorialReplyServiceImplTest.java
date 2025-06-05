@@ -183,7 +183,7 @@ class MemorialReplyServiceImplTest {
         when(memorialFinder.findByIdOrThrow(donateSeq)).thenReturn(mock(Memorial.class));
         when(memorialReplyRepository.findByCursor(eq(donateSeq), eq(cursor), any(Pageable.class))).thenReturn(content);
 
-        CursorReplyPaginationResponse<MemorialReplyResponse> page =
+        CursorReplyPaginationResponse<MemorialReplyResponse, Integer> page =
                 memorialReplyService.getMoreReplyList(donateSeq, cursor, size);
 
         assertNotNull(page);
