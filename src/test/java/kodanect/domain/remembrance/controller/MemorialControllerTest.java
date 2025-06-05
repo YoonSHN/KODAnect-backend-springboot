@@ -59,8 +59,8 @@ class MemorialControllerTest {
                 new MemorialResponse(3, "나길동", "N", "20220101", "M", 30, 32)
         );
 
-        CursorPaginationResponse<MemorialResponse> page =
-                CursorPaginationResponse.<MemorialResponse>builder()
+        CursorPaginationResponse<MemorialResponse, Integer> page =
+                CursorPaginationResponse.<MemorialResponse, Integer>builder()
                         .content(content)
                         .nextCursor(null)
                         .hasNext(false)
@@ -203,8 +203,8 @@ class MemorialControllerTest {
                 new MemorialResponse(3, "나길동", "N", "20220103", "M", 30, 32)
         );
 
-        CursorPaginationResponse<MemorialResponse> page =
-                CursorPaginationResponse.<MemorialResponse>builder()
+        CursorPaginationResponse<MemorialResponse, Integer> page =
+                CursorPaginationResponse.<MemorialResponse, Integer>builder()
                         .content(content)
                         .nextCursor(null)
                         .hasNext(false)

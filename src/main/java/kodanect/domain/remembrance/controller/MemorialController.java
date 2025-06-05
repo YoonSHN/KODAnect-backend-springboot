@@ -24,7 +24,7 @@ public class MemorialController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<CursorPaginationResponse<MemorialResponse>>> getMemorialList(
+    public ResponseEntity<ApiResponse<CursorPaginationResponse<MemorialResponse, Integer>>> getMemorialList(
             @RequestParam(required = false) Integer cursor,
             @RequestParam(defaultValue = "20") int size)
             throws  InvalidPaginationRangeException
@@ -32,7 +32,7 @@ public class MemorialController {
         /* 게시글 리스트 조회 */
 
         String successMessage = messageSourceAccessor.getMessage("board.read.success", new Object[] {});
-        CursorPaginationResponse<MemorialResponse> memorialResponses = memorialService.getMemorialList(cursor, size);
+        CursorPaginationResponse<MemorialResponse, Integer> memorialResponses = memorialService.getMemorialList(cursor, size);
         return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, successMessage,memorialResponses));
     }
 
@@ -50,7 +50,7 @@ public class MemorialController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<ApiResponse<CursorPaginationResponse<MemorialResponse>>> getSearchMemorialList(
+    public ResponseEntity<ApiResponse<CursorPaginationResponse<MemorialResponse, Integer>>> getSearchMemorialList(
             @RequestParam(defaultValue = "1900-01-01") String startDate,
             @RequestParam(defaultValue = "2100-12-31") String endDate,
             @RequestParam(defaultValue = "") String searchWord,
@@ -64,7 +64,7 @@ public class MemorialController {
         /* 게시글 검색 조건 조회 */
 
         String successMessage = messageSourceAccessor.getMessage("board.search.read.success", new Object[] {});
-        CursorPaginationResponse<MemorialResponse> memorialResponses = memorialService.getSearchMemorialList(startDate, endDate, searchWord, cursor, size);
+        CursorPaginationResponse<MemorialResponse, Integer> memorialResponses = memorialService.getSearchMemorialList(startDate, endDate, searchWord, cursor, size);
         return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, successMessage, memorialResponses));
     }
 

@@ -12,6 +12,7 @@ import java.util.List;
 
 public interface MemorialRepository extends JpaRepository<Memorial, Integer> {
 
+    /** 기증자 추모관 게시글 리스트 조회 */
     @Query(
         value = """
             SELECT new kodanect.domain.remembrance.dto.MemorialResponse
@@ -22,9 +23,10 @@ public interface MemorialRepository extends JpaRepository<Memorial, Integer> {
             GROUP BY m.donateSeq
             ORDER BY m.writeTime DESC
         """
-    )/* 기증자 추모관 게시글 리스트 조회 */
+    )
     List<MemorialResponse> findByCursor(@Param("cursor") Integer cursor, Pageable pageable);
 
+    /** 기증자 추모관 게시글 리스트 날짜 + 문자 조건 조회  */
     @Query(
         value = """
             SELECT new kodanect.domain.remembrance.dto.MemorialResponse
@@ -36,7 +38,7 @@ public interface MemorialRepository extends JpaRepository<Memorial, Integer> {
             GROUP BY m.donateSeq
             ORDER BY m.writeTime DESC
         """
-    )/* 기증자 추모관 게시글 리스트 날짜 + 문자 조건 조회  */
+    )
     List<MemorialResponse> findSearchByCursor(
             @Param("cursor") Integer cursor,
             Pageable pageable,
@@ -44,30 +46,31 @@ public interface MemorialRepository extends JpaRepository<Memorial, Integer> {
             @Param("endDate") String endDate,
             @Param("searchWord") String searchWord);
 
+    /** 기증자 추모관 이모지 카운팅(Flower) */
     @Modifying
     @Query(value = "UPDATE tb25_400_memorial m SET m.flower_count = m.flower_count + 1 WHERE m.donate_seq = :donateSeq", nativeQuery = true)
     void incrementFlower(@Param("donateSeq") Integer donateSeq);
-
+    /** 기증자 추모관 이모지 카운팅(Love) */
     @Modifying
     @Query(value = "UPDATE tb25_400_memorial m SET m.love_count = m.love_count + 1 WHERE m.donate_seq = :donateSeq", nativeQuery = true)
     void incrementLove(@Param("donateSeq") Integer donateSeq);
-
+    /** 기증자 추모관 이모지 카운팅(See) */
     @Modifying
     @Query(value = "UPDATE tb25_400_memorial m SET m.see_count = m.see_count + 1 WHERE m.donate_seq = :donateSeq", nativeQuery = true)
     void incrementSee(@Param("donateSeq") Integer donateSeq);
-
+    /** 기증자 추모관 이모지 카운팅(Miss) */
     @Modifying
     @Query(value = "UPDATE tb25_400_memorial m SET m.miss_count = m.miss_count + 1 WHERE m.donate_seq = :donateSeq", nativeQuery = true)
     void incrementMiss(@Param("donateSeq") Integer donateSeq);
-
+    /** 기증자 추모관 이모지 카운팅(Proud) */
     @Modifying
     @Query(value = "UPDATE tb25_400_memorial m SET m.proud_count = m.proud_count + 1 WHERE m.donate_seq = :donateSeq", nativeQuery = true)
     void incrementProud(@Param("donateSeq") Integer donateSeq);
-
+    /** 기증자 추모관 이모지 카운팅(Hard) */
     @Modifying
     @Query(value = "UPDATE tb25_400_memorial m SET m.hard_count = m.hard_count + 1 WHERE m.donate_seq = :donateSeq", nativeQuery = true)
     void incrementHard(@Param("donateSeq") Integer donateSeq);
-
+    /** 기증자 추모관 이모지 카운팅(Sad) */
     @Modifying
     @Query(value = "UPDATE tb25_400_memorial m SET m.sad_count = m.sad_count + 1 WHERE m.donate_seq = :donateSeq", nativeQuery = true)
     void incrementSad(@Param("donateSeq") Integer donateSeq);
