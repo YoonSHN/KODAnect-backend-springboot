@@ -45,7 +45,7 @@ public class RecipientExceptionHandler {
     public ResponseEntity<ApiResponse<String>> handleInvalidPasscodeException(RecipientInvalidPasscodeException ex) {
         log.warn("Access Forbidden (403 Forbidden): {}", ex.getMessage());
         return ResponseEntity
-                .status(HttpStatus.UNAUTHORIZED) // 403 Forbidden이 더 적절할 수 있습니다. UNATHORIZED는 인증 실패.
+                .status(HttpStatus.UNAUTHORIZED)
                 .body(ApiResponse.fail(HttpStatus.UNAUTHORIZED, ex.getMessage()));
     }
 

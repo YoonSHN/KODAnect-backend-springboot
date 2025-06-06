@@ -1,5 +1,6 @@
 package kodanect.domain.recipient.dto;
 
+import kodanect.common.util.CursorIdentifiable;
 import kodanect.domain.recipient.entity.RecipientCommentEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -12,7 +13,7 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class RecipientCommentResponseDto {
+public class RecipientCommentResponseDto implements CursorIdentifiable<Integer> {
 
     private Integer commentSeq;
     private Integer letterSeq;
@@ -36,5 +37,11 @@ public class RecipientCommentResponseDto {
                 .modifyTime(entity.getModifyTime())
                 .delFlag(entity.getDelFlag())
                 .build();
+    }
+
+    // CursorIdentifiable 인터페이스 구현
+    @Override
+    public Integer getCursorId() {
+        return this.commentSeq; // 댓글 커서 ID로 commentSeq 사용
     }
 }

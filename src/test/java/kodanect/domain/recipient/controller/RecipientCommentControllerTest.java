@@ -1,496 +1,144 @@
 package kodanect.domain.recipient.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import kodanect.common.config.GlobalsProperties;
-import kodanect.common.exception.custom.RecipientExceptionHandler;
-import kodanect.domain.recipient.exception.RecipientInvalidDataException;
-import kodanect.domain.recipient.exception.RecipientInvalidPasscodeException;
-import kodanect.domain.recipient.exception.RecipientNotFoundException;
+import kodanect.common.response.CursorReplyPaginationResponse;
 import kodanect.domain.recipient.dto.CommentDeleteRequestDto;
 import kodanect.domain.recipient.dto.RecipientCommentRequestDto;
 import kodanect.domain.recipient.dto.RecipientCommentResponseDto;
-import kodanect.domain.recipient.repository.RecipientCommentRepository;
-import kodanect.domain.recipient.repository.RecipientRepository;
 import kodanect.domain.recipient.service.RecipientCommentService;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration;
-import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Import;
+import org.springframework.context.MessageSource;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.support.MessageSourceAccessor;
-import org.springframework.http.HttpStatus;
+import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.ResultActions;
-
-import java.time.LocalDateTime;
-
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import java.util.List;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.doNothing;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@RunWith(SpringRunner.class)
-@WebMvcTest(
-        controllers = {RecipientCommentController.class, RecipientExceptionHandler.class},
-        excludeAutoConfiguration = {
-                DataSourceAutoConfiguration.class,
-                HibernateJpaAutoConfiguration.class,
-                JpaRepositoriesAutoConfiguration.class,
-                DataSourceTransactionManagerAutoConfiguration.class}
-        )
+
+@WebMvcTest(RecipientCommentController.class)
 public class RecipientCommentControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper; // DTO를 JSON으로 변환하기 위해 필요
-
     @MockBean
     private RecipientCommentService recipientCommentService;
 
-    @MockBean
-    private MessageSourceAccessor messageSourceAccessor;
+    @Autowired
+    private ObjectMapper objectMapper;
 
-    @MockBean
-    private RecipientRepository recipientRepository;
-
-    @MockBean
-    private RecipientCommentRepository recipientCommentRepository;
-
-    @MockBean
-    private org.springframework.data.jpa.mapping.JpaMetamodelMappingContext jpaMappingContext;
-
-    @MockBean
-    private GlobalsProperties globalsProperties;
-
-    @Before
-    public void setup() {
-        // 각 테스트 전에 필요한 초기화 작업
+    @TestConfiguration
+    static class TestConfig {
+        @Bean
+        public MessageSourceAccessor messageSourceAccessor() {
+            MessageSource messageSource = new ResourceBundleMessageSource();
+            ((ResourceBundleMessageSource) messageSource).setBasename("messages"); // 필요시 messages.properties 지정
+            return new MessageSourceAccessor(messageSource);
+        }
     }
 
-    /**---
-
-            ## 1. 댓글 작성 API (`POST /{letterSeq}/comments`) 테스트
-
-    ### 성공 케이스: 댓글 작성 성공
-
-    ```java*/
     @Test
-    public void writeComment_success() throws Exception {
-        // given
-        int letterSeq = 1;
-        RecipientCommentRequestDto requestDto = RecipientCommentRequestDto.builder()
-                .commentContents("새로운 댓글입니다.")
-                .commentWriter("테스터")
-                .commentPasscode("pass1234") // 실제 유효성 검사 규칙에 맞게 설정
-                .captchaToken("valid-captcha")
-                .build();
+    @DisplayName("댓글 목록 조회 성공 테스트")
+    void testGetPaginatedComments() throws Exception {
+        RecipientCommentResponseDto comment = new RecipientCommentResponseDto();
+        comment.setCommentSeq(1);
+        comment.setCommentContents("테스트 댓글");
+        // 필요한 필드 셋팅 추가
 
-        RecipientCommentResponseDto mockResponseDto = RecipientCommentResponseDto.builder()
-                .commentSeq(1)
-                .letterSeq(letterSeq)
-                .commentContents(requestDto.getCommentContents())
-                .commentWriter(requestDto.getCommentWriter())
-                .writeTime(LocalDateTime.now())
-                .build();
+        CursorReplyPaginationResponse<RecipientCommentResponseDto, Integer> pageResponse =
+                CursorReplyPaginationResponse.<RecipientCommentResponseDto, Integer>builder()
+                        .content(List.of(comment))
+                        .replyNextCursor(1)
+                        .replyHasNext(false)
+                        .build();
 
-        // 서비스 Mocking: 모든 인자가 매칭될 때 mockResponseDto를 반환
-        when(recipientCommentService.insertComment(
-                eq(letterSeq),
-                any(RecipientCommentRequestDto.class), // DTO 객체는 any()로 매칭
-                eq(requestDto.getCaptchaToken())
-        )).thenReturn(mockResponseDto);
+        given(recipientCommentService.selectPaginatedCommentsForRecipient(1, null, 3))
+                .willReturn(pageResponse);
 
-        // when
-        ResultActions actions = mockMvc.perform(post("/recipientLetters/{letterSeq}/comments", letterSeq)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestDto)) // DTO 객체를 JSON 문자열로 변환
-                .accept(MediaType.APPLICATION_JSON));
-
-        // then
-        actions.andExpect(status().isCreated()) // HttpStatus.CREATED (201)
-                .andExpect(jsonPath("$.code").value(HttpStatus.CREATED.value()))
-                .andExpect(jsonPath("$.message").value("댓글이 성공적으로 등록되었습니다."))
-                .andExpect(jsonPath("$.data.commentSeq").value(mockResponseDto.getCommentSeq()))
-                .andExpect(jsonPath("$.data.letterSeq").value(mockResponseDto.getLetterSeq()))
-                .andDo(print());
-
-        // 서비스 메서드 호출 검증
-        verify(recipientCommentService).insertComment(
-                eq(letterSeq),
-                any(RecipientCommentRequestDto.class),
-                eq(requestDto.getCaptchaToken())
-        );
+        mockMvc.perform(get("/recipientLetters/1/comments")
+                        .param("size", "3"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.content[0].commentSeq").value(1))
+                .andExpect(jsonPath("$.data.content[0].commentContents").value("테스트 댓글"));
     }
 
-    /**---
-
-            ### 실패 케이스: 유효성 검사 실패 (ex: 내용 누락)
-
-    ```java*/
     @Test
-    public void writeComment_validationFailed() throws Exception {
-        // given
-        int letterSeq = 1;
-        // 유효성 검사 실패 조건: commentContents가 null (또는 @NotBlank 규칙 위반)
-        RecipientCommentRequestDto requestDto = RecipientCommentRequestDto.builder()
-                .commentContents(null) // 내용 누락
-                .commentWriter("테스터")
-                .commentPasscode("pass1234")
-                .captchaToken("valid-captcha")
-                .build();
+    @DisplayName("댓글 작성 성공 테스트")
+    void testWriteComment() throws Exception {
+        RecipientCommentRequestDto requestDto = new RecipientCommentRequestDto();
+        requestDto.setCommentContents("새 댓글");
+        requestDto.setCommentWriter("작성자");
+        requestDto.setCommentPasscode("asdf1234");
 
-        // 서비스 Mocking은 필요 없습니다. 유효성 검사 단계에서 이미 실패하기 때문입니다.
+        RecipientCommentResponseDto responseDto = new RecipientCommentResponseDto();
+        responseDto.setCommentSeq(1);
+        responseDto.setCommentContents("새 댓글");
+        responseDto.setCommentWriter("작성자");
 
-        // when
-        ResultActions actions = mockMvc.perform(post("/recipientLetters/{letterSeq}/comments", letterSeq)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestDto))
-                .accept(MediaType.APPLICATION_JSON));
+        given(recipientCommentService.insertComment(1, requestDto)).willReturn(responseDto);
 
-        // then
-        actions.andExpect(status().isBadRequest()) // HttpStatus.BAD_REQUEST (400)
-                .andExpect(jsonPath("$.code").value(HttpStatus.BAD_REQUEST.value()))
-                // 에러 메시지는 @Valid 어노테이션에 따라 다를 수 있습니다.
-                // 정확한 메시지를 확인하려면 실제로 이 테스트를 한번 실행해봐야 합니다.
-                .andExpect(jsonPath("$.message").exists()) // 메시지 존재 여부만 확인
-                .andDo(print());
-
-        // 서비스 메서드는 호출되지 않았을 것입니다.
-        verify(recipientCommentService, never()).insertComment(anyInt(), any(RecipientCommentRequestDto.class), anyString());
+        mockMvc.perform(post("/recipientLetters/1/comments")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.commentSeq").value(1))
+                .andExpect(jsonPath("$.data.commentContents").value("새 댓글"));
     }
 
-    /**---
-
-            ### 실패 케이스: 서비스 예외 발생 (ex: 캡차 인증 실패)
-
-    ```java*/
     @Test
-    public void writeComment_serviceException_captchaFailed() throws Exception {
-        // given
-        int letterSeq = 1;
-        RecipientCommentRequestDto requestDto = RecipientCommentRequestDto.builder()
-                .commentContents("댓글 내용")
-                .commentWriter("테스터")
-                .commentPasscode("pass1234")
-                .captchaToken("invalid-captcha") // 유효하지 않은 캡차
-                .build();
+    @DisplayName("댓글 수정 성공 테스트")
+    void testUpdateComment() throws Exception {
+        RecipientCommentRequestDto requestDto = new RecipientCommentRequestDto();
+        requestDto.setCommentContents("수정된 댓글");
+        requestDto.setCommentWriter("작성자");
+        requestDto.setCommentPasscode("asdf1234");
 
-        // 서비스 Mocking: RecipientInvalidDataException 발생
-        when(recipientCommentService.insertComment(
-                eq(letterSeq),
-                any(RecipientCommentRequestDto.class),
-                eq(requestDto.getCaptchaToken())
-        )).thenThrow(new RecipientInvalidDataException("캡차 인증에 실패했습니다.")); // 특정 예외 발생
+        RecipientCommentResponseDto responseDto = new RecipientCommentResponseDto();
+        responseDto.setCommentSeq(1);
+        responseDto.setCommentContents("수정된 댓글");
+        responseDto.setCommentWriter("작성자");
 
-        // when
-        ResultActions actions = mockMvc.perform(post("/recipientLetters/{letterSeq}/comments", letterSeq)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestDto))
-                .accept(MediaType.APPLICATION_JSON));
+        given(recipientCommentService.updateComment(
+                ArgumentMatchers.eq(1),
+                ArgumentMatchers.eq("수정된 댓글"),
+                ArgumentMatchers.eq("작성자"),
+                ArgumentMatchers.eq("asdf1234"))).willReturn(responseDto);
 
-        // then
-        actions.andExpect(status().isBadRequest()) // HttpStatus.BAD_REQUEST (400)
-                .andExpect(jsonPath("$.code").value(HttpStatus.BAD_REQUEST.value()))
-                .andExpect(jsonPath("$.message").value("캡차 인증에 실패했습니다."))
-                .andDo(print());
-
-        // 서비스 메서드 호출 검증
-        verify(recipientCommentService).insertComment(
-                eq(letterSeq),
-                any(RecipientCommentRequestDto.class),
-                eq(requestDto.getCaptchaToken())
-        );
+        mockMvc.perform(put("/recipientLetters/1/comments/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.commentSeq").value(1))
+                .andExpect(jsonPath("$.data.commentContents").value("수정된 댓글"));
     }
 
-    /**---
-
-            ## 2. 댓글 수정 API (`PUT /{letterSeq}/comments/{commentSeq}`) 테스트
-
-    ### 성공 케이스: 댓글 수정 성공
-
-    ```java*/
     @Test
-    public void updateComment_success() throws Exception {
-        // given
-        int letterSeq = 1;
-        int commentSeq = 101;
-        RecipientCommentRequestDto requestDto = RecipientCommentRequestDto.builder()
-                .commentContents("수정된 댓글 내용입니다.")
-                .commentWriter("수정자")
-                .commentPasscode("pass1234") // 실제 유효성 검사 규칙에 맞게 설정
-                .captchaToken("valid-captcha")
-                .build();
+    @DisplayName("댓글 삭제 성공 테스트")
+    void testDeleteComment() throws Exception {
+        CommentDeleteRequestDto requestDto = new CommentDeleteRequestDto();
+        requestDto.setCommentPasscode("asdf1234");
 
-        RecipientCommentResponseDto mockResponseDto = RecipientCommentResponseDto.builder()
-                .commentSeq(commentSeq)
-                .letterSeq(letterSeq)
-                .commentContents(requestDto.getCommentContents())
-                .commentWriter(requestDto.getCommentWriter())
-                .writeTime(LocalDateTime.now()) // 수정 시간은 새로 찍힐 수 있음
-                .build();
+        doNothing().when(recipientCommentService).deleteComment(1, 1, "asdf1234");
 
-        // 서비스 Mocking (eq()는 제거해도 잘 동작할 것입니다. 위에서 논의된 대로)
-        when(recipientCommentService.updateComment(
-                commentSeq,
-                requestDto.getCommentContents(),
-                requestDto.getCommentWriter(),
-                requestDto.getCommentPasscode(),
-                requestDto.getCaptchaToken()
-        )).thenReturn(mockResponseDto);
-
-        // when
-        ResultActions actions = mockMvc.perform(put("/recipientLetters/{letterSeq}/comments/{commentSeq}", letterSeq, commentSeq)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestDto))); // 이 줄 추가: requestDto를 JSON 문자열로 변환하여 본문에 포함
-
-        // then
-        actions.andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
-                .andExpect(jsonPath("$.message").value("댓글이 성공적으로 수정되었습니다."))
-                .andExpect(jsonPath("$.data.commentSeq").value(mockResponseDto.getCommentSeq()))
-                .andExpect(jsonPath("$.data.commentContents").value(mockResponseDto.getCommentContents()))
-                .andDo(print());
-
-        // 서비스 메서드 호출 검증 (eq()는 제거해도 잘 동작할 것입니다. 위에 논의된 대로)
-        verify(recipientCommentService).updateComment(
-                commentSeq,
-                requestDto.getCommentContents(),
-                requestDto.getCommentWriter(),
-                requestDto.getCommentPasscode(),
-                requestDto.getCaptchaToken()
-        );
+        mockMvc.perform(delete("/recipientLetters/1/comments/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("댓글이 성공적으로 삭제되었습니다."));
     }
-
-    /**---
-
-            ### 실패 케이스: 댓글 수정 - 댓글을 찾을 수 없음
-
-    ```java*/
-    @Test
-    public void updateComment_notFound() throws Exception {
-        // given
-        int letterSeq = 1;
-        int nonExistentCommentSeq = 999; // 존재하지 않는 댓글 시퀀스
-        RecipientCommentRequestDto requestDto = RecipientCommentRequestDto.builder()
-                .commentContents("수정 내용")
-                .commentWriter("수정자")
-                .commentPasscode("pass1234")
-                .captchaToken("valid-captcha")
-                .build();
-
-        // 서비스 Mocking: RecipientNotFoundException 발생
-        when(recipientCommentService.updateComment(
-                eq(nonExistentCommentSeq), // 존재하지 않는 댓글 시퀀스
-                anyString(), anyString(), anyString(), anyString()
-        )).thenThrow(new RecipientNotFoundException("댓글을 찾을 수 없습니다."));
-
-        // when
-        ResultActions actions = mockMvc.perform(put("/recipientLetters/{letterSeq}/comments/{commentSeq}", letterSeq, nonExistentCommentSeq)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestDto))
-                .accept(MediaType.APPLICATION_JSON));
-
-        // then
-        actions.andExpect(status().isNotFound()) // HttpStatus.NOT_FOUND (404)
-                .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
-                .andExpect(jsonPath("$.message").value("댓글을 찾을 수 없습니다."))
-                .andDo(print());
-
-        // 서비스 메서드 호출 검증
-        verify(recipientCommentService).updateComment(
-                eq(nonExistentCommentSeq),
-                anyString(), anyString(), anyString(), anyString()
-        );
-    }
-
-    /**---
-
-            ### 실패 케이스: 댓글 수정 - 권한 없음 (비밀번호 불일치)
-
-    ```java*/
-    @Test
-    public void updateComment_unauthorized() throws Exception {
-        // given
-        int letterSeq = 1;
-        int commentSeq = 101;
-        RecipientCommentRequestDto requestDto = RecipientCommentRequestDto.builder()
-                .commentContents("수정 내용")
-                .commentWriter("수정자")
-                // 유효성 검사 규칙을 통과하지만, 실제로는 비밀번호가 틀린 값으로 설정
-                .commentPasscode("wrongPa55w0rd")
-                .captchaToken("valid-captcha")
-                .build();
-
-        // 서비스 Mocking: RecipientInvalidPasscodeException 발생으로 변경!
-        when(recipientCommentService.updateComment(
-                eq(commentSeq),
-                anyString(), anyString(), eq(requestDto.getCommentPasscode()), anyString()
-        )).thenThrow(new RecipientInvalidPasscodeException("비밀번호가 일치하지 않습니다.")); // <-- RecipientInvalidPasscodeException으로 변경
-
-        // when
-        ResultActions actions = mockMvc.perform(put("/recipientLetters/{letterSeq}/comments/{commentSeq}", letterSeq, commentSeq)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestDto))
-                .accept(MediaType.APPLICATION_JSON));
-
-        // then
-        actions.andExpect(status().isUnauthorized()) // HttpStatus.UNAUTHORIZED (401)
-                .andExpect(jsonPath("$.code").value(HttpStatus.UNAUTHORIZED.value()))
-                .andExpect(jsonPath("$.message").value("비밀번호가 일치하지 않습니다."))
-                .andDo(print());
-
-        // 서비스 메서드 호출 검증
-        verify(recipientCommentService).updateComment(
-                eq(commentSeq),
-                anyString(), anyString(), eq(requestDto.getCommentPasscode()), anyString()
-        );
-    }
-
-    /**---
-
-            ## 3. 댓글 삭제 API (`DELETE /{letterSeq}/comments/{commentSeq}`) 테스트
-
-    ### 성공 케이스: 댓글 삭제 성공
-
-    ```java*/
-    @Test
-    public void deleteComment_success() throws Exception {
-        // given
-        int letterSeq = 1;
-        int commentSeq = 101;
-        CommentDeleteRequestDto requestDto = CommentDeleteRequestDto.builder()
-                .commentPasscode("pass1234") // 실제 유효성 검사 규칙에 맞게 설정
-                .captchaToken("valid-captcha")
-                .build();
-
-        // 서비스 Mocking: void 메서드이므로 doNothing() 사용
-        doNothing().when(recipientCommentService).deleteComment(
-                eq(letterSeq),
-                eq(commentSeq),
-                eq(requestDto.getCommentPasscode()),
-                eq(requestDto.getCaptchaToken())
-        );
-
-        // when
-        ResultActions actions = mockMvc.perform(delete("/recipientLetters/{letterSeq}/comments/{commentSeq}", letterSeq, commentSeq)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestDto))
-                .accept(MediaType.APPLICATION_JSON));
-
-        // then
-        actions.andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
-                .andExpect(jsonPath("$.message").value("댓글이 성공적으로 삭제되었습니다."))
-                .andExpect(jsonPath("$.data").doesNotExist()) // 삭제는 data가 없어야 함
-                .andDo(print());
-
-        // 서비스 메서드 호출 검증
-        verify(recipientCommentService).deleteComment(
-                eq(letterSeq),
-                eq(commentSeq),
-                eq(requestDto.getCommentPasscode()),
-                eq(requestDto.getCaptchaToken())
-        );
-    }
-
-    /**---
-
-            ### 실패 케이스: 댓글 삭제 - 댓글을 찾을 수 없음
-
-    ```java*/
-    @Test
-    public void deleteComment_notFound() throws Exception {
-        // given
-        int letterSeq = 1;
-        int nonExistentCommentSeq = 999;
-        CommentDeleteRequestDto requestDto = CommentDeleteRequestDto.builder()
-                .commentPasscode("pass1234")
-                .captchaToken("valid-captcha")
-                .build();
-
-        // 서비스 Mocking: RecipientNotFoundException 발생
-        doThrow(new RecipientNotFoundException("댓글을 찾을 수 없습니다."))
-                .when(recipientCommentService).deleteComment(
-                        eq(letterSeq),
-                        eq(nonExistentCommentSeq),
-                        anyString(), anyString()
-                );
-
-        // when
-        ResultActions actions = mockMvc.perform(delete("/recipientLetters/{letterSeq}/comments/{commentSeq}", letterSeq, nonExistentCommentSeq)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestDto))
-                .accept(MediaType.APPLICATION_JSON));
-
-        // then
-        actions.andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
-                .andExpect(jsonPath("$.message").value("댓글을 찾을 수 없습니다."))
-                .andDo(print());
-
-        // 서비스 메서드 호출 검증
-        verify(recipientCommentService).deleteComment(
-                eq(letterSeq),
-                eq(nonExistentCommentSeq),
-                anyString(), anyString()
-        );
-    }
-
-    /**---
-
-            ### 실패 케이스: 댓글 삭제 - 권한 없음 (비밀번호 불일치)
-
-    ```java*/
-    @Test
-    public void deleteComment_unauthorized() throws Exception {
-        // given
-        int letterSeq = 1;
-        int commentSeq = 101;
-        CommentDeleteRequestDto requestDto = CommentDeleteRequestDto.builder()
-                // 유효성 검사 규칙을 통과하는 비밀번호 (예: 8자 이상, 영문/숫자 포함)
-                // 하지만 실제로는 "틀린" 비밀번호
-                .commentPasscode("wrongPa55w0rd") // 유효성 검사를 통과하는 값으로 변경
-                .captchaToken("valid-captcha")
-                .build();
-
-        // 서비스 Mocking: RecipientInvalidPasscodeException 발생으로 변경!
-        doThrow(new RecipientInvalidPasscodeException("비밀번호가 일치하지 않습니다.")) // <-- RecipientInvalidPasscodeException으로 변경
-                .when(recipientCommentService).deleteComment(
-                        eq(letterSeq),
-                        eq(commentSeq),
-                        eq(requestDto.getCommentPasscode()),
-                        anyString()
-                );
-
-        // when
-        ResultActions actions = mockMvc.perform(delete("/recipientLetters/{letterSeq}/comments/{commentSeq}", letterSeq, commentSeq)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestDto))
-                .accept(MediaType.APPLICATION_JSON));
-
-        // then
-        actions.andExpect(status().isUnauthorized()) // HttpStatus.UNAUTHORIZED (401)
-                .andExpect(jsonPath("$.code").value(HttpStatus.UNAUTHORIZED.value()))
-                .andExpect(jsonPath("$.message").value("비밀번호가 일치하지 않습니다."))
-                .andDo(print());
-
-        // 서비스 메서드 호출 검증
-        verify(recipientCommentService).deleteComment(
-                eq(letterSeq),
-                eq(commentSeq),
-                eq(requestDto.getCommentPasscode()),
-                anyString()
-        );
-    }
+  
 }

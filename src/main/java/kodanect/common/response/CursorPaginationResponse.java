@@ -1,6 +1,7 @@
 package kodanect.common.response;
 
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -25,6 +26,7 @@ import java.util.List;
  */
 @Getter
 @Builder
+@AllArgsConstructor
 public class CursorPaginationResponse<T, C> {
 
     /** 실제 데이터 응답 리스트 */
