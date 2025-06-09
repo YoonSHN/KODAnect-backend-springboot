@@ -1,6 +1,6 @@
 package kodanect.domain.article.controller;
 
-import kodanect.common.exception.custom.ArticleNotFoundException;
+import kodanect.domain.article.exception.ArticleNotFoundException;
 import kodanect.common.response.ApiResponse;
 import kodanect.domain.article.dto.ArticleDTO;
 import kodanect.domain.article.dto.ArticleDetailDto;
