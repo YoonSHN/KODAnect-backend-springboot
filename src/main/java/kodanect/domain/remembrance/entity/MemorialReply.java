@@ -1,6 +1,8 @@
 package kodanect.domain.remembrance.entity;
 
 import kodanect.domain.remembrance.dto.MemorialReplyCreateRequest;
+import kodanect.domain.remembrance.exception.ReplyAlreadyDeleteException;
+import kodanect.domain.remembrance.exception.ReplyPasswordMismatchException;
 import lombok.*;
 
 import javax.persistence.*;
@@ -71,13 +73,25 @@ public class MemorialReply {
         this.delFlag = delFlag;
     }
 
-    public static MemorialReply of(MemorialReplyCreateRequest memorialReplyCreateRequest) {
+    public static MemorialReply of(MemorialReplyCreateRequest memorialReplyCreateRequest, Integer donateSeq) {
         return MemorialReply.builder()
-                .donateSeq(memorialReplyCreateRequest.getDonateSeq())
+                .donateSeq(donateSeq)
                 .replyWriter(memorialReplyCreateRequest.getReplyWriter())
                 .replyPassword(memorialReplyCreateRequest.getReplyPassword())
                 .replyContents(memorialReplyCreateRequest.getReplyContents())
                 .build();
+    }
+
+    public void validateReplyPassword(String requestPassword) {
+        if(!this.replyPassword.equals(requestPassword)) {
+            throw new ReplyPasswordMismatchException(this.replySeq);
+        }
+    }
+
+    public void validateNotDeleted() {
+        if(!"N".equals(this.delFlag)) {
+            throw new ReplyAlreadyDeleteException(this.replySeq);
+        }
     }
 
 }

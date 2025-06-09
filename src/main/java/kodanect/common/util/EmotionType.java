@@ -59,7 +59,7 @@ public enum EmotionType {
     public static EmotionType from(String emotion) throws InvalidEmotionTypeException {
         /* 문자열 검증 flower, love, see, miss, proud, hard, sad */
         if(emotion == null || emotion.isEmpty()){
-            throw new InvalidEmotionTypeException();
+            throw new InvalidEmotionTypeException(emotion);
         }
 
         try {

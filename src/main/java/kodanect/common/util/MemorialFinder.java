@@ -16,6 +16,6 @@ public class MemorialFinder {
 
     public Memorial findByIdOrThrow(Integer donateSeq) throws MemorialNotFoundException {
         /* 게시글 조회 */
-        return memorialRepository.findById(donateSeq).orElseThrow(MemorialNotFoundException::new);
+        return memorialRepository.findById(donateSeq).orElseThrow(() -> new MemorialNotFoundException(donateSeq));
     }
 }

@@ -1,12 +1,32 @@
 package kodanect.domain.remembrance.exception;
 
-public class InvalidEmotionTypeException extends RuntimeException {
+import kodanect.common.exception.custom.AbstractCustomException;
+import org.springframework.http.HttpStatus;
+
+import static kodanect.common.exception.config.MessageKeys.EMOTION_INVALID;
+
+public class InvalidEmotionTypeException extends AbstractCustomException {
     /* 이모지 이름 형식이 맞지 않을 경우 */
-    public InvalidEmotionTypeException(String message) {
-        super(message);
+
+    private final String emotion;
+
+    public InvalidEmotionTypeException(String emotion) {
+        super(EMOTION_INVALID);
+        this.emotion = emotion;
     }
 
-    public InvalidEmotionTypeException() {
-        super("이모지 이름 입력 형식이 올바르지 않습니다.");
+    @Override
+    public String getMessageKey() {
+        return EMOTION_INVALID;
+    }
+
+    @Override
+    public Object[] getArguments() {
+        return new Object[]{emotion};
+    }
+
+    @Override
+    public HttpStatus getStatus() {
+        return HttpStatus.BAD_REQUEST;
     }
 }

@@ -10,11 +10,19 @@ import kodanect.domain.remembrance.service.MemorialReplyService;
 import org.springframework.context.support.MessageSourceAccessor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import kodanect.common.response.ApiResponse;
 
+import javax.validation.Valid;
+import javax.validation.constraints.Min;
+
+import static kodanect.common.exception.config.MessageKeys.DONATE_INVALID;
+import static kodanect.common.exception.config.MessageKeys.REPLY_INVALID;
+import static kodanect.common.validation.PaginationValidator.validatePagination;
 
 @RestController
+@Validated
 @RequestMapping("/remembrance/{donateSeq}/replies")
 public class MemorialReplyController {
 
@@ -28,12 +36,15 @@ public class MemorialReplyController {
 
     @GetMapping
     public ResponseEntity<ApiResponse<CursorReplyPaginationResponse<MemorialReplyResponse, Integer>>> getMoreReplies(
-            @PathVariable Integer donateSeq,
+            @PathVariable @Min(value = 1, message = DONATE_INVALID) Integer donateSeq,
             @RequestParam Integer cursor, @RequestParam(defaultValue = "3") int size)
-            throws  MemorialNotFoundException,
-                    InvalidDonateSeqException
+            throws  InvalidPaginationRangeException,
+                    MemorialNotFoundException
     {
         /* 댓글 더보기 */
+
+        /* 페이징 요청 검증 */
+        validatePagination(cursor, size);
 
         String successMessage = messageSourceAccessor.getMessage("board.reply.read.success", new Object[] {});
         CursorReplyPaginationResponse<MemorialReplyResponse, Integer> memorialReplyResponses = memorialReplyService.getMoreReplyList(donateSeq, cursor, size);
@@ -42,13 +53,9 @@ public class MemorialReplyController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<String>> createMemorialReply(
-            @PathVariable Integer donateSeq,
-            @RequestBody MemorialReplyCreateRequest memorialReplyCreateRequest)
-            throws  MissingReplyContentException,
-                    MissingReplyWriterException,
-                    MissingReplyPasswordException,
-                    InvalidDonateSeqException,
-                    MemorialNotFoundException
+            @PathVariable @Min(value = 1, message = DONATE_INVALID) Integer donateSeq,
+            @RequestBody @Valid MemorialReplyCreateRequest memorialReplyCreateRequest)
+            throws  MemorialNotFoundException
     {
         /* 게시글 댓글 작성 */
 
@@ -59,18 +66,12 @@ public class MemorialReplyController {
 
     @PutMapping("/{replySeq}")
     public ResponseEntity<ApiResponse<String>> updateMemorialReply(
-            @PathVariable Integer donateSeq,
-            @PathVariable Integer replySeq,
-            @RequestBody MemorialReplyUpdateRequest memorialReplyUpdateRequest)
-            throws  ReplyPostMismatchException,
-                    ReplyIdMismatchException,
-                    MissingReplyPasswordException,
-                    ReplyPasswordMismatchException,
-                    InvalidDonateSeqException,
-                    MissingReplyContentException,
+            @PathVariable @Min(value = 1, message = DONATE_INVALID) Integer donateSeq,
+            @PathVariable @Min(value = 1, message = REPLY_INVALID) Integer replySeq,
+            @RequestBody @Valid MemorialReplyUpdateRequest memorialReplyUpdateRequest)
+            throws  ReplyPasswordMismatchException,
                     MemorialReplyNotFoundException,
                     MemorialNotFoundException,
-                    InvalidReplySeqException,
                     ReplyAlreadyDeleteException
     {
         /* 게시글 댓글 수정 */
@@ -82,17 +83,12 @@ public class MemorialReplyController {
 
     @DeleteMapping("/{replySeq}")
     public ResponseEntity<ApiResponse<String>> deleteMemorialReply(
-            @PathVariable Integer donateSeq,
-            @PathVariable Integer replySeq,
-            @RequestBody MemorialReplyDeleteRequest memorialReplyDeleteRequest)
-            throws  ReplyPostMismatchException,
-                    ReplyIdMismatchException,
-                    MissingReplyPasswordException,
-                    ReplyPasswordMismatchException,
+            @PathVariable @Min(value = 1, message = DONATE_INVALID) Integer donateSeq,
+            @PathVariable @Min(value = 1, message = REPLY_INVALID) Integer replySeq,
+            @RequestBody @Valid MemorialReplyDeleteRequest memorialReplyDeleteRequest)
+            throws  ReplyPasswordMismatchException,
                     MemorialReplyNotFoundException,
                     MemorialNotFoundException,
-                    InvalidReplySeqException,
-                    InvalidDonateSeqException,
                     ReplyAlreadyDeleteException
     {
         /* 게시글 댓글 삭제 - 소프트 삭제 */

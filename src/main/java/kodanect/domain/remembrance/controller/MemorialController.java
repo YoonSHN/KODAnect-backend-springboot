@@ -9,9 +9,17 @@ import kodanect.domain.remembrance.service.MemorialService;
 import org.springframework.context.support.MessageSourceAccessor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.constraints.Min;
+
+import static kodanect.common.exception.config.MessageKeys.DONATE_INVALID;
+import static kodanect.common.validation.PaginationValidator.validatePagination;
+import static kodanect.common.validation.SearchValidator.validateSearchDates;
+
 @RestController
+@Validated
 @RequestMapping("/remembrance")
 public class MemorialController {
 
@@ -31,6 +39,9 @@ public class MemorialController {
     {
         /* 게시글 리스트 조회 */
 
+        /* 페이징 요청 검증 */
+        validatePagination(cursor, size);
+
         String successMessage = messageSourceAccessor.getMessage("board.read.success", new Object[] {});
         CursorPaginationResponse<MemorialResponse, Integer> memorialResponses = memorialService.getMemorialList(cursor, size);
         return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, successMessage,memorialResponses));
@@ -38,9 +49,8 @@ public class MemorialController {
 
     @GetMapping("/{donateSeq}")
     public ResponseEntity<ApiResponse<MemorialDetailResponse>> getMemorialByDonateSeq(
-            @PathVariable Integer donateSeq)
-            throws  MemorialNotFoundException,
-            InvalidDonateSeqException
+            @PathVariable @Min(value = 1, message = DONATE_INVALID) Integer donateSeq)
+            throws  MemorialNotFoundException
     {
         /* 게시글 상세 조회 */
 
@@ -57,11 +67,17 @@ public class MemorialController {
             @RequestParam(required = false) Integer cursor,
             @RequestParam(defaultValue = "20") int size)
             throws  InvalidPaginationRangeException,
-            MissingSearchDateParameterException,
-            InvalidSearchDateFormatException,
-            InvalidSearchDateRangeException
+                    MissingSearchDateParameterException,
+                    InvalidSearchDateFormatException,
+                    InvalidSearchDateRangeException
     {
         /* 게시글 검색 조건 조회 */
+
+        /* 날짜 조건 검증 */
+        validateSearchDates(startDate, endDate);
+
+        /* 페이징 요청 검증 */
+        validatePagination(cursor, size);
 
         String successMessage = messageSourceAccessor.getMessage("board.search.read.success", new Object[] {});
         CursorPaginationResponse<MemorialResponse, Integer> memorialResponses = memorialService.getSearchMemorialList(startDate, endDate, searchWord, cursor, size);
@@ -70,11 +86,10 @@ public class MemorialController {
 
     @PatchMapping("/{donateSeq}/{emotion}")
     public ResponseEntity<ApiResponse<String>> updateMemorialLikeCount(
-            @PathVariable Integer donateSeq,
+            @PathVariable @Min(value = 1, message = DONATE_INVALID) Integer donateSeq,
             @PathVariable String emotion)
             throws  InvalidEmotionTypeException,
-            MemorialNotFoundException,
-            InvalidDonateSeqException
+                    MemorialNotFoundException
     {
         /* 이모지 카운트 수 업데이트 */
         /* flower, love, see, miss, proud, hard, sad */

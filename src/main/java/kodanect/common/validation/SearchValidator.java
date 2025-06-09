@@ -18,20 +18,16 @@ public class SearchValidator {
                     InvalidSearchDateRangeException
     {
         /* 날짜 검증 */
-        if(startDate == null || endDate == null) {
-            throw new MissingSearchDateParameterException();
-        }
-
-        if(startDate.isEmpty() || endDate.isEmpty()) {
-            throw new MissingSearchDateParameterException();
+        if(startDate.isBlank() || endDate.isBlank()) {
+            throw new MissingSearchDateParameterException(startDate, endDate);
         }
 
         if(startDate.length() != DATE_LENGTH || endDate.length() != DATE_LENGTH) {
-            throw new InvalidSearchDateFormatException();
+            throw new InvalidSearchDateFormatException(startDate, endDate);
         }
 
         if(startDate.compareTo(endDate) > 0) {
-            throw new InvalidSearchDateRangeException();
+            throw new InvalidSearchDateRangeException(startDate, endDate);
         }
     }
 }

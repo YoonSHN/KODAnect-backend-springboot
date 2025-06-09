@@ -9,19 +9,12 @@ public interface MemorialService {
     /* 이모지 카운트 수 업데이트 */
     void emotionCountUpdate(Integer donateSeq, String emotion)
             throws  InvalidEmotionTypeException,
-            MemorialNotFoundException,
-            InvalidDonateSeqException;
+                    MemorialNotFoundException;
     /* 게시글 검색 조건 조회 */
-    CursorPaginationResponse<MemorialResponse, Integer> getSearchMemorialList(String startDate, String endDate, String searchWord, Integer cursor, int size)
-            throws  InvalidPaginationRangeException,
-            MissingSearchDateParameterException,
-            InvalidSearchDateFormatException,
-            InvalidSearchDateRangeException;
+    CursorPaginationResponse<MemorialResponse, Integer> getSearchMemorialList(String startDate, String endDate, String searchWord, Integer cursor, int size);
     /* 게시글 리스트 조회 */
-    CursorPaginationResponse<MemorialResponse, Integer> getMemorialList(Integer cursor, int size)
-            throws  InvalidPaginationRangeException;
+    CursorPaginationResponse<MemorialResponse, Integer> getMemorialList(Integer cursor, int size);
     /* 게시글 상세 조회 */
     MemorialDetailResponse getMemorialByDonateSeq(Integer donateSeq)
-            throws  MemorialNotFoundException,
-            InvalidDonateSeqException;
+            throws  MemorialNotFoundException;
 }

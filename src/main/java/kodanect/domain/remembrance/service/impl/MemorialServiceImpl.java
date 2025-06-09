@@ -23,9 +23,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static kodanect.common.util.FormatUtils.formatDate;
 import static kodanect.common.util.FormatUtils.formatSearchWord;
-import static kodanect.common.validation.DonateSeqValidator.validateDonateSeq;
-import static kodanect.common.validation.PaginationValidator.validatePagination;
-import static kodanect.common.validation.SearchValidator.validateSearchDates;
 
 
 @Service
@@ -64,17 +61,13 @@ public class MemorialServiceImpl implements MemorialService {
     @Override
     public void emotionCountUpdate(Integer donateSeq, String emotion)
             throws  InvalidEmotionTypeException,
-            MemorialNotFoundException,
-            InvalidDonateSeqException
+                    MemorialNotFoundException
     {
         /* 게시글 마다 락을 개별 쓰기 락 객체로 관리 */
         ReentrantReadWriteLock lock = getLock(donateSeq);
         lock.writeLock().lock();
 
         try{
-            /* 게시글 ID 검증 */
-            validateDonateSeq(donateSeq);
-
             /* 게시글 조회 */
             memorialFinder.findByIdOrThrow(donateSeq);
 
@@ -91,15 +84,7 @@ public class MemorialServiceImpl implements MemorialService {
     @Override
     public CursorPaginationResponse<MemorialResponse, Integer> getSearchMemorialList(
             String startDate, String endDate, String searchWord, Integer cursor, int size)
-            throws  InvalidPaginationRangeException,
-            MissingSearchDateParameterException,
-            InvalidSearchDateFormatException,
-            InvalidSearchDateRangeException
     {
-
-        /* 날짜 조건 검증 */
-        validateSearchDates(startDate, endDate);
-
         /* 검색 문자 포매팅 */
         searchWord = formatSearchWord(searchWord);
 
@@ -118,10 +103,7 @@ public class MemorialServiceImpl implements MemorialService {
 
     /** 게시글 리스트 조회 */
     @Override
-    public CursorPaginationResponse<MemorialResponse, Integer> getMemorialList(Integer cursor, int size) throws InvalidPaginationRangeException {
-
-        /* 페이징 검증 */
-        validatePagination(cursor, size);
+    public CursorPaginationResponse<MemorialResponse, Integer> getMemorialList(Integer cursor, int size) {
 
         /* 페이징 포매팅 */
         Pageable pageable = PageRequest.of(0, size +1);
@@ -134,21 +116,18 @@ public class MemorialServiceImpl implements MemorialService {
     /** 게시글 상세 조회 */
     @Override
     public MemorialDetailResponse getMemorialByDonateSeq(Integer donateSeq)
-            throws  MemorialNotFoundException,
-            InvalidDonateSeqException
+            throws  MemorialNotFoundException
     {
-
-        /* 게시글 ID 검증 */
-        validateDonateSeq(donateSeq);
-
         /* 게시글 조회 */
         Memorial memorial = memorialFinder.findByIdOrThrow(donateSeq);
 
         /* 댓글 리스트 모두 조회 */
-        List<MemorialReplyResponse> memorialReplyResponses = memorialReplyService.getMemorialReplyList(donateSeq, null, DEFAULT_SIZE + 1);
+        List<MemorialReplyResponse> memorialReplyResponses =
+                memorialReplyService.getMemorialReplyList(donateSeq, null, DEFAULT_SIZE + 1);
 
         /* 댓글 리스트 페이징 포매팅 */
-        CursorReplyPaginationResponse<MemorialReplyResponse, Integer> cursoredReplies = CursorFormatter.cursorReplyFormat(memorialReplyResponses, DEFAULT_SIZE);
+        CursorReplyPaginationResponse<MemorialReplyResponse, Integer> cursoredReplies =
+                CursorFormatter.cursorReplyFormat(memorialReplyResponses, DEFAULT_SIZE);
 
         /* 하늘나라 편지 리스트 조회 예정 */
 

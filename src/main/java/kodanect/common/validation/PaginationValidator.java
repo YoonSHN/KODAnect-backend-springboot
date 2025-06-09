@@ -13,7 +13,7 @@ public class PaginationValidator {
 
         if(cursor != null && cursor <= 0 || size <= 0) {
             /* 페이지 범위가 잘못 됐을 경우 */
-            throw new InvalidPaginationRangeException();
+            throw new InvalidPaginationRangeException(cursor, size);
         }
     }
 }

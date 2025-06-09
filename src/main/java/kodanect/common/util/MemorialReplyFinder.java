@@ -16,6 +16,6 @@ public class MemorialReplyFinder {
 
     public MemorialReply findByIdOrThrow(Integer replySeq) throws MemorialReplyNotFoundException {
         /* 댓글 조회 */
-        return memorialReplyRepository.findById(replySeq).orElseThrow(MemorialReplyNotFoundException::new);
+        return memorialReplyRepository.findById(replySeq).orElseThrow(() -> new MemorialReplyNotFoundException(replySeq));
     }
 }
