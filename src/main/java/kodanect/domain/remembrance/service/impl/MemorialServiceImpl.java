@@ -16,6 +16,7 @@ import kodanect.common.util.MemorialFinder;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -59,6 +60,7 @@ public class MemorialServiceImpl implements MemorialService {
 
     /** 이모지 카운팅 */
     @Override
+    @Transactional
     public void emotionCountUpdate(Integer donateSeq, String emotion)
             throws  InvalidEmotionTypeException,
                     MemorialNotFoundException
