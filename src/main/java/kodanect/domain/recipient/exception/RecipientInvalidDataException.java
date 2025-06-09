@@ -7,7 +7,7 @@ import org.springframework.http.HttpStatus;
 public class RecipientInvalidDataException extends AbstractCustomException {
 
     private static final String MESSAGE_KEY = "recipient.invalid.data"; // 메시지 키 정의
-    private final Object[] arguments;
+    private final transient Object[] arguments;
 
     public RecipientInvalidDataException() {
         this("유효하지 않은 요청 데이터입니다.");

@@ -5,7 +5,7 @@ import org.springframework.http.HttpStatus;
 public class InvalidIntegerConversionException extends AbstractCustomException {
 
     private static final String MESSAGE_KEY = "common.invalid.integer.conversion"; // 적절한 메시지 키 정의
-    private final Object[] arguments;
+    private final transient Object[] arguments;
 
     public InvalidIntegerConversionException() {
         this("유효하지 않은 숫자 형식입니다.");

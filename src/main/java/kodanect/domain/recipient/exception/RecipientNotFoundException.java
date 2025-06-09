@@ -6,7 +6,7 @@ import org.springframework.http.HttpStatus;
 public class RecipientNotFoundException extends AbstractCustomException {
 
     private static final String MESSAGE_KEY = "recipient.notfound"; // 메시지 키 정의
-    private final Object[] arguments; // 메시지에 포함될 인자들을 저장할 필드
+    private final transient Object[] arguments; // 메시지에 포함될 인자들을 저장할 필드
 
     // 기본 생성자
     public RecipientNotFoundException() {

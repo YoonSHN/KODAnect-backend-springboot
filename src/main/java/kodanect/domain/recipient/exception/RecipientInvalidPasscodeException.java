@@ -6,7 +6,7 @@ import org.springframework.http.HttpStatus;
 public class RecipientInvalidPasscodeException extends AbstractCustomException {
 
     private static final String MESSAGE_KEY = "recipient.invalid.passcode"; // 메시지 키 정의
-    private final Object[] arguments;
+    private final transient Object[] arguments;
 
     public RecipientInvalidPasscodeException() {
         this("비밀번호가 일치하지 않습니다.");
