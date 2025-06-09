@@ -14,5 +14,6 @@ public interface RecipientCommentService {
     // 댓글 삭제
     void deleteComment(Integer letterSeq, Integer commentSeq, String inputPasscode);
 
-    CursorReplyPaginationResponse<RecipientCommentResponseDto, Integer> selectPaginatedCommentsForRecipient(int letterSeq, Integer lastCommentId, int size);
+    // 특정 개시물의 페이징된 댓글 조회
+    CursorReplyPaginationResponse<RecipientCommentResponseDto, Integer> selectPaginatedCommentsForRecipient(Integer letterSeq, Integer lastCommentId, Integer size);
 }

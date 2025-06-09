@@ -35,6 +35,8 @@ import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static kodanect.common.exception.config.MessageKeys.RECIPIENT_NOT_FOUND;
+
 
 @Service("recipientService")
 public class RecipientServiceImpl implements RecipientService {
@@ -77,7 +79,7 @@ public class RecipientServiceImpl implements RecipientService {
         // 게시물 조회 (삭제되지 않은 게시물만 조회)
         RecipientEntity recipientEntityold = recipientRepository.findById(letterSeq)
                 .filter(entity -> "N".equalsIgnoreCase(entity.getDelFlag())) // 삭제되지 않은 게시물만 필터링
-                .orElseThrow(() -> new RecipientNotFoundException(RECIPIENT_NOT_FOUND_MESSAGE));
+                .orElseThrow(() -> new RecipientNotFoundException(RECIPIENT_NOT_FOUND, letterSeq));
 
         // 비밀번호 불일치 (엔티티의 checkPasscode 메서드 활용)
         if (!recipientEntityold.checkPasscode(letterPasscode)) {
@@ -93,7 +95,7 @@ public class RecipientServiceImpl implements RecipientService {
         // 1. 게시물 조회 (삭제되지 않은 게시물만 조회)
         RecipientEntity recipientEntityold = recipientRepository.findById(letterSeq)
                 .filter(entity -> "N".equalsIgnoreCase(entity.getDelFlag()))
-                .orElseThrow(() -> new RecipientNotFoundException(RECIPIENT_NOT_FOUND_MESSAGE));
+                .orElseThrow(() -> new RecipientNotFoundException(RECIPIENT_NOT_FOUND, letterSeq));
 
         // 2. 비밀번호 검증
         verifyLetterPassword(letterSeq, requestPasscode); // 비밀번호 불일치 시 예외 발생
@@ -155,7 +157,7 @@ public class RecipientServiceImpl implements RecipientService {
         // 게시물 조회 (삭제되지 않은 게시물만 조회)
         RecipientEntity recipientEntityold = recipientRepository.findById(letterSeq)
                 .filter(entity -> "N".equalsIgnoreCase(entity.getDelFlag()))
-                .orElseThrow(() -> new RecipientNotFoundException(RECIPIENT_NOT_FOUND_MESSAGE));
+                .orElseThrow(() -> new RecipientNotFoundException(RECIPIENT_NOT_FOUND, letterSeq));
 
         // 게시물 비밀번호 검증
         if (!recipientEntityold.checkPasscode(letterPasscode)) {
@@ -241,7 +243,7 @@ public class RecipientServiceImpl implements RecipientService {
         // 1. 해당 게시물 조회 (삭제되지 않은 게시물만 조회하도록 필터링)
         RecipientEntity recipientEntity = recipientRepository.findById(letterSeq)
                 .filter(entity -> "N".equalsIgnoreCase(entity.getDelFlag()))
-                .orElseThrow(() -> new RecipientNotFoundException(RECIPIENT_NOT_FOUND_MESSAGE));
+                .orElseThrow(() -> new RecipientNotFoundException(RECIPIENT_NOT_FOUND, letterSeq));
 
         // 2. 조회수 증가
         recipientEntity.incrementReadCount();

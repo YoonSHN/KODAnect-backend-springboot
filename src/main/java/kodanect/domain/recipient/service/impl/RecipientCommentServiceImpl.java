@@ -29,6 +29,8 @@ import javax.persistence.criteria.Predicate;
 import java.util.ArrayList;
 import java.util.List;
 
+import static kodanect.common.exception.config.MessageKeys.RECIPIENT_NOT_FOUND;
+
 @Service("recipientCommentService")
 @RequiredArgsConstructor // final 필드에 대한 생성자 주입
 public class RecipientCommentServiceImpl implements RecipientCommentService {
@@ -60,7 +62,7 @@ public class RecipientCommentServiceImpl implements RecipientCommentService {
                 .filter(entity -> "N".equalsIgnoreCase(entity.getDelFlag()))
                 .orElseThrow(() -> {
                     logger.warn("게시물을 찾을 수 없거나 이미 삭제된 게시물입니다: {}", letterSeq);
-                    return new RecipientNotFoundException("게시물을 찾을 수 없거나 이미 삭제된 게시물입니다: " + letterSeq);
+                    return new RecipientNotFoundException(RECIPIENT_NOT_FOUND, letterSeq);
                 });
     }
 
@@ -110,7 +112,7 @@ public class RecipientCommentServiceImpl implements RecipientCommentService {
         return recipientCommentRepository.findByCommentSeqAndDelFlag(commentSeq, "N")
                 .orElseThrow(() -> {
                     logger.warn("댓글 조회 실패: {}", COMMENT_NOT_FOUND_MESSAGE);
-                    return new RecipientCommentNotFoundException(COMMENT_NOT_FOUND_MESSAGE);
+                    return new RecipientCommentNotFoundException(commentSeq);
                 });
     }
 
@@ -190,13 +192,13 @@ public class RecipientCommentServiceImpl implements RecipientCommentService {
      * @return 커서 기반 페이지네이션 응답 (댓글)
      */
     @Override
-    public CursorReplyPaginationResponse<RecipientCommentResponseDto, Integer> selectPaginatedCommentsForRecipient(int letterSeq, Integer lastCommentId, int size) {
+    public CursorReplyPaginationResponse<RecipientCommentResponseDto, Integer> selectPaginatedCommentsForRecipient(Integer letterSeq, Integer lastCommentId, Integer size) {
         logger.info("Selecting paginated comments for letterSeq: {}, lastCommentId: {}, size: {}", letterSeq, lastCommentId, size);
 
         // 1. 해당 게시물이 삭제되지 않았는지 확인
         RecipientEntity activeRecipient = recipientRepository.findById(letterSeq)
                 .filter(entity -> "N".equalsIgnoreCase(entity.getDelFlag()))
-                .orElseThrow(() -> new RecipientNotFoundException(RECIPIENT_NOT_FOUND_MESSAGE));
+                .orElseThrow(() -> new RecipientNotFoundException(RECIPIENT_NOT_FOUND, letterSeq));
 
         // 2. 쿼리할 데이터의 실제 size (클라이언트 요청 size + 1 하여 다음 커서 존재 여부 확인)
         int querySize = size + 1;
