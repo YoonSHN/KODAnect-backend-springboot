@@ -43,7 +43,6 @@ public class WebMvcConfig implements WebMvcConfigurer {
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         registry.addResourceHandler("/admin/kindeditor/attached/**")
                 .addResourceLocations("file:/app/uploads/admin/kindeditor/attached/");
-
         // Recipient 게시판 이미지 파일 핸들러
         // file.base-url (예: /uploads/**) 요청을 file:uploadRootDir (예: file:/app/uploads/) 경로로 매핑
         registry.addResourceHandler(globalsProperties.getFileBaseUrl() + "/**")
