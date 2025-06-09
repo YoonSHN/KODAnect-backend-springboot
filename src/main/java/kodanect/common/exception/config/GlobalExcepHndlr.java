@@ -17,6 +17,7 @@ import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 
 import java.io.IOException;
@@ -172,7 +173,9 @@ public class GlobalExcepHndlr {
                 .filter(Objects::nonNull)
                 .findFirst();
 
+
         String errorMessage = errorMessageOpt.orElse("잘못된 요청입니다.");
+        log.info("BindException 발생: {}", errorMessage);
         return ResponseEntity.badRequest()
                 .body(ApiResponse.fail(HttpStatus.BAD_REQUEST, errorMessage));
     }
@@ -230,6 +233,7 @@ public class GlobalExcepHndlr {
      */
     @ExceptionHandler(IOException.class)
     public ResponseEntity<ApiResponse<Void>> handleIOException(IOException ex) {
+        log.error("파일 처리 중 IOException 발생", ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ApiResponse.fail(HttpStatus.INTERNAL_SERVER_ERROR, "파일 처리 중 오류가 발생했습니다."));
     }
@@ -256,6 +260,25 @@ public class GlobalExcepHndlr {
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ApiResponse.fail(HttpStatus.INTERNAL_SERVER_ERROR, msg));
     }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiResponse<Void>> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        log.warn("잘못된 파라미터 타입 요청: name={}, value={}, requiredType={}",
+                ex.getName(), ex.getValue(), ex.getRequiredType(), ex);
+
+        String name = ex.getName();
+        String value = String.valueOf(ex.getValue());
+        String expected = ex.getRequiredType() != null ? ex.getRequiredType().getSimpleName() : "Unknown";
+
+        String message = String.format("요청 파라미터 '%s'의 값 '%s'은(는) 타입 '%s'으로 변환할 수 없습니다.",
+                name, value, expected);
+
+        return ResponseEntity.badRequest()
+                .body(ApiResponse.fail(HttpStatus.BAD_REQUEST, message));
+    }
+
+
+
 
 
 
