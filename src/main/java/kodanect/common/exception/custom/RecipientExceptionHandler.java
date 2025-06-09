@@ -5,7 +5,9 @@ import kodanect.domain.recipient.exception.RecipientCommentNotFoundException;
 import kodanect.domain.recipient.exception.RecipientInvalidPasscodeException;
 import kodanect.domain.recipient.exception.RecipientInvalidDataException;
 import kodanect.domain.recipient.exception.RecipientNotFoundException;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.support.MessageSourceAccessor;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
@@ -20,21 +22,26 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 @Slf4j
 @RestControllerAdvice(basePackages = "kodanect.domain.recipient")
 @Order(Ordered.HIGHEST_PRECEDENCE)
+@RequiredArgsConstructor
 public class RecipientExceptionHandler {
-    public RecipientExceptionHandler() {
-        log.info(">>> RecipientExceptionHandler loaded");
-    }
+
+    private final MessageSourceAccessor messageSourceAccessor;  // MessageSourceAccessor 주입
 
     /**
      * 리소스를 찾을 수 없거나 이미 삭제된 경우의 예외 처리 (404 Not Found)
      * RecipientNotFoundException, CommentNotFoundException
      */
     @ExceptionHandler({RecipientNotFoundException.class, RecipientCommentNotFoundException.class})
-    public ResponseEntity<ApiResponse<String>> handleNotFoundCustomException(RuntimeException ex) {
-        log.warn("Resource Not Found (404 Not Found): {}", ex.getMessage());
+    public ResponseEntity<ApiResponse<Void>> handleNotFoundCustomException(AbstractCustomException ex) {
+        String message = messageSourceAccessor.getMessage(
+                ex.getMessageKey(),
+                ex.getArguments(),
+                ex.getMessage() // AbstractCustomException의 기본 메시지 사용
+        );
+        log.warn("Resource Not Found ({}): {}", ex.getStatus(), message);
         return ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
-                .body(ApiResponse.fail(HttpStatus.NOT_FOUND, ex.getMessage()));
+                .status(ex.getStatus()) // 예외 객체에서 HTTP 상태 코드 가져오기
+                .body(ApiResponse.fail(ex.getStatus(), message));
     }
 
     /**
@@ -42,11 +49,16 @@ public class RecipientExceptionHandler {
      * InvalidPasscodeException
      */
     @ExceptionHandler(RecipientInvalidPasscodeException.class)
-    public ResponseEntity<ApiResponse<String>> handleInvalidPasscodeException(RecipientInvalidPasscodeException ex) {
-        log.warn("Access Forbidden (403 Forbidden): {}", ex.getMessage());
+    public ResponseEntity<ApiResponse<Void>> handleInvalidPasscodeException(RecipientInvalidPasscodeException ex) {
+        String message = messageSourceAccessor.getMessage(
+                ex.getMessageKey(),
+                ex.getArguments(),
+                ex.getMessage()
+        );
+        log.warn("Access Forbidden ({}): {}", ex.getStatus(), message);
         return ResponseEntity
-                .status(HttpStatus.UNAUTHORIZED)
-                .body(ApiResponse.fail(HttpStatus.UNAUTHORIZED, ex.getMessage()));
+                .status(ex.getStatus()) // 예외 객체에서 HTTP 상태 코드 가져오기 (401)
+                .body(ApiResponse.fail(ex.getStatus(), message));
     }
 
     /**
@@ -54,11 +66,16 @@ public class RecipientExceptionHandler {
      * RecipientInvalidDataException
      */
     @ExceptionHandler(RecipientInvalidDataException.class)
-    public ResponseEntity<ApiResponse<String>> handleInvalidDataException(RecipientInvalidDataException ex) {
-        log.warn("Bad Request (400 Bad Request): {}", ex.getMessage());
+    public ResponseEntity<ApiResponse<Void>> handleInvalidDataException(RecipientInvalidDataException ex) {
+        String message = messageSourceAccessor.getMessage(
+                ex.getMessageKey(),
+                ex.getArguments(),
+                ex.getMessage()
+        );
+        log.warn("Bad Request ({}): {}", ex.getStatus(), message);
         return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.fail(HttpStatus.BAD_REQUEST, ex.getMessage()));
+                .status(ex.getStatus()) // 예외 객체에서 HTTP 상태 코드 가져오기
+                .body(ApiResponse.fail(ex.getStatus(), message));
     }
 
     /**
@@ -66,11 +83,16 @@ public class RecipientExceptionHandler {
      * InvalidIntegerConversionException
      */
     @ExceptionHandler(InvalidIntegerConversionException.class)
-    public ResponseEntity<ApiResponse<String>> handleInvalidIntegerConversionException(InvalidIntegerConversionException ex) {
-        log.warn("Bad Request (400): Integer 변환 실패 - {}", ex.getMessage());
+    public ResponseEntity<ApiResponse<Void>> handleInvalidIntegerConversionException(InvalidIntegerConversionException ex) {
+        String message = messageSourceAccessor.getMessage(
+                ex.getMessageKey(),
+                ex.getArguments(),
+                ex.getMessage()
+        );
+        log.warn("Bad Request ({}): Integer 변환 실패 - {}", ex.getStatus(), message);
         return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.fail(HttpStatus.BAD_REQUEST, ex.getMessage()));
+                .status(ex.getStatus()) // 예외 객체에서 HTTP 상태 코드 가져오기
+                .body(ApiResponse.fail(ex.getStatus(), message));
     }
 
     /**
@@ -84,13 +106,12 @@ public class RecipientExceptionHandler {
         for (FieldError fieldError : ex.getBindingResult().getFieldErrors()) {
             errorMessage.append(fieldError.getDefaultMessage()).append(" ");
         }
-
+        String finalMessage = errorMessage.toString().trim();
         log.warn("Validation failed (400): {}", errorMessage.toString().trim());
 
-        // 불필요한 try-catch 블록 제거
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.fail(HttpStatus.BAD_REQUEST, errorMessage.toString().trim()));
+                .body(ApiResponse.fail(HttpStatus.BAD_REQUEST, finalMessage));
     }
 
     /**
@@ -102,10 +123,11 @@ public class RecipientExceptionHandler {
         for (FieldError fieldError : ex.getBindingResult().getFieldErrors()) {
             errorMessage.append(fieldError.getDefaultMessage()).append(" ");
         }
+        String finalMessage = errorMessage.toString().trim();
         log.warn("BindException (400): {}", errorMessage.toString().trim());
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.fail(HttpStatus.BAD_REQUEST, errorMessage.toString().trim()));
+                .body(ApiResponse.fail(HttpStatus.BAD_REQUEST, finalMessage));
     }
 
     /**
