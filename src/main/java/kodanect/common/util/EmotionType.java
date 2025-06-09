@@ -75,7 +75,7 @@ public enum EmotionType {
      *
      * 이모지 문자 검증 메서드
      *
-     * @param emotion: flower, love, see, miss, proud, hard, sad
+     * @param emotion 사용자로부터 입력된 감정 문자열
      * @return 매칭되는 EmotionType 열거형 상수
      *
      * */
