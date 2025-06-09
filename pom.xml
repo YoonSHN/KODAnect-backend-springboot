@@ -107,7 +107,11 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-actuator</artifactId>
 		</dependency>
-
+		<dependency>
+			<groupId>io.sentry</groupId>
+			<artifactId>sentry-spring-boot-starter</artifactId>
+			<version>6.34.0</version>
+		</dependency>
 
 		<!-- egovframe -->
 		<dependency>
@@ -188,6 +192,8 @@
 		</dependency>
     </dependencies>
 
+
+
 	<build>
 		<plugins>
 			<!-- Spring Boot Plugin -->
@@ -196,6 +202,26 @@
 				<artifactId>spring-boot-maven-plugin</artifactId>
 				<configuration>
 				</configuration>
+			</plugin>
+
+			<plugin>
+				<groupId>io.sentry</groupId>
+				<artifactId>sentry-maven-plugin</artifactId>
+				<version>0.5.0</version>
+				<extensions>true</extensions>
+				<configuration>
+					<debugSentryCli>true</debugSentryCli>
+					<org>my-sentry-3h</org>
+					<project>java-spring-boot</project>
+					<authToken>${env.SENTRY_AUTH_TOKEN}</authToken>
+				</configuration>
+				<executions>
+					<execution>
+						<goals>
+							<goal>uploadSourceBundle</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 
 			<plugin>
@@ -222,6 +248,8 @@
 					<outputFile>target/checkstyle-result.xml</outputFile>
 				</configuration>
 			</plugin>
+
+
 
 			<plugin>
 				<groupId>org.sonarsource.scanner.maven</groupId>
@@ -289,6 +317,8 @@
 
 				</executions>
 			</plugin>
+
+
 
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>

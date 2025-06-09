@@ -8,6 +8,10 @@ pipeline {
         SLACK_TOKEN = credentials('slack-token')
         IMAGE_NAME = 'kodanect'
 
+        SENTRY_AUTH_TOKEN = credentials('sentry-auth-token')
+        SENTRY_DSN = credentials('sentry-dsn')
+        SENTRY_ENVIRONMENT = 'prod'
+
         CI_FAILED = 'false'
         CD_FAILED = 'false'
         MAVEN_OPTS = '-Xmx2g'
@@ -199,6 +203,9 @@ DB_PASSWORD=${DB_PASSWORD}
 SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
 DOCKER_USER=${DOCKER_USER}
 IMAGE_TAG=${imageTag}
+SENTRY_AUTH_TOKEN=${SENTRY_AUTH_TOKEN}
+SENTRY_DSN=${SENTRY_DSN}
+SENTRY_ENVIRONMENT=${SENTRY_ENVIRONMENT}
 EOF
 
                             sshpass -p "\$SSH_PASS" ssh -o StrictHostKeyChecking=no \$SSH_USER@\${SERVER_HOST} 'mkdir -p /root/docker-compose-prod'
@@ -233,6 +240,27 @@ EOF
                               --title "Release ${imageTag}" \\
                               --notes "이미지: ${fullImage}"
                         """
+                        sh """
+                            curl https://sentry.io/api/0/organizations/my-sentry-3h/releases/ \\
+                              -H "Authorization: Bearer ${SENTRY_AUTH_TOKEN}" \\
+                              -H 'Content-Type: application/json' \\
+                              -d '{
+                                "version": "kodanect@${imageTag}",
+                                "projects": ["java-spring-boot"]
+                              }'
+                        """
+
+                        sh """
+                            curl https://sentry.io/api/0/organizations/my-sentry-3h/releases/kodanect@${imageTag}/commits/ \\
+                              -X POST \\
+                              -H "Authorization: Bearer ${SENTRY_AUTH_TOKEN}" \\
+                              -H "Content-Type: application/json" \\
+                              -d '{
+                                "commit": "${GIT_COMMIT}",
+                                "repository": "FC-DEV3-Final-Project/KODAnect-backend-springboot"
+                              }'
+                        """
+
                     }
 
                     if (currentBuild.currentResult == 'FAILURE') {
