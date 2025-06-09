@@ -22,16 +22,33 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+/**
+ *
+ * 기증자 추모관 댓글 서비스 구현체
+ * <br>
+ * 댓글 저장, 수정, 삭제, 더보기 기능을 제공
+ *
+ **/
 @Service
 public class MemorialReplyServiceImpl implements MemorialReplyService {
 
+    /** 스레드 생존 기간 */
     private static final int CACHE_EXPIRE_MINUTES = 10;
+    /** 멀티 스레딩 갯수 */
     private static final int CACHE_MAX_SIZE = 100_000;
 
     private final MemorialReplyRepository memorialReplyRepository;
     private final MemorialFinder memorialFinder;
     private final MemorialReplyFinder memorialReplyFinder;
 
+    /**
+     *
+     * 멀티 스레딩 설정
+     *
+     * <p>CACHE_MAX_SIZE : 멀티 스레딩 갯수</p>
+     * <p>CACHE_EXPIRE_MINUTES : 스레드 생존 기간</p>
+     *
+     * */
     private final Cache<Integer, ReentrantReadWriteLock> lockCache =
             Caffeine.newBuilder().expireAfterAccess(CACHE_EXPIRE_MINUTES, TimeUnit.MINUTES).maximumSize(CACHE_MAX_SIZE).build();
 
@@ -41,10 +58,27 @@ public class MemorialReplyServiceImpl implements MemorialReplyService {
         this.memorialReplyFinder = memorialReplyFinder;
     }
 
+    /**
+     *
+     * 게시글 번호 기반 락 생성 및 반환 메서드
+     * 락은 Caffeine 캐시에 저장되며, 최대 10분간 유지됩니다.
+     *
+     * @param donateSeq 상세 게시글 번호
+     * @return 게시글 별로 ReentrantReadWriteLock을 lockCache 설정에 맞게 반환
+     *
+     * */
     private ReentrantReadWriteLock getLock(int donateSeq) {
         return lockCache.get(donateSeq, k -> new ReentrantReadWriteLock());
     }
 
+    /**
+     *
+     * 기증자 추모관 댓글 수정 메서드
+     *
+     * @param donateSeq 상세 게시글 번호
+     * @param memorialReplyCreateRequest 댓글 생성 요청 dto
+     *
+     * */
     @Override
     public void createReply(Integer donateSeq, MemorialReplyCreateRequest memorialReplyCreateRequest)
             throws  MemorialNotFoundException
@@ -67,6 +101,15 @@ public class MemorialReplyServiceImpl implements MemorialReplyService {
         }
     }
 
+    /**
+     *
+     * 기증자 추모관 댓글 수정 메서드
+     *
+     * @param donateSeq 상세 게시글 번호
+     * @param replySeq 댓글 번호
+     * @param memorialReplyUpdateRequest 댓글 수정 요청 dto
+     *
+     * */
     @Override
     public void updateReply(Integer donateSeq, Integer replySeq, MemorialReplyUpdateRequest memorialReplyUpdateRequest)
             throws  ReplyPasswordMismatchException,
@@ -99,6 +142,15 @@ public class MemorialReplyServiceImpl implements MemorialReplyService {
         }
     }
 
+    /**
+     *
+     * 기증자 추모관 댓글 삭제 메서드
+     *
+     * @param donateSeq 상세 게시글 번호
+     * @param replySeq 댓글 번호
+     * @param memorialReplyDeleteRequest 댓글 삭제 요청 dto
+     *
+     * */
     @Override
     public void deleteReply(Integer donateSeq, Integer replySeq, MemorialReplyDeleteRequest memorialReplyDeleteRequest)
             throws  ReplyPasswordMismatchException,
@@ -133,6 +185,16 @@ public class MemorialReplyServiceImpl implements MemorialReplyService {
         }
     }
 
+    /**
+     *
+     * 기증자 추모관 댓글 리스트 반환 메서드
+     *
+     * @param donateSeq 상세 게시글 번호
+     * @param cursor 조회할 댓글 페이지 번호(이 ID보다 작은 번호의 댓글을 조회)
+     * @param size 조회할 댓글 페이지 사이즈
+     * @return 조건에 맞는 댓글 리스트(최신순)
+     *
+     * */
     @Override
     public List<MemorialReplyResponse> getMemorialReplyList(Integer donateSeq, Integer cursor, int size)
             throws  MemorialNotFoundException
@@ -149,6 +211,16 @@ public class MemorialReplyServiceImpl implements MemorialReplyService {
 
     }
 
+    /**
+     *
+     * 기증자 추모관 댓글 더 보기(리스트) 반환 메서드
+     *
+     * @param donateSeq 상세 게시글 번호
+     * @param cursor 조회할 댓글 페이지 번호(이 ID보다 작은 번호의 댓글을 조회)
+     * @param size 조회할 댓글 페이지 사이즈
+     * @return 조건에 맞는 댓글 리스트(최신순)
+     *
+     * */
     public CursorReplyPaginationResponse<MemorialReplyResponse, Integer> getMoreReplyList(Integer donateSeq, Integer cursor, int size)
             throws  MemorialNotFoundException
     {

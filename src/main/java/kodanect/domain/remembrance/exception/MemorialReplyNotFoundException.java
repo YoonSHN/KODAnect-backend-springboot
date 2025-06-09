@@ -5,8 +5,8 @@ import org.springframework.http.HttpStatus;
 
 import static kodanect.common.exception.config.MessageKeys.REPLY_NOT_FOUND;
 
+/** 기증자 추모관 댓글을 못 찾았을 경우 발생하는 예외 */
 public class MemorialReplyNotFoundException extends AbstractCustomException {
-    /* 기증자 추모관 댓글을 못 찾았을 때 */
 
     private final Integer replySeq;
 

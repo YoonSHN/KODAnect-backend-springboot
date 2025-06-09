@@ -5,8 +5,8 @@ import org.springframework.http.HttpStatus;
 
 import static kodanect.common.exception.config.MessageKeys.SEARCH_DATE_MISSING;
 
+/** 검색 시작일 또는 종료일이 누락 됐을 경우 발생하는 예외 */
 public class MissingSearchDateParameterException extends AbstractCustomException {
-    /* 검색 시작일 또는 종료일이 누락 됐을 경우 */
 
     private final String startDate;
     private final String endDate;

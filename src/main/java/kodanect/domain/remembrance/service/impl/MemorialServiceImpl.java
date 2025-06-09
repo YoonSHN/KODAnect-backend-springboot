@@ -26,6 +26,13 @@ import static kodanect.common.util.FormatUtils.formatDate;
 import static kodanect.common.util.FormatUtils.formatSearchWord;
 
 
+/**
+ *
+ * 기증자 추모관 게시글 서비스 구현체
+ * <br>
+ * 게시글 조회, 검색, 이모지 카운팅 등의 기능을 제공
+ *
+ **/
 @Service
 public class MemorialServiceImpl implements MemorialService {
 
@@ -44,6 +51,9 @@ public class MemorialServiceImpl implements MemorialService {
      *
      * 멀티 스레딩 설정
      *
+     * <p>CACHE_MAX_SIZE : 멀티 스레딩 갯수</p>
+     * <p>CACHE_EXPIRE_MINUTES : 스레드 생존 기간</p>
+     *
      * */
     private final Cache<Integer, ReentrantReadWriteLock> lockCache =
             Caffeine.newBuilder().expireAfterAccess(CACHE_EXPIRE_MINUTES, TimeUnit.MINUTES).maximumSize(CACHE_MAX_SIZE).build();
@@ -54,11 +64,27 @@ public class MemorialServiceImpl implements MemorialService {
         this.memorialFinder = memorialFinder;
     }
 
+    /**
+     *
+     * 게시글 번호 기반 락 생성 및 반환 메서드
+     * 락은 Caffeine 캐시에 저장되며, 최대 10분간 유지됩니다.
+     *
+     * @param donateSeq 상세 게시글 번호
+     * @return 게시글 별로 ReentrantReadWriteLock을 lockCache 설정에 맞게 반환
+     *
+     * */
     private ReentrantReadWriteLock getLock(Integer donateSeq) {
         return lockCache.get(donateSeq, k -> new ReentrantReadWriteLock());
     }
 
-    /** 이모지 카운팅 */
+    /**
+     * 
+     * 기증자 추모관 이모지 카운팅 메서드
+     * 
+     * @param donateSeq 상세 게시글 번호
+     * @param emotion  추가 카운트 될 이모지
+     * 
+     * */
     @Override
     @Transactional
     public void emotionCountUpdate(Integer donateSeq, String emotion)
@@ -82,7 +108,18 @@ public class MemorialServiceImpl implements MemorialService {
         }
     }
 
-    /** 게시글 검색 조건 조회 */
+    /** 
+     * 
+     * 기증자 추모관 게시글 검색 조건 조회 메서드
+     * 
+     * @param startDate 시작 일
+     * @param endDate 종료 일
+     * @param searchWord 검색 문자
+     * @param cursor 조회할 댓글 페이지 번호(이 ID보다 작은 번호의 댓글을 조회)
+     * @param size 조회할 댓글 페이지 사이즈
+     * @return 조건에 맞는 게시글 리스트(최신순)
+     *
+     * */
     @Override
     public CursorPaginationResponse<MemorialResponse, Integer> getSearchMemorialList(
             String startDate, String endDate, String searchWord, Integer cursor, int size)
@@ -103,7 +140,15 @@ public class MemorialServiceImpl implements MemorialService {
 
     }
 
-    /** 게시글 리스트 조회 */
+    /**
+     *
+     * 기증자 추모관 게시글 조회 메서드
+     *
+     * @param cursor 조회할 댓글 페이지 번호(이 ID보다 작은 번호의 댓글을 조회)
+     * @param size 조회할 댓글 페이지 사이즈
+     * @return 조건에 맞는 게시글 리스트(최신순)
+     *
+     * */
     @Override
     public CursorPaginationResponse<MemorialResponse, Integer> getMemorialList(Integer cursor, int size) {
 
@@ -115,7 +160,14 @@ public class MemorialServiceImpl implements MemorialService {
         return CursorFormatter.cursorFormat(memorialResponses, size);
     }
 
-    /** 게시글 상세 조회 */
+    /**
+     *
+     * 기증자 추모관 게시글 상세 조회 메서드
+     *
+     * @param donateSeq 상세 게시글 번호
+     * @return 조건에 맞는 게시글
+     *
+     * */
     @Override
     public MemorialDetailResponse getMemorialByDonateSeq(Integer donateSeq)
             throws  MemorialNotFoundException

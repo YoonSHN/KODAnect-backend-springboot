@@ -11,6 +11,13 @@ import javax.validation.constraints.Pattern;
 import static kodanect.common.exception.config.MessageKeys.REPLY_PASSWORD_EMPTY;
 import static kodanect.common.exception.config.MessageKeys.REPLY_PASSWORD_INVALID;
 
+/**
+ *
+ * 기증자 추모관 댓글 삭제 요청 dto
+ *
+ * <p>replyPassword : 댓글 비밀번호</p>
+ *
+ * */
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor

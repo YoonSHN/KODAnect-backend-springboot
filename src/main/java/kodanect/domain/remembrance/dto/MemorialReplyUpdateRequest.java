@@ -12,6 +12,14 @@ import static kodanect.common.exception.config.MessageKeys.REPLY_PASSWORD_EMPTY;
 import static kodanect.common.exception.config.MessageKeys.REPLY_PASSWORD_INVALID;
 import static kodanect.common.exception.config.MessageKeys.REPLY_CONTENTS_EMPTY;
 
+/**
+ *
+ * 기증자 추모관 댓글 수정 요청 dto
+ *
+ * <p>replyPassword : 댓글 비밀번호</p>
+ * <p>replyContents : 댓글 내용</p>
+ *
+ * */
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor

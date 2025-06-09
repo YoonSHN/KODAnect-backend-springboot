@@ -5,8 +5,8 @@ import org.springframework.http.HttpStatus;
 
 import static kodanect.common.exception.config.MessageKeys.REPLY_ALREADY_DELETED;
 
+/** 이미 삭제된 댓글일 경우 발생하는 예외 */
 public class ReplyAlreadyDeleteException extends AbstractCustomException {
-    /* 이미 삭제된 댓글일 경우 */
 
     private final Integer replySeq;
 

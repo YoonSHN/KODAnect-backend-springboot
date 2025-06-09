@@ -18,6 +18,11 @@ import static kodanect.common.exception.config.MessageKeys.DONATE_INVALID;
 import static kodanect.common.validation.PaginationValidator.validatePagination;
 import static kodanect.common.validation.SearchValidator.validateSearchDates;
 
+/**
+ *
+ * 기증자 추모관 컨트롤러
+ *
+ * */
 @RestController
 @Validated
 @RequestMapping("/remembrance")
@@ -31,6 +36,13 @@ public class MemorialController {
         this.messageSourceAccessor = messageSourceAccessor;
     }
 
+    /**
+     *
+     * 기증자 추모관 게시물 목록 을 조회하는 메서드
+     * @param cursor 조회할 페이지 번호
+     * @param size 조회할 페이지 사이즈
+     *
+     * */
     @GetMapping
     public ResponseEntity<ApiResponse<CursorPaginationResponse<MemorialResponse, Integer>>> getMemorialList(
             @RequestParam(required = false) Integer cursor,
@@ -47,6 +59,13 @@ public class MemorialController {
         return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, successMessage,memorialResponses));
     }
 
+    /**
+     *
+     * 기증자 추모관 상세 페이지 조회 메서드
+     *
+     * @param donateSeq 조회할 게시글 번호
+     *
+     * */
     @GetMapping("/{donateSeq}")
     public ResponseEntity<ApiResponse<MemorialDetailResponse>> getMemorialByDonateSeq(
             @PathVariable @Min(value = 1, message = DONATE_INVALID) Integer donateSeq)
@@ -59,6 +78,17 @@ public class MemorialController {
         return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, successMessage, memorialDetailResponse));
     }
 
+    /**
+     *
+     * 기증자 추모관 게시글 검색 조회 메서드
+     *
+     * @param startDate 시작 일
+     * @param endDate 종료 일
+     * @param searchWord 검색할 문자
+     * @param cursor 페이지 번호
+     * @param size 페이지 사이즈
+     *
+     * */
     @GetMapping("/search")
     public ResponseEntity<ApiResponse<CursorPaginationResponse<MemorialResponse, Integer>>> getSearchMemorialList(
             @RequestParam(defaultValue = "1900-01-01") String startDate,
@@ -84,6 +114,14 @@ public class MemorialController {
         return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, successMessage, memorialResponses));
     }
 
+    /**
+     *
+     * 기증자 추모관 게시글 상세 페이지의 이모지를 +1 해주는 메서드
+     *
+     * @param donateSeq 상세 게시글 번호
+     * @param emotion 증가시길 이모지
+     *
+     * */
     @PatchMapping("/{donateSeq}/{emotion}")
     public ResponseEntity<ApiResponse<String>> updateMemorialLikeCount(
             @PathVariable @Min(value = 1, message = DONATE_INVALID) Integer donateSeq,

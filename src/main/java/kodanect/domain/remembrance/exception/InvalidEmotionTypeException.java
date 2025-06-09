@@ -5,8 +5,8 @@ import org.springframework.http.HttpStatus;
 
 import static kodanect.common.exception.config.MessageKeys.EMOTION_INVALID;
 
+/** 이모지 이름 형식이 맞지 않을 경우 발생하는 예외 */
 public class InvalidEmotionTypeException extends AbstractCustomException {
-    /* 이모지 이름 형식이 맞지 않을 경우 */
 
     private final String emotion;
 

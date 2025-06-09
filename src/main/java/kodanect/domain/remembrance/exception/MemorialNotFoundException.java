@@ -5,8 +5,8 @@ import org.springframework.http.HttpStatus;
 
 import static kodanect.common.exception.config.MessageKeys.DONATE_NOT_FOUND;
 
+/** 기증자 추모관 게시물을 찾지 못했을 경우 발생하는 예외 */
 public class MemorialNotFoundException extends AbstractCustomException {
-    /* 기증자 추모관 게시물을 찾지 못했을 경우 */
 
     private final Integer donateSeq;
 

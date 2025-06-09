@@ -8,6 +8,7 @@ import lombok.*;
 import javax.persistence.*;
 import java.time.LocalDateTime;
 
+/** 기증자 추모관 댓글 엔티티 클래스 */
 @Entity(name = "MemorialReply")
 @Table(name = "tb25_401_memorial_reply")
 @Builder

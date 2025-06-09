@@ -5,8 +5,8 @@ import org.springframework.http.HttpStatus;
 
 import static kodanect.common.exception.config.MessageKeys.PAGINATION_INVALID;
 
+/** 페이지 범위가 잘못 됐을 경우 발생하는 예외 */
 public class InvalidPaginationRangeException extends AbstractCustomException {
-    /* 페이지 범위가 잘못 됐을 경우 */
 
     private final Integer cursor;
     private final int size;

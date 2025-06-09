@@ -24,6 +24,11 @@ public class MemorialExceptionHandler {
         this.messageSourceAccessor = messageSourceAccessor;
     }
 
+    /**
+     *
+     *AbstractCustomException 예외를 상속받은 기증자 추모관의 예외들을 처리하는 메서드
+     *
+     * */
     @ExceptionHandler(AbstractCustomException.class)
     public ResponseEntity<ApiResponse<Void>> handleCustomException(AbstractCustomException ex) {
         String message = messageSourceAccessor.getMessage(

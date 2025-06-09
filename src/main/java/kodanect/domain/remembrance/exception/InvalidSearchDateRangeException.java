@@ -5,8 +5,8 @@ import org.springframework.http.HttpStatus;
 
 import static kodanect.common.exception.config.MessageKeys.SEARCH_DATE_RANGE_INVALID;
 
+/** 검색 종료일이 시작일 보다 미래일 경우 발생하는 예외 */
 public class InvalidSearchDateRangeException extends AbstractCustomException {
-    /* 검색 종료일이 시작일 보다 미래일 경우 */
 
     private final String startDate;
     private final String endDate;

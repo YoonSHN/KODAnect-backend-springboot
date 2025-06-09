@@ -21,6 +21,11 @@ import static kodanect.common.exception.config.MessageKeys.DONATE_INVALID;
 import static kodanect.common.exception.config.MessageKeys.REPLY_INVALID;
 import static kodanect.common.validation.PaginationValidator.validatePagination;
 
+/**
+ *
+ * 기증자 추모관 댓글 관련 컨트롤러
+ *
+ * */
 @RestController
 @Validated
 @RequestMapping("/remembrance/{donateSeq}/replies")
@@ -34,6 +39,15 @@ public class MemorialReplyController {
         this.messageSourceAccessor = messageSourceAccessor;
     }
 
+    /**
+     *
+     * 기증자 추모관 댓글 리스트 더 보기 요청 메서드
+     *
+     * @param donateSeq 상세 게시글 번호
+     * @param cursor 조회할 페이지 번호
+     * @param size 조회할 페이지 사이즈
+     *
+     * */
     @GetMapping
     public ResponseEntity<ApiResponse<CursorReplyPaginationResponse<MemorialReplyResponse, Integer>>> getMoreReplies(
             @PathVariable @Min(value = 1, message = DONATE_INVALID) Integer donateSeq,
@@ -51,6 +65,14 @@ public class MemorialReplyController {
         return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, successMessage, memorialReplyResponses));
     }
 
+    /**
+     *
+     * 기증자 추모관 댓글 생성 메서드
+     *
+     * @param donateSeq 댓글 생성할 게시글 번호
+     * @param memorialReplyCreateRequest 댓글 생성 요청 dto
+     *
+     * */
     @PostMapping
     public ResponseEntity<ApiResponse<String>> createMemorialReply(
             @PathVariable @Min(value = 1, message = DONATE_INVALID) Integer donateSeq,
@@ -64,6 +86,15 @@ public class MemorialReplyController {
         return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, successMessage));
     }
 
+    /**
+     *
+     * 기증자 추모관 댓글 수정 메서드
+     *
+     * @param donateSeq 댓글 수정할 상세 게시글 번호
+     * @param replySeq 수정할 댓글 번호
+     * @param memorialReplyUpdateRequest 댓글 수정 요청 dto
+     *
+     * */
     @PutMapping("/{replySeq}")
     public ResponseEntity<ApiResponse<String>> updateMemorialReply(
             @PathVariable @Min(value = 1, message = DONATE_INVALID) Integer donateSeq,
@@ -81,6 +112,15 @@ public class MemorialReplyController {
         return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, successMessage));
     }
 
+    /**
+     *
+     * 기증자 추모관 댓글 삭제 메서드
+     *
+     * @param donateSeq 댓글 삭제할 상세 게시글 번호
+     * @param replySeq 삭제할 댓글 번호
+     * @param memorialReplyDeleteRequest 댓글 삭제 요청 dto
+     *
+     * */
     @DeleteMapping("/{replySeq}")
     public ResponseEntity<ApiResponse<String>> deleteMemorialReply(
             @PathVariable @Min(value = 1, message = DONATE_INVALID) Integer donateSeq,
