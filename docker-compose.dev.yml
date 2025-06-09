@@ -17,6 +17,8 @@ services:
       DB_NAME: ${DB_NAME}
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
+      SENTRY_AUTH_TOKEN: ${SENTRY_AUTH_TOKEN}
+      SENTRY_DSN: ${SENTRY_DSN}
     volumes:
       - ./uploads:/app/uploads
       - ./files:/app/files
