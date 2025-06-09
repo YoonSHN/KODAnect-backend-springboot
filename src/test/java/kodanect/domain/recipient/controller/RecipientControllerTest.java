@@ -123,7 +123,7 @@ public class RecipientControllerTest {
         int letterSeq = 1;
         String passcode = "1234";
 
-        when(recipientService.verifyLetterPassword(eq(letterSeq), eq(passcode))).thenReturn(true);
+        when(recipientService.verifyLetterPassword(letterSeq, passcode)).thenReturn(true);
 
         String requestBody = "{\"letterPasscode\":\"1234\"}";
 

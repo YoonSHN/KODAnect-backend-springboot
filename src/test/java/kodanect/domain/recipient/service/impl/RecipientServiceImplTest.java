@@ -187,7 +187,6 @@ public class RecipientServiceImplTest {
         );
         requestDto.setImageFile(newMockFile);
 
-        String newUniqueFileName = "new-mock-uuid-for-testing.png";
         String newOriginalFileName = newMockFile.getOriginalFilename();
 
         when(recipientRepository.findById(letterSeq)).thenReturn(Optional.of(existingEntity));

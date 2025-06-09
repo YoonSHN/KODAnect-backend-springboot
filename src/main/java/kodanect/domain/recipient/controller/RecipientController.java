@@ -41,7 +41,7 @@ public class RecipientController {
             @RequestParam(required = false) Integer lastId,     // 첫 조회 시 null, 더보기 시 마지막 게시물 ID
             @RequestParam(defaultValue = "20") int size         // 게시물 한 번에 가져올 개수 (기본값 20)**
     ) {
-        logger.info("게시물 목록 조회 요청: searchCondition={}, lastId={}, size={}", searchCondition, lastId, size);
+        logger.info("게시물 목록 조회 요청이 수신되었습니다. lastId: {}, size: {}", lastId, size);
         CursorPaginationResponse<RecipientListResponseDto, Integer> responseData =
                 recipientService.selectRecipientList(searchCondition, lastId, size);
 

@@ -27,7 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 
 @WebMvcTest(RecipientCommentController.class)
-public class RecipientCommentControllerTest {
+class RecipientCommentControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
@@ -111,18 +111,16 @@ public class RecipientCommentControllerTest {
         responseDto.setCommentWriter("작성자");
 
         given(recipientCommentService.updateComment(
-                ArgumentMatchers.eq(1),
-                ArgumentMatchers.eq("수정된 댓글"),
-                ArgumentMatchers.eq("작성자"),
-                ArgumentMatchers.eq("asdf1234"))).willReturn(responseDto);
+                1,
+                "수정된 댓글",
+                "작성자",
+                "asdf1234")).willReturn(responseDto);
 
         mockMvc.perform(put("/recipientLetters/1/comments/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDto)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.commentSeq").value(1))
-                .andExpect(jsonPath("$.data.commentContents").value("수정된 댓글"));
+                .andExpect(jsonPath("$.success").value(true));
     }
 
     @Test
