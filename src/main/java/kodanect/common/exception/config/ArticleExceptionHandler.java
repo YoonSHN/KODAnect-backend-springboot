@@ -2,6 +2,8 @@ package kodanect.common.exception.config;
 
 import kodanect.common.exception.custom.*;
 import kodanect.common.response.ApiResponse;
+import kodanect.domain.article.exception.ArticleNotFoundException;
+import kodanect.domain.article.exception.InvalidBoardCodeException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.support.MessageSourceAccessor;
 import org.springframework.http.HttpStatus;
