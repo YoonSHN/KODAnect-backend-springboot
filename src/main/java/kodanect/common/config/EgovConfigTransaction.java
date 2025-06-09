@@ -47,14 +47,12 @@ public class EgovConfigTransaction {
 	 * 트랜잭션 전파 방식과 롤백 정책 설정
 	 *
 	 * [읽기 계열] (readOnly = true)
-	 * - get*, find*, read*, select*, list*, fetch*, load*, search*, query*, check*
+	 * - get*, find*, read*, select*, list*, fetch*, search*, query*, check*
 	 *
 	 * [쓰기 계열] (트랜잭션 전파 + 예외 발생 시 롤백)
 	 * - save*, insert*, update*, delete*, create*, remove*, register*,
 	 *   edit*, change*, process*, apply*, sync*
 	 *
-	 * [기본 처리]
-	 * - 위 조건에 해당하지 않는 모든 메서드는 쓰기 계열로 처리
 	 */
 	@Bean
 	public TransactionInterceptor txAdvice(@Qualifier("transactionManager") PlatformTransactionManager txManager) {
@@ -75,7 +73,6 @@ public class EgovConfigTransaction {
 		txMethods.put("select*", readOnlyTx);
 		txMethods.put("list*", readOnlyTx);
 		txMethods.put("fetch*", readOnlyTx);
-		txMethods.put("load*", readOnlyTx);
 		txMethods.put("search*", readOnlyTx);
 		txMethods.put("query*", readOnlyTx);
 		txMethods.put("check*", readOnlyTx);
@@ -93,8 +90,6 @@ public class EgovConfigTransaction {
 		txMethods.put("apply*", writeTx);
 		txMethods.put("sync*", writeTx);
 		txMethods.put("increase*", writeTx);
-
-		txMethods.put("*", writeTx);
 
 		NameMatchTransactionAttributeSource txAttributeSource = new NameMatchTransactionAttributeSource();
 		txAttributeSource.setNameMap(txMethods);
