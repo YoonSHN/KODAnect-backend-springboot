@@ -33,7 +33,7 @@ public class RecipientEntity {
     private Integer letterSeq;
 
     // 장기 구분 코드
-    @Column(name = "organ_code", length = 10) // nullable = true 는 컬럼 정의에 있으면 충분
+    @Column(name = "organ_code", length = 10)
     private String organCode;
 
     // 기타 장기
@@ -45,7 +45,7 @@ public class RecipientEntity {
     private String letterTitle;
 
     // 수혜 연도
-    @Column(name = "recipient_year", length = 4) // nullable = true 는 컬럼 정의에 있으면 충분
+    @Column(name = "recipient_year", length = 4)
     private String recipientYear;
 
     // 편지 비밀번호
@@ -57,7 +57,7 @@ public class RecipientEntity {
     private String letterWriter;
 
     // 편지 익명여부
-    @Column(name = "anonymity_flag", length = 1) // nullable = true 는 컬럼 정의에 있으면 충분
+    @Column(name = "anonymity_flag", length = 1)
     private String anonymityFlag;
 
     // 조회 건수 (Request 시에는 0으로 초기화되거나 무시)
@@ -101,11 +101,11 @@ public class RecipientEntity {
     @Builder.Default
     private String delFlag = "N";
 
-    // 검색 키워드용 (Transient는 유지)
+    // 검색 키워드용
     @Transient
     private String searchKeyword;
 
-    // 검색 타입용 (Transient는 유지)
+    // 검색 타입용
     @Transient
     private String searchType;
 
@@ -114,7 +114,7 @@ public class RecipientEntity {
     @OrderBy("writeTime ASC") // 댓글을 작성 시간 오름차순으로 정렬
     private List<RecipientCommentEntity> comments = new ArrayList<>(); // NullPointerException 방지를 위해 초기화
 
-    // 비즈니스 로직을 위한 메서드 (유지)
+    // 비즈니스 로직을 위한 메서드
     public void incrementReadCount() {
         this.readCount = this.readCount + 1;
     }
@@ -127,7 +127,7 @@ public class RecipientEntity {
         }
     }
 
-    // 비밀번호 일치 여부 확인 (서비스에서 사용) (유지)
+    // 비밀번호 일치 여부 확인
     public boolean checkPasscode(String inputPasscode) {
         return this.letterPasscode != null && this.letterPasscode.equals(inputPasscode);
     }
