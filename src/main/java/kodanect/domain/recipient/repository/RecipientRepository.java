@@ -35,4 +35,15 @@ public interface RecipientRepository extends JpaRepository<RecipientEntity, Inte
     @Query("SELECT r FROM RecipientEntity r WHERE r.delFlag = 'N' AND (:lastId IS NULL OR r.letterSeq < :lastId) ORDER BY r.letterSeq DESC")
     List<RecipientEntity> findActivePostsByLastId(@Param("lastId") Integer lastId, Pageable pageable);
 
+    // 게시물 목록 조회 시 연관된 댓글을 LEFT JOIN FETCH로 한 번에 가져오기
+    // delFlag='N'인 게시물과 해당 게시물의 delFlag='N'인 댓글만 가져오도록 필터링
+    @Query("SELECT DISTINCT r FROM RecipientEntity r " +
+            "LEFT JOIN FETCH r.comments c " + // r.comments를 페치 조인
+            "WHERE r.delFlag = 'N' " + // 게시물 delFlag='N'
+            "AND (:lastId IS NULL OR r.letterSeq < :lastId) " + // 커서 페이징 조건
+            "AND (c IS NULL OR c.delFlag = 'N') " + // 댓글 delFlag='N' 또는 댓글이 없는 경우
+            "ORDER BY r.letterSeq DESC")
+    List<RecipientEntity> findActivePostsByLastIdWithComments(@Param("lastId") Integer lastId, Pageable pageable);
+
+
 }

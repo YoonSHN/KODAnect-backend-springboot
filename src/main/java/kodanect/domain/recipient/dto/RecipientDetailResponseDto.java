@@ -7,6 +7,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Data
 @Builder
@@ -33,9 +35,11 @@ public class RecipientDetailResponseDto {
     private int commentCount;        // 댓글 수는 조회 시 필요한 정보이므로 DTO에 포함
     private boolean hasMoreComments; // 추가 댓글이 있는지 여부
     private String imageUrl;         // 게시물에 등록된 이미지의 URL
+    private List<RecipientCommentResponseDto> topComments; // 초기에 보여줄 댓글 목록 필드
 
     // Entity -> DTO 변환 메서드 (정적 팩토리 메서드)
     public static RecipientDetailResponseDto fromEntity(RecipientEntity entity) {
+
         return RecipientDetailResponseDto.builder() // 빌더로 객체를 생성한 결과를 바로 반환
                 .letterSeq(entity.getLetterSeq())
                 .organCode(entity.getOrganCode())
@@ -56,11 +60,13 @@ public class RecipientDetailResponseDto {
                 .commentCount(0)
                 .hasMoreComments(false)
                 .imageUrl(entity.getFileName()) // RecipientEntity의 fileName을 이미지 URL로 활용
+                .topComments(List.of())
                 .build();
     }
-    // 서비스 계층에서 commentCount, topComments, hasMoreComments를 설정하기 위한 setter
-    public void setCommentData(int commentCount, boolean hasMoreComments) {
+    // 서비스 계층에서 댓글 관련 데이터 (총 댓글 수, 더보기 여부, 상위 N개 댓글)를 설정하기 위한 setter
+    public void setCommentData(int commentCount, boolean hasMoreComments, List<RecipientCommentResponseDto> topComments) {
         this.commentCount = commentCount;
         this.hasMoreComments = hasMoreComments;
+        this.topComments = topComments;
     }
 }

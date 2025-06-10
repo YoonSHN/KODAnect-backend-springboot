@@ -241,7 +241,7 @@ public class RecipientServiceImpl implements RecipientService {
     @Override
     public RecipientDetailResponseDto selectRecipient(int letterSeq) {
         // 1. 해당 게시물 조회 (삭제되지 않은 게시물만 조회하도록 필터링)
-        RecipientEntity recipientEntity = recipientRepository.findById(letterSeq)
+        RecipientEntity recipientEntity = recipientRepository.findByIdWithComments(letterSeq)
                 .filter(entity -> "N".equalsIgnoreCase(entity.getDelFlag()))
                 .orElseThrow(() -> new RecipientNotFoundException(RECIPIENT_NOT_FOUND, letterSeq));
 
@@ -258,10 +258,26 @@ public class RecipientServiceImpl implements RecipientService {
             totalCommentCount = 0;
         }
 
-        // DTO에 댓글 관련 데이터 설정
+        // 5. 상위 N개 댓글 조회 (커서 기능 적용)
+        // findPaginatedComments를 사용하여 INITIAL_COMMENT_LOAD_LIMIT 만큼만 가져옵니다.
+        Pageable commentPageable = PageRequest.of(0, INITIAL_COMMENT_LOAD_LIMIT, Sort.by(Sort.Direction.ASC, "writeTime", "commentSeq")); // 정렬 기준 명확화
+        List<RecipientCommentEntity> initialComments = recipientCommentRepository.findPaginatedComments(
+                recipientEntity, // letterSeq 대신 RecipientEntity 객체를 전달
+                0, // lastCommentId는 첫 조회이므로 0 (또는 null)
+                commentPageable
+        );
+
+        // 6. 상위 N개 댓글 DTO로 변환
+        List<RecipientCommentResponseDto> topCommentsDto = initialComments.stream()
+                .map(RecipientCommentResponseDto::fromEntity)
+                .toList();
+
+
+        // 7. DTO에 댓글 관련 데이터 설정
         responseDto.setCommentData(
                 totalCommentCount,
-                totalCommentCount > INITIAL_COMMENT_LOAD_LIMIT // 전체 댓글 수가 3개보다 많으면 더보기 버튼 활성화
+                totalCommentCount > INITIAL_COMMENT_LOAD_LIMIT, // 전체 댓글 수가 3개보다 많으면 더보기 버튼 활성화
+                topCommentsDto // 상위 N개 댓글 목록 전달
         );
 
         return responseDto;
@@ -298,24 +314,25 @@ public class RecipientServiceImpl implements RecipientService {
         Pageable pageable = PageRequest.of(0, querySize, sort);
 
         // 6. 게시물 조회
-        List<RecipientEntity> recipientList = recipientRepository.findAll(spec, pageable).getContent();
+        List<RecipientEntity> recipientList = recipientRepository.findActivePostsByLastIdWithComments(lastId, pageable);
 
-        // 7. 각 RecipientEntity에 대한 댓글 수를 조회
-        final Map<Integer, Integer> commentCountMap = getCommentCountMap(recipientList);
-
-        // 8. RecipientEntity를 RecipientResponseDto로 변환하고 commentCount 필드를 채우기
+        // 7. RecipientEntity를 RecipientResponseDto로 변환하고 commentCount 필드를 채우기
         List<RecipientListResponseDto> recipientResponseDtos = recipientList.stream()
                 .map(entity -> {
                     RecipientListResponseDto dto = RecipientListResponseDto.fromEntity(entity);
-                    dto.setCommentCount(commentCountMap.getOrDefault(entity.getLetterSeq(), 0));
+                    // 엔티티의 comments 컬렉션에서 댓글 수를 가져옵니다.
+                    long activeCommentCount = entity.getComments().stream()
+                            .filter(comment -> "N".equals(comment.getDelFlag()))
+                            .count();
+                    dto.setCommentCount((int) activeCommentCount);
                     return dto;
                 })
                 .toList();
 
-        // 9. 검색 조건에 맞는 전체 게시물 총 개수 조회
+        // 8. 검색 조건에 맞는 전체 게시물 총 개수 조회
         int totalCount = selectRecipientListTotCnt(searchCondition);
 
-        // 10. CursorTotalcountFormatter 사용하여 응답 포맷팅
+        // 9. CursorTotalcountFormatter 사용하여 응답 포맷팅
         return CursorTotalcountFormatter.cursorFormat(recipientResponseDtos, size, totalCount);
     }
 

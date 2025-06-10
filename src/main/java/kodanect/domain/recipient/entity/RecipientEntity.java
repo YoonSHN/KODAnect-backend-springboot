@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.DynamicInsert;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -111,7 +112,8 @@ public class RecipientEntity {
 
     // 게시물과 댓글의 연관 관계 매핑
     @OneToMany(mappedBy = "letterSeq", fetch = FetchType.LAZY) // mappedBy는 RecipientCommentEntity의 필드명
-    @OrderBy("writeTime ASC") // 댓글을 작성 시간 오름차순으로 정렬
+    @BatchSize(size = 100) // N+1 쿼리 문제를 완화하기 위해 추가 (BatchSize는 원하는 숫자로 설정)
+    @OrderBy("writeTime ASC")
     private List<RecipientCommentEntity> comments = new ArrayList<>(); // NullPointerException 방지를 위해 초기화
 
     // 비즈니스 로직을 위한 메서드
