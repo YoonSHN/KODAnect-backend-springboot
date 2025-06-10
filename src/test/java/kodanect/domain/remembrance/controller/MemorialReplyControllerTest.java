@@ -51,22 +51,18 @@ class MemorialReplyControllerTest {
     @BeforeEach
     void setupCreate() {
         this.replyCreateDto = MemorialReplyCreateRequest.builder()
-                .donateSeq(1)
                 .replyWriter("홍길동")
                 .replyContents("내용")
+                .replyPassword("1234asdf")
                 .build();
 
         this.replyUpdateDto = MemorialReplyUpdateRequest.builder()
-                .donateSeq(1)
-                .replySeq(1)
-                .replyPassword("1234")
+                .replyPassword("1234asdf")
                 .replyContents("내용")
                 .build();
 
         this.replyDeleteDto = MemorialReplyDeleteRequest.builder()
-                .donateSeq(1)
-                .replySeq(1)
-                .replyPassword("1234")
+                .replyPassword("1234asdf")
                 .build();
     }
 

@@ -5,6 +5,16 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
+/**
+ *
+ * 기증자 추모관 게시글 댓글 응답 dto
+ *
+ * <p>replySeq : 댓글 번호</p>
+ * <p>replyWriter : 댓글 작성자 닉네임</p>
+ * <p>replyContents : 댓글 내용</p>
+ * <p>replyWriteTime : 댓글 등록일시</p>
+ *
+ * */
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor

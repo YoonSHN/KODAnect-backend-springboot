@@ -1,11 +1,14 @@
 package kodanect.domain.remembrance.entity;
 
 import kodanect.domain.remembrance.dto.MemorialReplyCreateRequest;
+import kodanect.domain.remembrance.exception.ReplyAlreadyDeleteException;
+import kodanect.domain.remembrance.exception.ReplyPasswordMismatchException;
 import lombok.*;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
 
+/** 기증자 추모관 댓글 엔티티 클래스 */
 @Entity(name = "MemorialReply")
 @Table(name = "tb25_401_memorial_reply")
 @Builder
@@ -71,13 +74,25 @@ public class MemorialReply {
         this.delFlag = delFlag;
     }
 
-    public static MemorialReply of(MemorialReplyCreateRequest memorialReplyCreateRequest) {
+    public static MemorialReply of(MemorialReplyCreateRequest memorialReplyCreateRequest, Integer donateSeq) {
         return MemorialReply.builder()
-                .donateSeq(memorialReplyCreateRequest.getDonateSeq())
+                .donateSeq(donateSeq)
                 .replyWriter(memorialReplyCreateRequest.getReplyWriter())
                 .replyPassword(memorialReplyCreateRequest.getReplyPassword())
                 .replyContents(memorialReplyCreateRequest.getReplyContents())
                 .build();
+    }
+
+    public void validateReplyPassword(String requestPassword) {
+        if(!this.replyPassword.equals(requestPassword)) {
+            throw new ReplyPasswordMismatchException(this.replySeq);
+        }
+    }
+
+    public void validateNotDeleted() {
+        if(!"N".equals(this.delFlag)) {
+            throw new ReplyAlreadyDeleteException(this.replySeq);
+        }
     }
 
 }
