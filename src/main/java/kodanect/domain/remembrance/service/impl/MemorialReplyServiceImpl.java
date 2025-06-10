@@ -113,9 +113,9 @@ public class MemorialReplyServiceImpl implements MemorialReplyService {
     @Override
     public void updateReply(Integer donateSeq, Integer replySeq, MemorialReplyUpdateRequest memorialReplyUpdateRequest)
             throws  ReplyPasswordMismatchException,
-                    MemorialReplyNotFoundException,
-                    MemorialNotFoundException,
-                    ReplyAlreadyDeleteException
+            MemorialReplyNotFoundException,
+            MemorialNotFoundException,
+            ReplyAlreadyDeleteException
     {
         /* 게시글 댓글 수정 */
         ReentrantReadWriteLock lock = getLock(donateSeq);
@@ -135,7 +135,11 @@ public class MemorialReplyServiceImpl implements MemorialReplyService {
             memorialReply.validateNotDeleted();
 
             /* 댓글 수정 */
-            memorialReplyRepository.updateReplyContents(replySeq, memorialReplyUpdateRequest.getReplyContents());
+            memorialReplyRepository.updateReplyContents(
+                    replySeq,
+                    memorialReplyUpdateRequest.getReplyContents(),
+                    memorialReplyUpdateRequest.getReplyWriter()
+            );
         }
         finally {
             lock.writeLock().unlock();
@@ -154,9 +158,9 @@ public class MemorialReplyServiceImpl implements MemorialReplyService {
     @Override
     public void deleteReply(Integer donateSeq, Integer replySeq, MemorialReplyDeleteRequest memorialReplyDeleteRequest)
             throws  ReplyPasswordMismatchException,
-                    MemorialReplyNotFoundException,
-                    MemorialNotFoundException,
-                    ReplyAlreadyDeleteException
+            MemorialReplyNotFoundException,
+            MemorialNotFoundException,
+            ReplyAlreadyDeleteException
     {
         /* 게시글 댓글 삭제 del_flag = 'Y' 설정 */
         ReentrantReadWriteLock lock = getLock(donateSeq);

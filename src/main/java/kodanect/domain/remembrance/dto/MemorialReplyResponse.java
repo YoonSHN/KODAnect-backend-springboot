@@ -37,5 +37,10 @@ public class MemorialReplyResponse implements CursorIdentifiable<Integer> {
     public Integer getCursorId() {
         return replySeq;
     }
+
+    /** 2020-12-13T02:11:12 -> 2020-12-13 형식 변경 */
+    public String getReplyWriteTime() {
+        return replyWriteTime.toLocalDate().toString();
+    }
 }
 

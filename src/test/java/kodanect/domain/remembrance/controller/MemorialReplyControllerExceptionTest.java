@@ -115,10 +115,10 @@ class MemorialReplyControllerExceptionTest {
     MessageSourceAccessor messageSourceAccessor;
 
     /*
-    *
-    * 댓글 더보기
-    *
-    * */
+     *
+     * 댓글 더보기
+     *
+     * */
 
     @Test
     @DisplayName("댓글 더보기 : 존재하지 않는 게시글을 요청한 경우 - 404")
@@ -170,10 +170,10 @@ class MemorialReplyControllerExceptionTest {
     }
 
     /*
-    *
-    * 댓글 생성
-    *
-    * */
+     *
+     * 댓글 생성
+     *
+     * */
 
     @Test
     @DisplayName("댓글 생성 : 내용이 입력되지 않은 경우 - 400")
@@ -313,10 +313,10 @@ class MemorialReplyControllerExceptionTest {
 
 
     /*
-    *
-    * 댓글 수정
-    *
-    * */
+     *
+     * 댓글 수정
+     *
+     * */
 
     @Test
     @DisplayName("댓글 수정 : 댓글 비밀번호가 입력되지 않은 경우 - 400")
@@ -325,6 +325,7 @@ class MemorialReplyControllerExceptionTest {
         MemorialReplyUpdateRequest request =
                 MemorialReplyUpdateRequest
                         .builder()
+                        .replyWriter(REPLY_WRITER)
                         .replyContents(CONTENTS)
                         .replyPassword(EMPTY)
                         .build();
@@ -347,6 +348,7 @@ class MemorialReplyControllerExceptionTest {
         MemorialReplyUpdateRequest request =
                 MemorialReplyUpdateRequest
                         .builder()
+                        .replyWriter(REPLY_WRITER)
                         .replyContents(CONTENTS)
                         .replyPassword(REPLY_PASSWORD)
                         .build();
@@ -373,6 +375,7 @@ class MemorialReplyControllerExceptionTest {
         MemorialReplyUpdateRequest request =
                 MemorialReplyUpdateRequest
                         .builder()
+                        .replyWriter(REPLY_WRITER)
                         .replyContents(CONTENTS)
                         .replyPassword(REPLY_PASSWORD)
                         .build();
@@ -395,6 +398,7 @@ class MemorialReplyControllerExceptionTest {
         MemorialReplyUpdateRequest request =
                 MemorialReplyUpdateRequest
                         .builder()
+                        .replyWriter(REPLY_WRITER)
                         .replyContents(CONTENTS)
                         .replyPassword(REPLY_PASSWORD)
                         .build();
@@ -421,6 +425,7 @@ class MemorialReplyControllerExceptionTest {
         MemorialReplyUpdateRequest request =
                 MemorialReplyUpdateRequest
                         .builder()
+                        .replyWriter(REPLY_WRITER)
                         .replyContents(EMPTY)
                         .replyPassword(REPLY_PASSWORD)
                         .build();
@@ -442,6 +447,7 @@ class MemorialReplyControllerExceptionTest {
         MemorialReplyUpdateRequest request =
                 MemorialReplyUpdateRequest
                         .builder()
+                        .replyWriter(REPLY_WRITER)
                         .replyContents(CONTENTS)
                         .replyPassword(REPLY_PASSWORD)
                         .build();
@@ -464,6 +470,7 @@ class MemorialReplyControllerExceptionTest {
         MemorialReplyUpdateRequest request =
                 MemorialReplyUpdateRequest
                         .builder()
+                        .replyWriter(REPLY_WRITER)
                         .replyContents(CONTENTS)
                         .replyPassword(REPLY_PASSWORD)
                         .build();
@@ -490,6 +497,7 @@ class MemorialReplyControllerExceptionTest {
         MemorialReplyUpdateRequest request =
                 MemorialReplyUpdateRequest
                         .builder()
+                        .replyWriter(REPLY_WRITER)
                         .replyContents(CONTENTS)
                         .replyPassword(REPLY_PASSWORD)
                         .build();
@@ -510,10 +518,10 @@ class MemorialReplyControllerExceptionTest {
 
 
     /*
-    *
-    * 댓글 삭제
-    *
-    * */
+     *
+     * 댓글 삭제
+     *
+     * */
 
     @Test
     @DisplayName("댓글 삭제 : 비밀번호가 입력되지 않은 경우 - 400")
