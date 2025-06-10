@@ -237,17 +237,22 @@ EOF
                                 "projects": ["java-spring-boot"]
                               }'
                         """
-                        sh """
+                        catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
+                            sh """
                             curl https://sentry.io/api/0/organizations/my-sentry-3h/releases/kodanect@${imageTag}/commits/ \\
                               -X POST \\
                               -H "Authorization: Bearer ${SENTRY_AUTH_TOKEN}" \\
                               -H "Content-Type: application/json" \\
                               -d '{
-                                "commit": "${GIT_COMMIT}",
-                                "repository": "FC-DEV3-Final-Project/KODAnect-backend-springboot"
+                                "commits": [
+                                  {
+                                    "commit": "${GIT_COMMIT}",
+                                    "repository": "FC-DEV3-Final-Project/KODAnect-backend-springboot"
+                                  }
+                                ]
                               }'
-                        """
-                    }
+                            """
+                        }
 
                     if (currentBuild.currentResult == 'FAILURE') {
                         githubNotify context: 'deploy', status: 'FAILURE', description: '배포 실패'
