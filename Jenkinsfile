@@ -95,38 +95,36 @@ pipeline {
         }
 
         stage('SonarCloud Analysis') {
-                    when {
-                        branch 'main'
-                    }
-                    steps {
-                        script {
-                            githubNotify context: 'sonar', status: 'PENDING', description: 'SonarCloud 분석 중...'
+            when {
+                branch 'main'
+            }
+            steps {
+                script {
+                    githubNotify context: 'sonar', status: 'PENDING', description: 'SonarCloud 분석 중...'
+                    withSonarQubeEnv('SonarCloud') {
+                        withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
+                            catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                                def sonarCmd = "./mvnw sonar:sonar" +
+                                    " -Dsonar.projectKey=kodanect" +
+                                    " -Dsonar.organization=fc-dev3-final-project" +
+                                    " -Dsonar.token=${SONAR_TOKEN}" +
+                                    " -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml" +
+                                    " -Dsonar.branch.name=main"
+                                sh "${sonarCmd}"
+                            }
 
-                            withSonarQubeEnv('SonarCloud') {
-                                withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
-                                    catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-                                        def sonarCmd = "./mvnw sonar:sonar" +
-                                            " -Dsonar.projectKey=kodanect" +
-                                            " -Dsonar.organization=fc-dev3-final-project" +
-                                            " -Dsonar.token=${SONAR_TOKEN}" +
-                                            " -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml" +
-                                            " -Dsonar.branch.name=main"
-
-                                        sh "${sonarCmd}"
-                                    }
-
-                                    if (currentBuild.currentResult == 'FAILURE') {
-                                        githubNotify context: 'sonar', status: 'FAILURE', description: 'SonarCloud 분석 실패'
-                                        env.CI_FAILED = 'true'
-                                        error('Sonar 분석 실패')
-                                    } else {
-                                        githubNotify context: 'sonar', status: 'SUCCESS', description: 'SonarCloud 분석 완료'
-                                    }
-                                }
+                            if (currentBuild.currentResult == 'FAILURE') {
+                                githubNotify context: 'sonar', status: 'FAILURE', description: 'SonarCloud 분석 실패'
+                                env.CI_FAILED = 'true'
+                                error('Sonar 분석 실패')
+                            } else {
+                                githubNotify context: 'sonar', status: 'SUCCESS', description: 'SonarCloud 분석 완료'
                             }
                         }
                     }
                 }
+            }
+        }
 
         stage('Docker Build & Push') {
             when {
@@ -141,9 +139,9 @@ pipeline {
 
                     catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
                         sh """
-                            docker build \
-                              --build-arg RUN_MODE=prod \
-                              --build-arg SENTRY_AUTH_TOKEN=${SENTRY_AUTH_TOKEN} \
+                            docker build \\
+                              --build-arg RUN_MODE=prod \\
+                              --build-arg SENTRY_AUTH_TOKEN=${SENTRY_AUTH_TOKEN} \\
                               -t ${fullImage} .
                         """
                         sh """
@@ -228,36 +226,29 @@ EOF
                               --title "Release ${imageTag}" \\
                               --notes "이미지: ${fullImage}"
                         """
+
                         sh """
                             curl https://sentry.io/api/0/organizations/my-sentry-3h/releases/ \\
                               -H "Authorization: Bearer ${SENTRY_AUTH_TOKEN}" \\
                               -H 'Content-Type: application/json' \\
-                              -d '{
-                                "version": "kodanect@${imageTag}",
-                                "projects": ["java-spring-boot"]
-                              }'
+                              -d '{"version": "kodanect@${imageTag}", "projects": ["java-spring-boot"]}'
                         """
+
                         catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
                             sh """
-                            curl https://sentry.io/api/0/organizations/my-sentry-3h/releases/kodanect@${imageTag}/commits/ \\
-                              -X POST \\
-                              -H "Authorization: Bearer ${SENTRY_AUTH_TOKEN}" \\
-                              -H "Content-Type: application/json" \\
-                              -d '{
-                                "commits": [
-                                  {
-                                    "commit": "${GIT_COMMIT}",
-                                    "repository": "FC-DEV3-Final-Project/KODAnect-backend-springboot"
-                                  }
-                                ]
-                              }'
+                                curl https://sentry.io/api/0/organizations/my-sentry-3h/releases/kodanect@${imageTag}/commits/ \\
+                                  -X POST \\
+                                  -H "Authorization: Bearer ${SENTRY_AUTH_TOKEN}" \\
+                                  -H "Content-Type: application/json" \\
+                                  -d '{"commits": [{"commit": "${GIT_COMMIT}", "repository": "FC-DEV3-Final-Project/KODAnect-backend-springboot"}]}'
                             """
                         }
 
-                    if (currentBuild.currentResult == 'FAILURE') {
-                        githubNotify context: 'deploy', status: 'FAILURE', description: '배포 실패'
-                        env.CD_FAILED = 'true'
-                        error('배포 실패')
+                        if (currentBuild.currentResult == 'FAILURE') {
+                            githubNotify context: 'deploy', status: 'FAILURE', description: '배포 실패'
+                            env.CD_FAILED = 'true'
+                            error('배포 실패')
+                        }
                     }
                 }
             }
@@ -272,9 +263,9 @@ EOF
                     githubNotify context: 'healthcheck', status: 'PENDING', description: '헬스체크 중...'
 
                     def healthCheckUrl = "http://10.8.110.14:8080/actuator/health"
-
                     def retries = 3
                     def success = false
+
                     for (int i = 0; i < retries; i++) {
                         def response = sh(script: "curl -s -o /dev/null -w '%{http_code}' ${healthCheckUrl}", returnStdout: true).trim()
                         if (response == '200') {
