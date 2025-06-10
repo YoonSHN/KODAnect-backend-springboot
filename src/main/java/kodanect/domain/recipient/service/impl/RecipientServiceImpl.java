@@ -260,7 +260,7 @@ public class RecipientServiceImpl implements RecipientService {
 
         // 5. 상위 N개 댓글 조회 (커서 기능 적용)
         // findPaginatedComments를 사용하여 INITIAL_COMMENT_LOAD_LIMIT 만큼만 가져옵니다.
-        Pageable commentPageable = PageRequest.of(0, INITIAL_COMMENT_LOAD_LIMIT, Sort.by(Sort.Direction.ASC, "writeTime", "commentSeq")); // 정렬 기준 명확화
+        Pageable commentPageable = PageRequest.of(0, INITIAL_COMMENT_LOAD_LIMIT, Sort.by(Sort.Direction.ASC, WRITE_TIME, COMMENT_SEQ)); // 정렬 기준 명확화
         List<RecipientCommentEntity> initialComments = recipientCommentRepository.findPaginatedComments(
                 recipientEntity, // letterSeq 대신 RecipientEntity 객체를 전달
                 0, // lastCommentId는 첫 조회이므로 0 (또는 null)

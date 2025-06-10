@@ -212,7 +212,7 @@ public class RecipientCommentServiceImpl implements RecipientCommentService {
             // lastCommentId가 null이 아니고 0이 아니면 커서 조건 추가 (commentSeq는 int 타입이므로 intValue() 사용)
             if (lastCommentId != null && lastCommentId != 0) {
                 // 커서 방식에서 commentSeq가 오름차순 정렬이므로, lastCommentId보다 큰 값을 찾습니다.
-                predicates.add(cb.greaterThan(root.get(COMMENT_SEQ), lastCommentId.intValue()));
+                predicates.add(cb.greaterThan(root.get(COMMENT_SEQ), lastCommentId));
             }
             return cb.and(predicates.toArray(new Predicate[0]));
         };
