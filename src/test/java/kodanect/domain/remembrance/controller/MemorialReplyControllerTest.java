@@ -57,6 +57,7 @@ class MemorialReplyControllerTest {
                 .build();
 
         this.replyUpdateDto = MemorialReplyUpdateRequest.builder()
+                .replyWriter("홍길동")
                 .replyPassword("1234asdf")
                 .replyContents("내용")
                 .build();
