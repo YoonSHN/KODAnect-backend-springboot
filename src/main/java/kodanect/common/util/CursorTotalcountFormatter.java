@@ -1,8 +1,6 @@
 package kodanect.common.util;
 
-import kodanect.common.response.CursorPaginationResponse;
 import kodanect.common.response.CursorPaginationTotalcountResponse;
-import kodanect.common.response.CursorReplyPaginationResponse;
 
 import java.util.List;
 
