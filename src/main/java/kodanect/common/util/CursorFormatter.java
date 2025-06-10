@@ -38,7 +38,7 @@ public class CursorFormatter {
      * @return 다음 커서 정보를 포함한 CursorPaginationResponse
      */
 
-    public static <T extends CursorIdentifiable<C>, C>CursorPaginationResponse<T, C> cursorFormat(List<T> responses, int size) {
+    public static <T extends CursorIdentifiable<C>, C>CursorPaginationResponse<T, C> cursorFormat(List<T> responses, int size, long totalCount) {
         /* 기본 cursor 포맷 */
         boolean hasNext = responses.size() > size;
 
@@ -50,6 +50,7 @@ public class CursorFormatter {
                 .content(content)
                 .nextCursor(nextCursor)
                 .hasNext(hasNext)
+                .totalCount(totalCount)
                 .build();
     }
 

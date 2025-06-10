@@ -102,6 +102,7 @@ public class MemorialDetailResponse {
     private List<MemorialReplyResponse> memorialReplyResponses;
     private Integer replyNextCursor;
     private boolean replyHasNext;
+    private long totalReplyCount;
 
     /* 편지 리스트 */
 
@@ -113,7 +114,7 @@ public class MemorialDetailResponse {
     /** 기증자 상세 조회 객체 생성 메서드 */
     public static MemorialDetailResponse of(
             Memorial memorial, List<MemorialReplyResponse> replies,
-            Integer replyNextCursor, boolean replyHasNext)
+            Integer replyNextCursor, boolean replyHasNext, long totalReplyCount)
     {
         return MemorialDetailResponse.builder()
                 .donateSeq(memorial.getDonateSeq())
@@ -138,6 +139,7 @@ public class MemorialDetailResponse {
                 .memorialReplyResponses(replies)
                 .replyNextCursor(replyNextCursor)
                 .replyHasNext(replyHasNext)
+                .totalReplyCount(totalReplyCount)
                 .build();
     }
 }

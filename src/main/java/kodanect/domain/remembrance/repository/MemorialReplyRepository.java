@@ -16,7 +16,7 @@ import java.util.List;
  * <br>
  * 댓글의 생성, 수정, 삭제, 조회 등의 JPA 기반 기능 제공
  *
- * */
+ **/
 public interface MemorialReplyRepository extends JpaRepository<MemorialReply, Integer> {
 
     /**
@@ -58,4 +58,7 @@ public interface MemorialReplyRepository extends JpaRepository<MemorialReply, In
         """
     )
     List<MemorialReplyResponse> findByCursor(@Param("donateSeq") Integer donateSeq, @Param("cursor") Integer cursor, Pageable pageable);
+
+    /** 게시물 번호 기준 총 댓글 수 */
+    long countByDonateSeq(@Param("donateSeq") Integer donateSeq);
 }
