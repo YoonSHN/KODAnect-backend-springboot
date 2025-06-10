@@ -1,8 +1,8 @@
 package kodanect.domain.recipient.service.impl;
 
 import kodanect.common.config.GlobalsProperties;
-import kodanect.common.response.CursorPaginationTotalcountResponse;
-import kodanect.common.util.CursorTotalcountFormatter;
+import kodanect.common.response.CursorPaginationResponse;
+import kodanect.common.util.CursorFormatter;
 import kodanect.domain.recipient.dto.*;
 import kodanect.domain.recipient.exception.RecipientInvalidPasscodeException;
 import kodanect.domain.recipient.exception.RecipientInvalidDataException;
@@ -291,7 +291,7 @@ public class RecipientServiceImpl implements RecipientService {
      * @return 커서 기반 페이지네이션 응답 (게시물)
      */
     @Override
-    public CursorPaginationTotalcountResponse<RecipientListResponseDto, Integer> selectRecipientList(
+    public CursorPaginationResponse<RecipientListResponseDto, Long> selectRecipientList(
             RecipientSearchCondition searchCondition,
             Integer lastId,
             int size) {
@@ -314,7 +314,7 @@ public class RecipientServiceImpl implements RecipientService {
         Pageable pageable = PageRequest.of(0, querySize, sort);
 
         // 6. 게시물 조회
-        List<RecipientEntity> recipientList = recipientRepository.findActivePostsByLastIdWithComments(lastId, pageable);
+        List<RecipientEntity> recipientList = recipientRepository.findAll(spec, pageable).getContent(); // Page 객체에서 List 추출
 
         // 7. RecipientEntity를 RecipientResponseDto로 변환하고 commentCount 필드를 채우기
         List<RecipientListResponseDto> recipientResponseDtos = recipientList.stream()
@@ -330,10 +330,12 @@ public class RecipientServiceImpl implements RecipientService {
                 .toList();
 
         // 8. 검색 조건에 맞는 전체 게시물 총 개수 조회
-        int totalCount = selectRecipientListTotCnt(searchCondition);
+        int totalCount = (int) recipientRepository.count(getRecipientSpecification(searchCondition)
+                .and((root, query, cb) -> cb.equal(root.get(DEL_FLAG), "N")) // 전체 개수 셀 때도 delFlag 조건 추가
+        );
 
-        // 9. CursorTotalcountFormatter 사용하여 응답 포맷팅
-        return CursorTotalcountFormatter.cursorFormat(recipientResponseDtos, size, totalCount);
+        // 9. CursorFormatter 사용하여 응답 포맷팅
+        return CursorFormatter.cursorFormat(recipientResponseDtos, size, totalCount);
     }
 
     /**
@@ -373,7 +375,6 @@ public class RecipientServiceImpl implements RecipientService {
                 } else if (searchType == SearchType.CONTENTS) { // 내용만 검색
                     predicates.add(cb.like(cb.lower(root.get("letterContents")), likeKeyword));
                 }
-                // SearchType.WRITER 관련 로직은 제거됨
             }
             return cb.and(predicates.toArray(new Predicate[0]));
         };

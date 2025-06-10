@@ -1,7 +1,9 @@
 package kodanect.domain.recipient.repository;
 
 import kodanect.domain.recipient.entity.RecipientEntity;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -35,15 +37,12 @@ public interface RecipientRepository extends JpaRepository<RecipientEntity, Inte
     @Query("SELECT r FROM RecipientEntity r WHERE r.delFlag = 'N' AND (:lastId IS NULL OR r.letterSeq < :lastId) ORDER BY r.letterSeq DESC")
     List<RecipientEntity> findActivePostsByLastId(@Param("lastId") Integer lastId, Pageable pageable);
 
-    // 게시물 목록 조회 시 연관된 댓글을 LEFT JOIN FETCH로 한 번에 가져오기
-    // delFlag='N'인 게시물과 해당 게시물의 delFlag='N'인 댓글만 가져오도록 필터링
-    @Query("SELECT DISTINCT r FROM RecipientEntity r " +
-            "LEFT JOIN FETCH r.comments c " + // r.comments를 페치 조인
-            "WHERE r.delFlag = 'N' " + // 게시물 delFlag='N'
-            "AND (:lastId IS NULL OR r.letterSeq < :lastId) " + // 커서 페이징 조건
-            "AND (c IS NULL OR c.delFlag = 'N') " + // 댓글 delFlag='N' 또는 댓글이 없는 경우
-            "ORDER BY r.letterSeq DESC")
-    List<RecipientEntity> findActivePostsByLastIdWithComments(@Param("lastId") Integer lastId, Pageable pageable);
+    // JpaSpecificationExecutor의 findAll 메서드를 오버라이드하여 @EntityGraph 적용
+    @EntityGraph(attributePaths = {"comments"})
+    @Override // JpaSpecificationExecutor의 메서드를 오버라이드함을 명시
+    Page<RecipientEntity> findAll(org.springframework.data.jpa.domain.Specification<RecipientEntity> spec, Pageable pageable);
 
-
+    // 단일 게시물 조회 시 EntityGraph를 통한 comments fetch (기존과 동일)
+    @EntityGraph(attributePaths = {"comments"})
+    Optional<RecipientEntity> findOne(org.springframework.data.jpa.domain.Specification<RecipientEntity> spec);
 }
