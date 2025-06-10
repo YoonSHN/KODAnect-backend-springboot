@@ -1,11 +1,40 @@
 package kodanect.domain.remembrance.dto;
 
+import kodanect.common.util.FormatUtils;
 import kodanect.domain.remembrance.entity.Memorial;
 import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ *
+ * 기증자 추모관 게시글 응답 dto
+ *
+ * <p>donateSeq : 게시글 번호</p>
+ * <p>donorName : 기증자 명</p>
+ * <p>anonymityFlag : 익명 여부 Y, N</p>
+ * <p>donateTitle : 제목</p>
+ * <p>contents : 기증자 내용</p>
+ * <p>fileName : 이미지 파일 명</p>
+ * <p>orgFileName : 이미지 원본 파일 명</p>
+ * <p>writer : 작성자</p>
+ * <p>donateDate : 기증자 기증 일시</p>
+ * <p>genderFlag : 기증자 성별</p>
+ * <p>donateAge : 기증자 나이</p>
+ * <p>flowerCount : 이모지 헌화</p>
+ * <p>loveCount : 이모지 사랑해요</p>
+ * <p>seeCount : 이모지 보고싶어요</p>
+ * <p>missCount : 이모지 그리워요</p>
+ * <p>proudCount : 이모지 자랑스러워요</p>
+ * <p>hardCount : 이모지 힘들어요</p>
+ * <p>sadCount : 이모지 슬퍼요</p>
+ * <p>writeTime : 생성 일시</p>
+ * <p>memorialReplyResponses : 댓글 리스트</p>
+ * <p>replyNextCursor : 다음 페이지 번호</p>
+ * <p>replyHasNext : 다음 페이지 존재 유무</p>
+ *
+ * */
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -73,13 +102,19 @@ public class MemorialDetailResponse {
     private List<MemorialReplyResponse> memorialReplyResponses;
     private Integer replyNextCursor;
     private boolean replyHasNext;
+    private long totalReplyCount;
 
     /* 편지 리스트 */
 
-    /* 기증자 상세 조회 */
+    /** 20101212 -> 2010-12-12 형식 변경 */
+    public String getDonateDate() {
+        return FormatUtils.formatDonateDate(this.donateDate);
+    }
+
+    /** 기증자 상세 조회 객체 생성 메서드 */
     public static MemorialDetailResponse of(
             Memorial memorial, List<MemorialReplyResponse> replies,
-            Integer replyNextCursor, boolean replyHasNext)
+            Integer replyNextCursor, boolean replyHasNext, long totalReplyCount)
     {
         return MemorialDetailResponse.builder()
                 .donateSeq(memorial.getDonateSeq())
@@ -104,6 +139,7 @@ public class MemorialDetailResponse {
                 .memorialReplyResponses(replies)
                 .replyNextCursor(replyNextCursor)
                 .replyHasNext(replyHasNext)
+                .totalReplyCount(totalReplyCount)
                 .build();
     }
 }

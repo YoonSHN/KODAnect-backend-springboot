@@ -59,8 +59,8 @@ class MemorialControllerTest {
                 new MemorialResponse(3, "나길동", "N", "20220101", "M", 30, 32)
         );
 
-        CursorPaginationResponse<MemorialResponse> page =
-                CursorPaginationResponse.<MemorialResponse>builder()
+        CursorPaginationResponse<MemorialResponse, Integer> page =
+                CursorPaginationResponse.<MemorialResponse, Integer>builder()
                         .content(content)
                         .nextCursor(null)
                         .hasNext(false)
@@ -84,9 +84,9 @@ class MemorialControllerTest {
                 .andExpect(jsonPath("$.data.content[0].anonymityFlag").value("N"))
                 .andExpect(jsonPath("$.data.content[1].anonymityFlag").value("Y"))
                 .andExpect(jsonPath("$.data.content[2].anonymityFlag").value("N"))
-                .andExpect(jsonPath("$.data.content[0].donateDate").value("20200101"))
-                .andExpect(jsonPath("$.data.content[1].donateDate").value("20211231"))
-                .andExpect(jsonPath("$.data.content[2].donateDate").value("20220101"))
+                .andExpect(jsonPath("$.data.content[0].donateDate").value("2020-01-01"))
+                .andExpect(jsonPath("$.data.content[1].donateDate").value("2021-12-31"))
+                .andExpect(jsonPath("$.data.content[2].donateDate").value("2022-01-01"))
                 .andExpect(jsonPath("$.data.content[0].genderFlag").value("M"))
                 .andExpect(jsonPath("$.data.content[1].genderFlag").value("F"))
                 .andExpect(jsonPath("$.data.content[2].genderFlag").value("M"))
@@ -166,7 +166,7 @@ class MemorialControllerTest {
                 .andExpect(jsonPath("$.data.fileName").value("image.jpg"))
                 .andExpect(jsonPath("$.data.orgFileName").value("original.jpg"))
                 .andExpect(jsonPath("$.data.writer").value("관리자"))
-                .andExpect(jsonPath("$.data.donateDate").value("20240101"))
+                .andExpect(jsonPath("$.data.donateDate").value("2024-01-01"))
                 .andExpect(jsonPath("$.data.genderFlag").value("M"))
                 .andExpect(jsonPath("$.data.donateAge").value(43))
                 .andExpect(jsonPath("$.data.flowerCount").value(1))
@@ -203,8 +203,8 @@ class MemorialControllerTest {
                 new MemorialResponse(3, "나길동", "N", "20220103", "M", 30, 32)
         );
 
-        CursorPaginationResponse<MemorialResponse> page =
-                CursorPaginationResponse.<MemorialResponse>builder()
+        CursorPaginationResponse<MemorialResponse, Integer> page =
+                CursorPaginationResponse.<MemorialResponse, Integer>builder()
                         .content(content)
                         .nextCursor(null)
                         .hasNext(false)

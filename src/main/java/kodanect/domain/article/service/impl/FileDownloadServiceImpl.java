@@ -6,6 +6,7 @@ import kodanect.common.exception.custom.FileMissingException;
 import kodanect.domain.article.dto.DownloadFile;
 import kodanect.domain.article.service.FileDownloadService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.MediaType;
@@ -19,6 +20,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class FileDownloadServiceImpl implements FileDownloadService {
@@ -36,21 +38,25 @@ public class FileDownloadServiceImpl implements FileDownloadService {
      * @throws FileMissingException 파일이 없거나 읽을 수 없을 때
      */
     public DownloadFile loadDownloadFile(String boardCode, Integer articleSeq, String fileName) {
-        Path basePath = Paths.get(globalsProperties.getFileStorePath(), boardCode, articleSeq.toString()).toAbsolutePath().normalize();
+
+        Path basePath = Paths.get(globalsProperties.getFileStorePath(), boardCode, articleSeq.toString())
+                .toAbsolutePath().normalize();
+
         Path filePath = basePath.resolve(fileName).normalize();
 
         if (!filePath.startsWith(basePath)) {
-            throw new FileAccessViolationException(filePath.toString());
+            throw new FileAccessViolationException(basePath, filePath, boardCode, articleSeq, fileName);
         }
 
         Resource resource;
         try {
             resource = new UrlResource(filePath.toUri());
         } catch (MalformedURLException e) {
-            throw new FileMissingException(fileName);
+            throw new FileMissingException("URL 변환 실패", filePath, boardCode, articleSeq, fileName, e);
         }
+
         if (!resource.exists() || !resource.isReadable()) {
-            throw new FileMissingException(fileName);
+            throw new FileMissingException("파일 없음 또는 읽기 불가", filePath, boardCode, articleSeq, fileName);
         }
 
         String contentType;
@@ -58,10 +64,12 @@ public class FileDownloadServiceImpl implements FileDownloadService {
             contentType = Files.probeContentType(filePath);
         } catch (IOException e) {
             contentType = MediaType.APPLICATION_OCTET_STREAM_VALUE;
+            log.warn("[MIME 타입 추론 실패] 기본값으로 처리됨. 경로: {}, 오류: {}", filePath, e.getMessage());
         }
 
         String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8).replace("+", "%20");
 
         return new DownloadFile(resource, contentType, encodedFileName);
     }
+
 }

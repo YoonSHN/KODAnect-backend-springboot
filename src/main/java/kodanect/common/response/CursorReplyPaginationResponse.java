@@ -5,16 +5,35 @@ import lombok.Getter;
 
 import java.util.List;
 
+/**
+ * 댓글 전용 커서 기반 페이지네이션 응답 포맷
+ *
+ * <p><b>역할:</b><br>
+ * 기증자 추모관의 댓글 목록을 커서 기반으로 조회할 때 사용하는 응답 구조.<br>
+ * 댓글 리스트 외에도 다음 요청을 위한 커서 값 및 다음 페이지 존재 여부를 포함한다.
+ *
+ * <p><b>특징:</b>
+ * <ul>
+ *     <li>댓글 전용 페이징 응답 구조로, 필드명에 <code>reply</code> 접두어 사용</li>
+ *     <li>무한 스크롤 등에서 댓글을 일정 단위로 끊어 불러오기 용이</li>
+ *     <li>커서 방식으로 정렬 순서를 안정적으로 유지하면서 이어받기 가능</li>
+ * </ul>
+ *
+ * <p><b>사용 예:</b><br>
+ * - 댓글 조회 API: <code>/remembrance/{donateSeq}/replies?cursor=xxx&amp;size=10</code><br>
+ * - 클라이언트에서 추가 댓글 요청 시 <code>replyNextCursor</code> 기준으로 이어서 조회
+ */
+
 @Getter
 @Builder
-public class CursorReplyPaginationResponse<T> {
+public class CursorReplyPaginationResponse<T, C> {
 
-    /* 실제 데이터 */
+    /** 실제 데이터 응답 리스트 */
     private List<T> content;
 
-    /* 다음 요청 시 사용할 커서 값*/
-    private Integer replyNextCursor;
+    /** 다음 요청 시 사용할 커서 값*/
+    private C replyNextCursor;
 
-    /* 다음 페이지 존재 여부 */
+    /** 다음 페이지가 존재하는지 여부 (true면 다음 요청 가능) */
     private boolean replyHasNext;
 }

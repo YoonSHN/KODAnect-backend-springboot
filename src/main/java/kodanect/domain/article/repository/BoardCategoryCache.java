@@ -1,8 +1,9 @@
 package kodanect.domain.article.repository;
 
-import kodanect.common.exception.custom.InvalidBoardCodeException;
+import kodanect.domain.article.exception.InvalidBoardCodeException;
 import kodanect.domain.article.entity.BoardCategory;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -16,6 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * 현재 캐싱 방식은 인메모리 캐싱 방식을 사용하기 때문에 백오프에서 DB 추가구현시 reload 메서드 적용 필요
  * 사실 컬럼 하나 추가하면 끝나긴하지만 현재 DB를 변경없이 작동하는 방식을 고려
  */
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class BoardCategoryCache {

@@ -4,7 +4,6 @@ import kodanect.common.response.ApiResponse;
 import kodanect.domain.donation.exception.BadRequestException;
 import kodanect.domain.donation.exception.DonationNotFoundException;
 import kodanect.domain.donation.exception.ValidationFailedException;
-import kodanect.domain.remembrance.exception.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.NoSuchMessageException;
 import org.springframework.context.support.MessageSourceAccessor;
@@ -17,8 +16,10 @@ import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 
+import javax.validation.ConstraintViolationException;
 import java.io.IOException;
 import java.util.Objects;
 import java.util.Optional;
@@ -46,41 +47,7 @@ public class GlobalExcepHndlr {
     public GlobalExcepHndlr(MessageSourceAccessor messageSourceAccessor) {
         this.messageSourceAccessor = messageSourceAccessor;
     }
-    /**
-     * 400 예외 처리
-     *
-     * 잘못된 입력 발생 시 400 응답 반환
-     * */
-    @ExceptionHandler({
-        InvalidDonateSeqException.class,
-        InvalidEmotionTypeException.class,
-        InvalidPaginationRangeException.class,
-        InvalidReplySeqException.class,
-        InvalidSearchDateFormatException.class,
-        InvalidSearchDateRangeException.class,
-        MissingReplyContentException.class,
-        MissingReplyPasswordException.class,
-        MissingReplyWriterException.class,
-        MissingSearchDateParameterException.class,
-        ReplyIdMismatchException.class,
-        ReplyPostMismatchException.class
-    })public ResponseEntity<ApiResponse<Void>> handleBadRequest() {
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.fail(HttpStatus.BAD_REQUEST, "잘못된 요청입니다."));
-    }
 
-    /**
-     * 403 예외 처리
-     *
-     * 권한 오류 발생 시 403 응답 반환
-     * */
-    @ExceptionHandler(ReplyPasswordMismatchException.class)
-    public ResponseEntity<ApiResponse<Void>> handleForbidden() {
-        return ResponseEntity
-                .status(HttpStatus.FORBIDDEN)
-                .body(ApiResponse.fail(HttpStatus.FORBIDDEN, "비밀번호가 일치하지 않습니다."));
-    }
     /**
      * @Valided 유효성 검사 실패 예외 처리
      */
@@ -102,11 +69,7 @@ public class GlobalExcepHndlr {
      * 404 예외 처리 (Resource Not Found)
      * - 매핑되지 않은 URI 요청 또는 명시적으로 NOT_FOUND 예외를 던진 경우
      */
-    @ExceptionHandler({
-        MemorialNotFoundException.class,
-        MemorialReplyNotFoundException.class,
-        NoHandlerFoundException.class
-    })
+    @ExceptionHandler(NoHandlerFoundException.class)
     public ResponseEntity<ApiResponse<Void>> handleNotFound() {
 
         String msg = messageSourceAccessor.getMessage("error.notfound", "요청한 자원을 찾을 수 없습니다.");
@@ -148,17 +111,28 @@ public class GlobalExcepHndlr {
                 .body(ApiResponse.fail(HttpStatus.BAD_REQUEST, resolvedMsg));
     }
 
-
     /**
-     * 409 예외 처리
-     *
-     * 충돌 발생 시 409 응답 반환
+     * 400 예외 처리: @PathVariable, @RequestParam 등에서 @Min, @NotBlank 검증 실패 시 ConstraintViolationException 처리
      */
-    @ExceptionHandler(ReplyAlreadyDeleteException.class)
-    public ResponseEntity<ApiResponse<Void>> handleConflict() {
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ApiResponse<Void>> handleValidationException(ConstraintViolationException ex) {
+        String resolvedMsg;
+
+        try{
+            String firstMessageKey = ex.getConstraintViolations()
+                    .iterator()
+                    .next()
+                    .getMessage();
+
+            resolvedMsg = messageSourceAccessor.getMessage(firstMessageKey);
+        }
+        catch (Exception e) {
+            resolvedMsg = "잘못된 요청입니다.";
+        }
+
         return ResponseEntity
-                .status(HttpStatus.CONFLICT)
-                .body(ApiResponse.fail(HttpStatus.CONFLICT, "해당 항목은 이미 삭제되었습니다."));
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.fail(HttpStatus.BAD_REQUEST, resolvedMsg));
     }
 
     /**
@@ -172,7 +146,9 @@ public class GlobalExcepHndlr {
                 .filter(Objects::nonNull)
                 .findFirst();
 
+
         String errorMessage = errorMessageOpt.orElse("잘못된 요청입니다.");
+        log.info("BindException 발생: {}", errorMessage);
         return ResponseEntity.badRequest()
                 .body(ApiResponse.fail(HttpStatus.BAD_REQUEST, errorMessage));
     }
@@ -230,6 +206,7 @@ public class GlobalExcepHndlr {
      */
     @ExceptionHandler(IOException.class)
     public ResponseEntity<ApiResponse<Void>> handleIOException(IOException ex) {
+        log.error("파일 처리 중 IOException 발생", ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ApiResponse.fail(HttpStatus.INTERNAL_SERVER_ERROR, "파일 처리 중 오류가 발생했습니다."));
     }
@@ -256,6 +233,25 @@ public class GlobalExcepHndlr {
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ApiResponse.fail(HttpStatus.INTERNAL_SERVER_ERROR, msg));
     }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiResponse<Void>> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        log.warn("잘못된 파라미터 타입 요청: name={}, value={}, requiredType={}",
+                ex.getName(), ex.getValue(), ex.getRequiredType(), ex);
+
+        String name = ex.getName();
+        String value = String.valueOf(ex.getValue());
+        String expected = ex.getRequiredType() != null ? ex.getRequiredType().getSimpleName() : "Unknown";
+
+        String message = String.format("요청 파라미터 '%s'의 값 '%s'은(는) 타입 '%s'으로 변환할 수 없습니다.",
+                name, value, expected);
+
+        return ResponseEntity.badRequest()
+                .body(ApiResponse.fail(HttpStatus.BAD_REQUEST, message));
+    }
+
+
+
 
 
 

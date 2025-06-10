@@ -25,7 +25,7 @@ import static org.mockito.Mockito.*;
 
 
 @RunWith(org.mockito.junit.MockitoJUnitRunner.class)
-class MemorialServiceImplTest {
+public class MemorialServiceImplTest {
 
     @InjectMocks
     private MemorialServiceImpl memorialService;
@@ -41,7 +41,7 @@ class MemorialServiceImplTest {
 
     @Test
     @DisplayName("추모관 이모지 카운팅")
-    void 추모관_이모지_카운팅() throws Exception {
+    public void 추모관_이모지_카운팅() throws Exception {
         /* emotionCountUpdate */
 
         Integer donateSeq = 1;
@@ -109,7 +109,7 @@ class MemorialServiceImplTest {
 
     @Test
     @DisplayName("추모관 게시글 검색 조회")
-    void 추모관_게시글_검색_조회() throws Exception {
+    public void 추모관_게시글_검색_조회() throws Exception {
         /* getSearchMemorialList */
         Integer cursor = 1;
         int size = 20;
@@ -125,7 +125,7 @@ class MemorialServiceImplTest {
                 eq(cursor), any(Pageable.class), eq("20230101"), eq("20240101"), eq("%홍길동%"))
         ).thenReturn(content);
 
-        CursorPaginationResponse<MemorialResponse> result
+        CursorPaginationResponse<MemorialResponse, Integer> result
                 = memorialService.getSearchMemorialList(startDate, endDate, searchWord, cursor, size);
 
         assertNotNull(result);
@@ -133,7 +133,7 @@ class MemorialServiceImplTest {
         assertEquals(Integer.valueOf(1), result.getContent().get(0).getDonateSeq());
         assertEquals("홍길동", result.getContent().get(0).getDonorName());
         assertEquals("N", result.getContent().get(0).getAnonymityFlag());
-        assertEquals("20230101", result.getContent().get(0).getDonateDate());
+        assertEquals("2023-01-01", result.getContent().get(0).getDonateDate());
         assertEquals("M", result.getContent().get(0).getGenderFlag());
         assertEquals(Integer.valueOf(40), result.getContent().get(0).getDonateAge());
         assertEquals(5, result.getContent().get(0).getReplyCount());
@@ -141,7 +141,7 @@ class MemorialServiceImplTest {
 
     @Test
     @DisplayName("추모관 게시글 리스트 조회")
-    void 추모관_게시글_리스트_조회() throws Exception {
+    public void 추모관_게시글_리스트_조회() throws Exception {
         /* getMemorialList */
 
         Integer cursor = 1;
@@ -154,7 +154,7 @@ class MemorialServiceImplTest {
 
         when(memorialRepository.findByCursor(eq(cursor), any(Pageable.class))).thenReturn(content);
 
-        CursorPaginationResponse<MemorialResponse> page = memorialService.getMemorialList(cursor, size);
+        CursorPaginationResponse<MemorialResponse, Integer> page = memorialService.getMemorialList(cursor, size);
 
         assertNotNull(page);
         assertEquals(2, page.getContent().size());
@@ -163,7 +163,7 @@ class MemorialServiceImplTest {
         assertEquals(Integer.valueOf(1), dto1.getDonateSeq());
         assertEquals("홍길동", dto1.getDonorName());
         assertEquals("N", dto1.getAnonymityFlag());
-        assertEquals("20230101", dto1.getDonateDate());
+        assertEquals("2023-01-01", dto1.getDonateDate());
         assertEquals("M", dto1.getGenderFlag());
         assertEquals(Integer.valueOf(40), dto1.getDonateAge());
         assertEquals(5, dto1.getReplyCount());
@@ -172,7 +172,7 @@ class MemorialServiceImplTest {
         assertEquals(Integer.valueOf(2), dto2.getDonateSeq());
         assertEquals("김길동", dto2.getDonorName());
         assertEquals("Y", dto2.getAnonymityFlag());
-        assertEquals("20230102", dto2.getDonateDate());
+        assertEquals("2023-01-02", dto2.getDonateDate());
         assertEquals("F", dto2.getGenderFlag());
         assertEquals(Integer.valueOf(20), dto2.getDonateAge());
         assertEquals(2, dto2.getReplyCount());
@@ -181,7 +181,7 @@ class MemorialServiceImplTest {
 
     @Test
     @DisplayName("추모관 게시글 상세 조회")
-    void 추모관_게시글_상세_조회() throws Exception {
+    public void 추모관_게시글_상세_조회() throws Exception {
         /* getMemorialByDonateSeq */
 
         Integer donateSeq = 1;
@@ -197,7 +197,7 @@ class MemorialServiceImplTest {
                 .fileName("img.jpg")
                 .orgFileName("origin.jpg")
                 .writer("관리자")
-                .donateDate("20240101")
+                .donateDate("2024-01-01")
                 .genderFlag("M")
                 .donateAge(40)
                 .flowerCount(1)
@@ -234,7 +234,7 @@ class MemorialServiceImplTest {
         assertEquals("N", result.getAnonymityFlag());
         assertEquals("기억합니다", result.getDonateTitle());
         assertEquals("내용입니다", result.getContents());
-        assertEquals("20240101", result.getDonateDate());
+        assertEquals("2024-01-01", result.getDonateDate());
         assertEquals("M", result.getGenderFlag());
         assertEquals(Integer.valueOf(40), result.getDonateAge());
         assertEquals(1, result.getFlowerCount());

@@ -107,7 +107,11 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-actuator</artifactId>
 		</dependency>
-
+		<dependency>
+			<groupId>io.sentry</groupId>
+			<artifactId>sentry-spring-boot-starter</artifactId>
+			<version>6.34.0</version>
+		</dependency>
 
 		<!-- egovframe -->
 		<dependency>
@@ -164,11 +168,11 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
-		<dependency>
-			<groupId>org.seleniumhq.selenium</groupId>
-			<artifactId>selenium-java</artifactId>
-			<scope>test</scope>
-		</dependency>
+<!--		<dependency>-->
+<!--			<groupId>org.seleniumhq.selenium</groupId>-->
+<!--			<artifactId>selenium-java</artifactId>-->
+<!--			<scope>test</scope>-->
+<!--		</dependency>-->
 		<dependency>
 			<groupId>com.h2database</groupId>
 			<artifactId>h2</artifactId>
@@ -186,16 +190,9 @@
 			<artifactId>caffeine</artifactId>
 			<version>2.9.3</version>
 		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-actuator</artifactId>
-		</dependency>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
+
+
 
 	<build>
 		<plugins>
@@ -205,6 +202,26 @@
 				<artifactId>spring-boot-maven-plugin</artifactId>
 				<configuration>
 				</configuration>
+			</plugin>
+
+			<plugin>
+				<groupId>io.sentry</groupId>
+				<artifactId>sentry-maven-plugin</artifactId>
+				<version>0.5.0</version>
+				<extensions>true</extensions>
+				<configuration>
+					<debugSentryCli>true</debugSentryCli>
+					<org>my-sentry-3h</org>
+					<project>java-spring-boot</project>
+					<authToken>${env.SENTRY_AUTH_TOKEN}</authToken>
+				</configuration>
+				<executions>
+					<execution>
+						<goals>
+							<goal>uploadSourceBundle</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 
 			<plugin>
@@ -231,6 +248,8 @@
 					<outputFile>target/checkstyle-result.xml</outputFile>
 				</configuration>
 			</plugin>
+
+
 
 			<plugin>
 				<groupId>org.sonarsource.scanner.maven</groupId>
@@ -298,6 +317,8 @@
 
 				</executions>
 			</plugin>
+
+
 
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>

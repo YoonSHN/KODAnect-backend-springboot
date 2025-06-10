@@ -4,9 +4,9 @@
         "https://checkstyle.org/dtds/suppressions_1_2.dtd">
 
 <suppressions>
-    <suppress checks=".*" files=".*egovframework/.*"/>
-    <suppress checks=".*" files=".*application.*\.properties"/>
-    <suppress checks="MagicNumberCheck" files=".*domain/.*?/entity/.*"/>
-    <suppress checks="MagicNumberCheck" files=".*domain/.*/dto/.*"/>
+    <suppress checks=".*" files=".*[/\\]egovframework[/\\].*"/>
+    <suppress checks=".*" files=".*application.*\\.properties"/>
+    <suppress checks="LineLength" files=".*application.*\.properties"/>
+    <suppress checks="MagicNumber" files=".*[/\\]domain[/\\][^/\\]+[/\\]dto[/\\].*"/>
+    <suppress checks="MagicNumber" files=".*[/\\]domain[/\\][^/\\]+[/\\]entity[/\\].*"/>
 </suppressions>
-
