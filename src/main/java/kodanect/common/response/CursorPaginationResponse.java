@@ -35,4 +35,7 @@ public class CursorPaginationResponse<T, C> {
 
     /** 다음 페이지가 존재하는지 여부 (true면 다음 요청 가능) */
     private boolean hasNext;
+
+    /** 총 게시물 개수 */
+    private long totalCount;
 }

@@ -75,4 +75,14 @@ public interface MemorialReplyService {
      * */
     CursorReplyPaginationResponse<MemorialReplyResponse, Integer> getMoreReplyList(Integer donateSeq, Integer cursor, int size)
             throws  MemorialNotFoundException;
+
+    /**
+     * 
+     * 기증자 추모관 상세 게시글 댓글 총 갯수 반환 메서드
+     * 
+     * @param donateSeq 상세 게시글 번호
+     * @return 조건에 맞는 댓글 총 갯수
+     * 
+     * */
+    long getTotalReplyCount(Integer donateSeq);
 }

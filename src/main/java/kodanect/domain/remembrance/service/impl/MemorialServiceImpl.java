@@ -136,7 +136,9 @@ public class MemorialServiceImpl implements MemorialService {
 
         List<MemorialResponse> memorialResponses = memorialRepository.findSearchByCursor(cursor, pageable, startDateStr, endDateStr, searchWord);
 
-        return CursorFormatter.cursorFormat(memorialResponses, size);
+        long totalCount = memorialRepository.count();
+
+        return CursorFormatter.cursorFormat(memorialResponses, size, totalCount);
 
     }
 
@@ -157,7 +159,9 @@ public class MemorialServiceImpl implements MemorialService {
 
         List<MemorialResponse> memorialResponses = memorialRepository.findByCursor(cursor, pageable);
 
-        return CursorFormatter.cursorFormat(memorialResponses, size);
+        long totalCount = memorialRepository.count();
+
+        return CursorFormatter.cursorFormat(memorialResponses, size, totalCount);
     }
 
     /**
@@ -183,11 +187,16 @@ public class MemorialServiceImpl implements MemorialService {
         CursorReplyPaginationResponse<MemorialReplyResponse, Integer> cursoredReplies =
                 CursorFormatter.cursorReplyFormat(memorialReplyResponses, DEFAULT_SIZE);
 
+        /* 댓글 총 갯수 조회 */
+        long totalReplyCount = memorialReplyService.getTotalReplyCount(donateSeq);
+
         /* 하늘나라 편지 리스트 조회 예정 */
 
         /* 기증자 상세 조회 */
         return MemorialDetailResponse.of(memorial,
-                cursoredReplies.getContent(), cursoredReplies.getReplyNextCursor(), cursoredReplies.isReplyHasNext());
+                cursoredReplies.getContent(),
+                cursoredReplies.getReplyNextCursor(),
+                cursoredReplies.isReplyHasNext(), totalReplyCount);
     }
 }
 

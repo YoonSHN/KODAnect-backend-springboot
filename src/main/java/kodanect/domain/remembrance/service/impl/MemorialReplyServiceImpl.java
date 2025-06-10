@@ -206,7 +206,7 @@ public class MemorialReplyServiceImpl implements MemorialReplyService {
 
         Pageable pageable = PageRequest.of(0, size +1);
 
-        /* 댓글 리스트 모두 조회 */
+        /* 조건에 맞는 댓글 리스트 조회 */
         return memorialReplyRepository.findByCursor(donateSeq, cursor, pageable);
 
     }
@@ -236,6 +236,10 @@ public class MemorialReplyServiceImpl implements MemorialReplyService {
         List<MemorialReplyResponse> memorialReplyResponses = memorialReplyRepository.findByCursor(donateSeq, cursor, pageable);
 
         return CursorFormatter.cursorReplyFormat(memorialReplyResponses, size);
+    }
+
+    public long getTotalReplyCount(Integer donateSeq) {
+        return memorialReplyRepository.countByDonateSeq(donateSeq);
     }
 }
 
