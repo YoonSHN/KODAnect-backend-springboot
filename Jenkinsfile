@@ -96,9 +96,7 @@ pipeline {
 
         stage('SonarCloud Analysis') {
             when {
-                expression {
-                    return env.CHANGE_ID != null && env.CHANGE_TARGET == 'main'
-                }
+                branch 'main'
             }
             steps {
                 script {
@@ -106,18 +104,18 @@ pipeline {
 
                     withSonarQubeEnv('SonarCloud') {
                         withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
-                            def sonarCmd = "./mvnw sonar:sonar" +
-                                " -Dsonar.projectKey=kodanect" +
-                                " -Dsonar.organization=fc-dev3-final-project" +
-                                " -Dsonar.token=${SONAR_TOKEN}" +
-                                " -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml" +
-                                " -Dsonar.pullrequest.key=${CHANGE_ID}" +
-                                " -Dsonar.pullrequest.branch=${CHANGE_BRANCH}" +
-                                " -Dsonar.pullrequest.base=${CHANGE_TARGET}"
+                            catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                                def sonarCmd = "./mvnw sonar:sonar" +
+                                    " -Dsonar.projectKey=kodanect" +
+                                    " -Dsonar.organization=fc-dev3-final-project" +
+                                    " -Dsonar.token=${SONAR_TOKEN}" +
+                                    " -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml" +
+                                    " -Dsonar.branch.name=main"
 
-                            def scannerStatus = sh(script: sonarCmd, returnStatus: true)
+                                sh "${sonarCmd}"
+                            }
 
-                            if (scannerStatus != 0) {
+                            if (currentBuild.currentResult == 'FAILURE') {
                                 githubNotify context: 'sonar', status: 'FAILURE', description: 'SonarCloud 분석 실패'
                                 env.CI_FAILED = 'true'
                                 error('Sonar 분석 실패')
@@ -127,9 +125,9 @@ pipeline {
                                     if (qualityGate.status != 'OK') {
                                         githubNotify context: 'sonar', status: 'FAILURE', description: "품질 게이트 실패: ${qualityGate.status}"
                                         env.CI_FAILED = 'true'
-                                        error("Sonar 품질 게이트 실패")
+                                        error("SonarCloud 품질 게이트 실패: ${qualityGate.status}")
                                     } else {
-                                        githubNotify context: 'sonar', status: 'SUCCESS', description: 'Sonar 품질 게이트 통과'
+                                        githubNotify context: 'sonar', status: 'SUCCESS', description: 'SonarCloud 품질 게이트 통과'
                                     }
                                 }
                             }

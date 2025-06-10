@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 
 import static javax.persistence.GenerationType.IDENTITY;
 
+/** 기증자 추모관 게시글 엔티티 클래스 */
 @Entity(name = "Memorial")
 @Table(name = "tb25_400_memorial")
 @Builder

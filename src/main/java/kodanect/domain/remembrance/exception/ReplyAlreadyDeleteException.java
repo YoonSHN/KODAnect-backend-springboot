@@ -1,12 +1,32 @@
 package kodanect.domain.remembrance.exception;
 
-public class ReplyAlreadyDeleteException extends RuntimeException {
-    /* 이미 삭제된 댓글일 경우 */
-    public ReplyAlreadyDeleteException(String message) {
-        super(message);
+import kodanect.common.exception.custom.AbstractCustomException;
+import org.springframework.http.HttpStatus;
+
+import static kodanect.common.exception.config.MessageKeys.REPLY_ALREADY_DELETED;
+
+/** 이미 삭제된 댓글일 경우 발생하는 예외 */
+public class ReplyAlreadyDeleteException extends AbstractCustomException {
+
+    private final Integer replySeq;
+
+    public ReplyAlreadyDeleteException(Integer replySeq) {
+        super(REPLY_ALREADY_DELETED);
+        this.replySeq = replySeq;
     }
 
-    public ReplyAlreadyDeleteException() {
-        super("이미 삭제된 댓글 입니다.");
+    @Override
+    public String getMessageKey() {
+        return REPLY_ALREADY_DELETED;
+    }
+
+    @Override
+    public Object[] getArguments() {
+        return new Object[]{replySeq};
+    }
+
+    @Override
+    public HttpStatus getStatus() {
+        return HttpStatus.CONFLICT;
     }
 }

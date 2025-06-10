@@ -1,12 +1,35 @@
 package kodanect.domain.remembrance.exception;
 
-public class InvalidSearchDateRangeException extends RuntimeException {
-    /* 검색 종료일이 시작일 보다 미래일 경우 */
-    public InvalidSearchDateRangeException(String message) {
-        super(message);
+import kodanect.common.exception.custom.AbstractCustomException;
+import org.springframework.http.HttpStatus;
+
+import static kodanect.common.exception.config.MessageKeys.SEARCH_DATE_RANGE_INVALID;
+
+/** 검색 종료일이 시작일 보다 미래일 경우 발생하는 예외 */
+public class InvalidSearchDateRangeException extends AbstractCustomException {
+
+    private final String startDate;
+    private final String endDate;
+
+    public InvalidSearchDateRangeException(String startDate, String endDate) {
+        super(SEARCH_DATE_RANGE_INVALID);
+        this.startDate = startDate;
+        this.endDate = endDate;
     }
 
-    public InvalidSearchDateRangeException() {
-        super("검색 시작일과 종료일의 범위가 올바르지 않습니다.");
+    @Override
+    public String getMessageKey() {
+        return SEARCH_DATE_RANGE_INVALID;
     }
+
+    @Override
+    public Object[] getArguments() {
+        return new Object[]{startDate, endDate};
+    }
+
+    @Override
+    public HttpStatus getStatus() {
+        return HttpStatus.BAD_REQUEST;
+    }
+
 }

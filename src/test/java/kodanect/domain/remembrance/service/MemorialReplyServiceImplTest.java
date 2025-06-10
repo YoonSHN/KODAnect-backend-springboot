@@ -28,7 +28,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
-class MemorialReplyServiceImplTest {
+public class MemorialReplyServiceImplTest {
 
     @InjectMocks
     private MemorialReplyServiceImpl memorialReplyService;
@@ -45,13 +45,12 @@ class MemorialReplyServiceImplTest {
 
     @Test
     @DisplayName("추모관 댓글 생성")
-    void 추모관_댓글_생성() {
+    public void 추모관_댓글_생성() {
 
         Integer donateSeq = 1;
 
         MemorialReplyCreateRequest request =
                 MemorialReplyCreateRequest.builder()
-                        .donateSeq(donateSeq)
                         .replyWriter("홍길동")
                         .replyPassword("1234")
                         .replyContents("내용")
@@ -67,7 +66,7 @@ class MemorialReplyServiceImplTest {
 
     @Test
     @DisplayName("추모관 댓글 수정")
-    void 추모관_댓글_수정() {
+    public void 추모관_댓글_수정() {
 
         Integer donateSeq = 1;
         Integer replySeq = 1;
@@ -75,8 +74,6 @@ class MemorialReplyServiceImplTest {
         MemorialReplyUpdateRequest request =
                 MemorialReplyUpdateRequest
                         .builder()
-                        .donateSeq(donateSeq)
-                        .replySeq(replySeq)
                         .replyContents("수정 내용")
                         .replyPassword("1234")
                         .build();
@@ -100,7 +97,7 @@ class MemorialReplyServiceImplTest {
 
     @Test
     @DisplayName("추모관 댓글 삭제")
-    void 추모관_댓글_삭제() {
+    public void 추모관_댓글_삭제() {
 
         Integer donateSeq = 1;
         Integer replySeq = 1;
@@ -108,8 +105,6 @@ class MemorialReplyServiceImplTest {
         MemorialReplyDeleteRequest request =
                 MemorialReplyDeleteRequest
                         .builder()
-                        .donateSeq(donateSeq)
-                        .replySeq(replySeq)
                         .replyPassword("1234")
                         .build();
 
@@ -132,7 +127,7 @@ class MemorialReplyServiceImplTest {
 
     @Test
     @DisplayName("추모관 댓글 조회")
-    void 추모관_댓글_조회() {
+    public void 추모관_댓글_조회() {
 
         Integer donateSeq = 1;
         Integer cursor = 1;
@@ -165,7 +160,7 @@ class MemorialReplyServiceImplTest {
 
     @Test
     @DisplayName("추모관 댓글 더보기")
-    void 추모관_댓글_더보기() {
+    public void 추모관_댓글_더보기() {
 
         Integer donateSeq = 1;
         Integer cursor = 1;
