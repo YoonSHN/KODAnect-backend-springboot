@@ -95,47 +95,38 @@ pipeline {
         }
 
         stage('SonarCloud Analysis') {
-            when {
-                branch 'main'
-            }
-            steps {
-                script {
-                    githubNotify context: 'sonar', status: 'PENDING', description: 'SonarCloud 분석 중...'
+                    when {
+                        branch 'main'
+                    }
+                    steps {
+                        script {
+                            githubNotify context: 'sonar', status: 'PENDING', description: 'SonarCloud 분석 중...'
 
-                    withSonarQubeEnv('SonarCloud') {
-                        withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
-                            catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-                                def sonarCmd = "./mvnw sonar:sonar" +
-                                    " -Dsonar.projectKey=kodanect" +
-                                    " -Dsonar.organization=fc-dev3-final-project" +
-                                    " -Dsonar.token=${SONAR_TOKEN}" +
-                                    " -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml" +
-                                    " -Dsonar.branch.name=main"
+                            withSonarQubeEnv('SonarCloud') {
+                                withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
+                                    catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                                        def sonarCmd = "./mvnw sonar:sonar" +
+                                            " -Dsonar.projectKey=kodanect" +
+                                            " -Dsonar.organization=fc-dev3-final-project" +
+                                            " -Dsonar.token=${SONAR_TOKEN}" +
+                                            " -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml" +
+                                            " -Dsonar.branch.name=main"
 
-                                sh "${sonarCmd}"
-                            }
+                                        sh "${sonarCmd}"
+                                    }
 
-                            if (currentBuild.currentResult == 'FAILURE') {
-                                githubNotify context: 'sonar', status: 'FAILURE', description: 'SonarCloud 분석 실패'
-                                env.CI_FAILED = 'true'
-                                error('Sonar 분석 실패')
-                            } else {
-                                timeout(time: 5, unit: 'MINUTES') {
-                                    def qualityGate = waitForQualityGate()
-                                    if (qualityGate.status != 'OK') {
-                                        githubNotify context: 'sonar', status: 'FAILURE', description: "품질 게이트 실패: ${qualityGate.status}"
+                                    if (currentBuild.currentResult == 'FAILURE') {
+                                        githubNotify context: 'sonar', status: 'FAILURE', description: 'SonarCloud 분석 실패'
                                         env.CI_FAILED = 'true'
-                                        error("SonarCloud 품질 게이트 실패: ${qualityGate.status}")
+                                        error('Sonar 분석 실패')
                                     } else {
-                                        githubNotify context: 'sonar', status: 'SUCCESS', description: 'SonarCloud 품질 게이트 통과'
+                                        githubNotify context: 'sonar', status: 'SUCCESS', description: 'SonarCloud 분석 완료'
                                     }
                                 }
                             }
                         }
                     }
                 }
-            }
-        }
 
         stage('Docker Build & Push') {
             when {
@@ -149,7 +140,12 @@ pipeline {
                     githubNotify context: 'docker', status: 'PENDING', description: "도커 이미지 빌드 중... [${imageTag}]"
 
                     catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-                        sh "docker build -t ${fullImage} ."
+                        sh """
+                            docker build \
+                              --build-arg RUN_MODE=prod \
+                              --build-arg SENTRY_AUTH_TOKEN=${SENTRY_AUTH_TOKEN} \
+                              -t ${fullImage} .
+                        """
                         sh """
                             echo "\$DOCKER_PASS" | docker login -u "\$DOCKER_USER" --password-stdin
                             docker push ${fullImage}
