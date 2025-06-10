@@ -140,7 +140,12 @@ pipeline {
                     githubNotify context: 'docker', status: 'PENDING', description: "도커 이미지 빌드 중... [${imageTag}]"
 
                     catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-                        sh "docker build -t ${fullImage} ."
+                        sh """
+                            docker build \
+                              --build-arg RUN_MODE=prod \
+                              --build-arg SENTRY_AUTH_TOKEN=${SENTRY_AUTH_TOKEN} \
+                              -t ${fullImage} .
+                        """
                         sh """
                             echo "\$DOCKER_PASS" | docker login -u "\$DOCKER_USER" --password-stdin
                             docker push ${fullImage}

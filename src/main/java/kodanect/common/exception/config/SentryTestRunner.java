@@ -1,4 +1,4 @@
-package config;
+package kodanect.common.exception.config;
 
 import io.sentry.Sentry;
 import org.springframework.boot.CommandLineRunner;

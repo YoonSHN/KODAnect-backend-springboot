@@ -19,7 +19,10 @@ CMD ["mvn", "spring-boot:run"]
 FROM maven:3.9.6-eclipse-temurin-17 AS builder
 
 ARG RUN_MODE=prod
+ARG SENTRY_AUTH_TOKEN
+
 ENV RUN_MODE=${RUN_MODE}
+ENV SENTRY_AUTH_TOKEN=${SENTRY_AUTH_TOKEN}
 
 WORKDIR /app
 
@@ -32,9 +35,8 @@ RUN mvn dependency:go-offline -B
 
 COPY src ./src
 
-RUN echo "Build mode: $RUN_MODE" && \
-    if [ "$RUN_MODE" = "prod" ]; then \
-      mvn clean package -DskipTests; \
+RUN if [ "$RUN_MODE" = "prod" ]; then \
+      mvn clean package -DskipTests -Dsentry.auth.token=${SENTRY_AUTH_TOKEN}; \
     else \
       echo "Development mode - skipping build"; \
     fi
@@ -54,11 +56,9 @@ COPY src/main/resources/application.properties ./
 COPY src/main/resources/application-${RUN_MODE}.properties ./
 
 ENTRYPOINT ["/bin/sh", "-c", "\
-  echo \"Runtime mode: $RUN_MODE\" && \
   if [ \"$RUN_MODE\" = \"dev\" ]; then \
     echo 'Dev Mode - container is idle, use dev stage to run spring-boot:run'; \
     tail -f /dev/null; \
   else \
-    echo 'Prod Mode - running JAR'; \
     java -Dspring.profiles.active=$RUN_MODE -jar app.jar; \
   fi"]
