@@ -239,8 +239,8 @@ public class RecipientCommentRepositoryTest {
 
         for (Object[] row : commentCounts) {
             Integer letterSeq = (Integer) row[0];
-            // BigInteger로 받은 다음 longValue()를 호출하여 Long으로 변환합니다.
-            Long count = ((Number) row[1]).longValue();
+            // BigInteger로 받은 다음 intValue()를 호출하여 int 로 변환합니다.
+            Integer count = ((Number) row[1]).intValue();
 
             if (letterSeq.equals(recipient1.getLetterSeq())) {
                 assertThat(count).isEqualTo(2L);

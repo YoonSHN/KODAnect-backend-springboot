@@ -95,7 +95,7 @@ public class RecipientCommentServiceImplTest {
     public void insertComment_Success() {
         try (MockedStatic<Jsoup> mockedJsoup = Mockito.mockStatic(Jsoup.class)) {
             // Given
-            int letterSeq = activeRecipient.getLetterSeq();
+            Integer letterSeq = activeRecipient.getLetterSeq();
             RecipientCommentRequestDto requestDto = RecipientCommentRequestDto.builder()
                     .commentContents("<p>새로운 댓글 내용</p>")
                     .commentWriter("새로운 작성자")
@@ -137,7 +137,7 @@ public class RecipientCommentServiceImplTest {
     @Test
     public void insertComment_RecipientNotFound() {
         // Given
-        int letterSeq = 999; // 존재하지 않는 게시물 시퀀스
+        Integer letterSeq = 999; // 존재하지 않는 게시물 시퀀스
 
         when(recipientRepository.findById(letterSeq)).thenReturn(Optional.empty());
 
@@ -156,7 +156,7 @@ public class RecipientCommentServiceImplTest {
     public void insertComment_EmptyContentsAfterCleaning() {
         try (MockedStatic<Jsoup> mockedJsoup = Mockito.mockStatic(Jsoup.class)) {
             // Given
-            int letterSeq = activeRecipient.getLetterSeq();
+            Integer letterSeq = activeRecipient.getLetterSeq();
             RecipientCommentRequestDto requestDto = RecipientCommentRequestDto.builder()
                     .commentContents("<p></p>") // 내용이 없거나 필터링 후 비어질 내용
                     .commentWriter("test")
@@ -188,7 +188,7 @@ public class RecipientCommentServiceImplTest {
     public void updateComment_Success() {
         try (MockedStatic<Jsoup> mockedJsoup = Mockito.mockStatic(Jsoup.class)) {
             // Given
-            int commentSeq = activeComment.getCommentSeq();
+            Integer commentSeq = activeComment.getCommentSeq();
             String newContents = "업데이트된 <br>내용";
             String newWriter = "수정된 작성자";
             String inputPasscode = "pass1234";
@@ -222,7 +222,7 @@ public class RecipientCommentServiceImplTest {
     @Test
     public void updateComment_CommentNotFound() {
         // Given
-        int commentSeq = 999; // 존재하지 않는 댓글
+        Integer commentSeq = 999; // 존재하지 않는 댓글
         String newContents = "내용";
         String newWriter = "작가";
         String inputPasscode = "pass";
@@ -244,7 +244,7 @@ public class RecipientCommentServiceImplTest {
     @Test
     public void updateComment_InvalidPasscode() {
         // Given
-        int commentSeq = activeComment.getCommentSeq();
+        Integer commentSeq = activeComment.getCommentSeq();
         String newContents = "내용";
         String newWriter = "작가";
         String wrongPasscode = "wrongpass"; // 잘못된 비밀번호
@@ -267,7 +267,7 @@ public class RecipientCommentServiceImplTest {
     public void updateComment_EmptyContentsAfterCleaning() {
         try (MockedStatic<Jsoup> mockedJsoup = Mockito.mockStatic(Jsoup.class)) {
             // Given
-            int commentSeq = activeComment.getCommentSeq();
+            Integer commentSeq = activeComment.getCommentSeq();
             String newContents = "<p></p>"; // 필터링 후 비어질 내용
             String newWriter = "작가";
             String inputPasscode = "pass1234";
@@ -296,8 +296,8 @@ public class RecipientCommentServiceImplTest {
     @Test
     public void deleteComment_Success() {
         // Given
-        int letterSeq = activeRecipient.getLetterSeq(); // deleteComment는 letterSeq도 인자로 받음
-        int commentSeq = activeComment.getCommentSeq();
+        Integer letterSeq = activeRecipient.getLetterSeq(); // deleteComment는 letterSeq도 인자로 받음
+        Integer commentSeq = activeComment.getCommentSeq();
         String inputPasscode = "pass1234";
 
         when(recipientCommentRepository.findByCommentSeqAndDelFlag(commentSeq, "N"))
@@ -316,8 +316,8 @@ public class RecipientCommentServiceImplTest {
     @Test
     public void deleteComment_CommentNotFound() {
         // Given
-        int letterSeq = 1;
-        int commentSeq = 999; // 존재하지 않는 댓글
+        Integer letterSeq = 1;
+        Integer commentSeq = 999; // 존재하지 않는 댓글
         String inputPasscode = "pass";
 
         when(recipientCommentRepository.findByCommentSeqAndDelFlag(commentSeq, "N"))
@@ -337,8 +337,8 @@ public class RecipientCommentServiceImplTest {
     @Test
     public void deleteComment_InvalidPasscode() {
         // Given
-        int letterSeq = activeRecipient.getLetterSeq();
-        int commentSeq = activeComment.getCommentSeq();
+        Integer letterSeq = activeRecipient.getLetterSeq();
+        Integer commentSeq = activeComment.getCommentSeq();
         String wrongPasscode = "wrongpass"; // 잘못된 비밀번호
 
         when(recipientCommentRepository.findByCommentSeqAndDelFlag(commentSeq, "N"))

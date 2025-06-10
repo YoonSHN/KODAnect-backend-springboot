@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 public class RecipientDetailResponseDto {
 
-    private int letterSeq;
+    private Integer letterSeq;
     private String organCode;
     private String organEtc;
     private String letterTitle;

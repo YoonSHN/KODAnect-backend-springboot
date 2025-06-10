@@ -31,7 +31,7 @@ public class RecipientEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "letter_seq", nullable = false)
-    private Integer letterSeq;
+    private int letterSeq;
 
     // 장기 구분 코드
     @Column(name = "organ_code", length = 10)

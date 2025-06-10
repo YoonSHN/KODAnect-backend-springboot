@@ -1,7 +1,6 @@
 package kodanect.domain.recipient.controller;
 
 import kodanect.common.response.CursorPaginationResponse;
-import kodanect.common.response.CursorPaginationTotalcountResponse;
 import kodanect.domain.recipient.dto.*;
 import kodanect.domain.recipient.service.RecipientCommentService;
 import kodanect.domain.recipient.service.RecipientService;
@@ -9,6 +8,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
@@ -55,11 +55,23 @@ public class RecipientControllerTest {
         dto.setLetterSeq(1);                       // id 값 세팅
         dto.setLetterTitle("테스트 제목");           // 필요한 필드들 세팅
 
-        CursorPaginationTotalcountResponse<RecipientListResponseDto, Integer> pageResponse =
-                new CursorPaginationTotalcountResponse<>(List.of(dto), 1, true,1);
+        // CursorPaginationResponse의 목(Mock) 객체를 생성합니다.
+        // 이렇게 하면 실제 클래스의 생성자 접근 권한에 구애받지 않습니다.
+        // Mockito.mock()을 사용하면 됩니다.
+        @SuppressWarnings("unchecked") // 타입 안전성 경고를 무시합니다.
+        CursorPaginationResponse<RecipientListResponseDto, Integer> mockPageResponse =
+                Mockito.mock(CursorPaginationResponse.class);
 
+        // 목 객체의 getter 메서드들이 우리가 원하는 값을 반환하도록 설정합니다.
+        // Mockito.when()을 사용합니다.
+        when(mockPageResponse.getContent()).thenReturn(List.of(dto));
+        when(mockPageResponse.getNextCursor()).thenReturn(1);
+        when(mockPageResponse.isHasNext()).thenReturn(true);
+        when(mockPageResponse.getTotalCount()).thenReturn(1L); // totalCount도 설정
+
+        // recipientService.selectRecipientList가 이 목 객체를 반환하도록 설정합니다.
         when(recipientService.selectRecipientList(any(), any(), anyInt()))
-                .thenReturn(pageResponse);
+                .thenReturn(mockPageResponse); // 생성된 목 객체를 반환하도록 변경
 
         mockMvc.perform(get("/recipientLetters")
                         .param("lastId", "0")
@@ -104,7 +116,7 @@ public class RecipientControllerTest {
     //    GET /recipientLetters/{letterSeq} - 특정 게시물 조회
     @Test
     public void testView_Success() throws Exception {
-        int letterSeq = 1;
+        Integer letterSeq = 1;
         RecipientDetailResponseDto dto = new RecipientDetailResponseDto();
         // dto 세팅
 
@@ -122,7 +134,7 @@ public class RecipientControllerTest {
     //    POST /recipientLetters/{letterSeq}/verifyPwd - 비밀번호 인증
     @Test
     public void testVerifyPassword_Success() throws Exception {
-        int letterSeq = 1;
+        Integer letterSeq = 1;
         String passcode = "1234";
 
         when(recipientService.verifyLetterPassword(letterSeq, passcode)).thenReturn(true);
@@ -143,7 +155,7 @@ public class RecipientControllerTest {
     //    PATCH /recipientLetters/{letterSeq} - 게시물 수정 (multipart/form-data)
     @Test
     public void testEdit_Success() throws Exception {
-        int letterSeq = 1;
+        Integer letterSeq = 1;
         RecipientDetailResponseDto updatedDto = new RecipientDetailResponseDto();
         // updatedDto 세팅
 
@@ -172,7 +184,7 @@ public class RecipientControllerTest {
     //    DELETE /recipientLetters/{letterSeq} - 게시물 삭제
     @Test
     public void testDelete_Success() throws Exception {
-        int letterSeq = 1;
+        Integer letterSeq = 1;
         String passcode = "1234";
 
         RecipientDeleteRequestDto requestDto = new RecipientDeleteRequestDto();

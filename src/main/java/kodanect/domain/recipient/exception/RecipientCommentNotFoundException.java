@@ -7,9 +7,9 @@ import static kodanect.common.exception.config.MessageKeys.RECIPIENT_COMMENT_NOT
 
 public class RecipientCommentNotFoundException extends AbstractCustomException {
 
-    private final Integer commentSeq; // 존재하지 않는 댓글 ID
+    private final int commentSeq; // 존재하지 않는 댓글 ID
 
-    public RecipientCommentNotFoundException(Integer commentSeq) {
+    public RecipientCommentNotFoundException(int commentSeq) {
         super(RECIPIENT_COMMENT_NOT_FOUND);
         this.commentSeq = commentSeq;
     }

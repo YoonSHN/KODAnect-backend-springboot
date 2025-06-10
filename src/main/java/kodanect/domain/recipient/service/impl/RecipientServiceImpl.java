@@ -239,7 +239,7 @@ public class RecipientServiceImpl implements RecipientService {
 
     // 특정 게시물 조회
     @Override
-    public RecipientDetailResponseDto selectRecipient(int letterSeq) {
+    public RecipientDetailResponseDto selectRecipient(Integer letterSeq) {
         // 1. 해당 게시물 조회 (삭제되지 않은 게시물만 조회하도록 필터링)
         RecipientEntity recipientEntity = recipientRepository.findByIdWithComments(letterSeq)
                 .filter(entity -> "N".equalsIgnoreCase(entity.getDelFlag()))
@@ -291,7 +291,7 @@ public class RecipientServiceImpl implements RecipientService {
      * @return 커서 기반 페이지네이션 응답 (게시물)
      */
     @Override
-    public CursorPaginationResponse<RecipientListResponseDto, Long> selectRecipientList(
+    public CursorPaginationResponse<RecipientListResponseDto, Integer> selectRecipientList(
             RecipientSearchCondition searchCondition,
             Integer lastId,
             int size) {
@@ -316,26 +316,26 @@ public class RecipientServiceImpl implements RecipientService {
         // 6. 게시물 조회
         List<RecipientEntity> recipientList = recipientRepository.findAll(spec, pageable).getContent(); // Page 객체에서 List 추출
 
+        // 댓글 수 매핑을 위해 getCommentCountMap 메서드 활용 **
+        Map<Integer, Integer> commentCountMap = getCommentCountMap(recipientList);
+
         // 7. RecipientEntity를 RecipientResponseDto로 변환하고 commentCount 필드를 채우기
         List<RecipientListResponseDto> recipientResponseDtos = recipientList.stream()
                 .map(entity -> {
                     RecipientListResponseDto dto = RecipientListResponseDto.fromEntity(entity);
-                    // 엔티티의 comments 컬렉션에서 댓글 수를 가져옵니다.
-                    long activeCommentCount = entity.getComments().stream()
-                            .filter(comment -> "N".equals(comment.getDelFlag()))
-                            .count();
-                    dto.setCommentCount((int) activeCommentCount);
+                    // getCommentCountMap에서 가져온 댓글 수를 사용
+                    dto.setCommentCount(commentCountMap.getOrDefault(entity.getLetterSeq(), 0));
                     return dto;
                 })
                 .toList();
 
         // 8. 검색 조건에 맞는 전체 게시물 총 개수 조회
-        int totalCount = (int) recipientRepository.count(getRecipientSpecification(searchCondition)
+        Integer totalCount = (int) recipientRepository.count(getRecipientSpecification(searchCondition)
                 .and((root, query, cb) -> cb.equal(root.get(DEL_FLAG), "N")) // 전체 개수 셀 때도 delFlag 조건 추가
         );
 
         // 9. CursorFormatter 사용하여 응답 포맷팅
-        return CursorFormatter.cursorFormat(recipientResponseDtos, size, totalCount);
+        return CursorFormatter.<RecipientListResponseDto, Integer>cursorFormat(recipientResponseDtos, size, totalCount);
     }
 
     /**

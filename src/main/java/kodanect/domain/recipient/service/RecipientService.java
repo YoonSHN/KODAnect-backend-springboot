@@ -22,9 +22,9 @@ public interface RecipientService {
     RecipientDetailResponseDto insertRecipient(RecipientRequestDto requestDto);
 
     // 특정 게시물 조회
-    RecipientDetailResponseDto selectRecipient(int letterSeq);
+    RecipientDetailResponseDto selectRecipient(Integer letterSeq);
 
-    CursorPaginationResponse<RecipientListResponseDto, Long> selectRecipientList(
+    CursorPaginationResponse<RecipientListResponseDto, Integer> selectRecipientList(
             RecipientSearchCondition searchCondition,
             Integer lastId,
             int size);

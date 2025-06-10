@@ -80,7 +80,7 @@ public class RecipientController {
             **응답:** `ApiResponse<RecipientDetailResponseDto>`
             */
     @GetMapping("/{letterSeq}")
-    public ResponseEntity<ApiResponse<RecipientDetailResponseDto>> view(@PathVariable("letterSeq") int letterSeq){
+    public ResponseEntity<ApiResponse<RecipientDetailResponseDto>> view(@PathVariable("letterSeq") Integer letterSeq){
         logger.info("게시물 상세 조회 요청: letterSeq={}", letterSeq);
         RecipientDetailResponseDto recipientDto = recipientService.selectRecipient(letterSeq);
         return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, "게시물 조회 성공", recipientDto));
@@ -93,7 +93,7 @@ public class RecipientController {
             **응답:** `ApiResponse<Boolean>`
             */
     @PostMapping("/{letterSeq}/verifyPwd")
-    public ResponseEntity<ApiResponse<Boolean>> verifyPassword(@PathVariable("letterSeq") int letterSeq,
+    public ResponseEntity<ApiResponse<Boolean>> verifyPassword(@PathVariable("letterSeq") Integer letterSeq,
                                                                @RequestBody Map<String, String> requestBody) {
         String letterPasscode = requestBody.get("letterPasscode");
         logger.info("게시물 비밀번호 확인 요청: letterSeq={}", letterSeq);

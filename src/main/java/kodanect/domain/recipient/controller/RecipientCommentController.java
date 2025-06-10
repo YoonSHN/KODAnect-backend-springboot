@@ -30,11 +30,11 @@ public class RecipientCommentController {
 
      **요청:** `GET /recipientLetters/{letterSeq}/comments`
      **파라미터:** `letterSeq` (Path Variable), `lastCommentId`, `size`
-     **응답:** `ApiResponse<CursorReplyPaginationResponse<RecipientCommentResponseDto, Integer>>`
+     **응답:** `ApiResponse<CursorReplyPaginationResponse<RecipientCommentResponseDto, Long>>`
      */
     @GetMapping("/{letterSeq}/comments")
     public ResponseEntity<ApiResponse<CursorReplyPaginationResponse<RecipientCommentResponseDto, Integer>>> getPaginatedCommentsForRecipient(
-            @PathVariable("letterSeq") int letterSeq,
+            @PathVariable("letterSeq") Integer letterSeq,
             @RequestParam(required = false) Integer lastCommentId,
             @RequestParam(defaultValue = "3") int size) {  // **댓글 한 번에 가져올 개수 (기본값 3)**
         logger.info("페이징된 댓글 조회 요청: letterSeq={}, lastCommentId={}, size={}", letterSeq, lastCommentId, size);
@@ -45,7 +45,7 @@ public class RecipientCommentController {
 
     //  댓글 작성
     @PostMapping("/{letterSeq}/comments")
-    public ResponseEntity<ApiResponse<RecipientCommentResponseDto>> writeComment(@PathVariable("letterSeq") int letterSeq,
+    public ResponseEntity<ApiResponse<RecipientCommentResponseDto>> writeComment(@PathVariable("letterSeq") Integer letterSeq,
                                                                                  @Valid @RequestBody RecipientCommentRequestDto requestDto) {
 
         RecipientCommentResponseDto createdComment = recipientCommentService.insertComment(
@@ -58,8 +58,8 @@ public class RecipientCommentController {
 
     // 댓글 수정
     @PutMapping("/{letterSeq}/comments/{commentSeq}")
-    public ResponseEntity<ApiResponse<RecipientCommentResponseDto>> updateComment(@PathVariable("letterSeq") int letterSeq,
-                                                                                  @PathVariable("commentSeq") int commentSeq,
+    public ResponseEntity<ApiResponse<RecipientCommentResponseDto>> updateComment(@PathVariable("letterSeq") Integer letterSeq,
+                                                                                  @PathVariable("commentSeq") Integer commentSeq,
                                                                                   @Valid @RequestBody RecipientCommentRequestDto requestDto) {
         RecipientCommentResponseDto updatedComment = recipientCommentService.updateComment(
                 commentSeq, // 댓글 시퀀스

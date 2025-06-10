@@ -120,7 +120,7 @@ public class RecipientCommentServiceImpl implements RecipientCommentService {
 
     // 댓글 작성
     @Override
-    public RecipientCommentResponseDto insertComment(int letterSeq, RecipientCommentRequestDto requestDto) {
+    public RecipientCommentResponseDto insertComment(Integer letterSeq, RecipientCommentRequestDto requestDto) {
         logger.info("댓글 작성 요청 시작: letterSeq={}", letterSeq);
 
         // 1. 게시물 유효성 확인 (삭제되지 않은 게시물인지) (헬퍼 메서드 사용)
@@ -144,7 +144,7 @@ public class RecipientCommentServiceImpl implements RecipientCommentService {
 
     // 댓글 수정
     @Override
-    public RecipientCommentResponseDto updateComment(int commentSeq, String newContents, String newWriter, String inputPasscode) {
+    public RecipientCommentResponseDto updateComment(Integer commentSeq, String newContents, String newWriter, String inputPasscode) {
         logger.info("댓글 수정 요청 시작: commentSeq={}", commentSeq);
 
         // 1. 삭제되지 않은 기존 댓글 조회 (헬퍼 메서드 사용)
@@ -209,10 +209,10 @@ public class RecipientCommentServiceImpl implements RecipientCommentService {
             predicates.add(cb.equal(root.get(LETTER_SEQ), activeRecipient));
             predicates.add(cb.equal(root.get(DEL_FLAG), "N"));
 
-            // lastCommentId가 null이 아니고 0이 아니면 커서 조건 추가 (commentSeq는 Long 타입이므로 longValue() 사용)
+            // lastCommentId가 null이 아니고 0이 아니면 커서 조건 추가 (commentSeq는 int 타입이므로 intValue() 사용)
             if (lastCommentId != null && lastCommentId != 0) {
                 // 커서 방식에서 commentSeq가 오름차순 정렬이므로, lastCommentId보다 큰 값을 찾습니다.
-                predicates.add(cb.greaterThan(root.get(COMMENT_SEQ), lastCommentId.longValue()));
+                predicates.add(cb.greaterThan(root.get(COMMENT_SEQ), lastCommentId.intValue()));
             }
             return cb.and(predicates.toArray(new Predicate[0]));
         };
