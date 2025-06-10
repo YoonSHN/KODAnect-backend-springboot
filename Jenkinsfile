@@ -120,7 +120,7 @@ pipeline {
                                 env.CI_FAILED = 'true'
                                 error('Sonar 분석 실패')
                             } else {
-                                timeout(time: 10, unit: 'MINUTES') {
+                                timeout(time: 5, unit: 'MINUTES') {
                                     def qualityGate = waitForQualityGate()
                                     if (qualityGate.status != 'OK') {
                                         githubNotify context: 'sonar', status: 'FAILURE', description: "품질 게이트 실패: ${qualityGate.status}"
@@ -185,8 +185,8 @@ pipeline {
                         string(credentialsId: 'github-token-string', variable: 'GITHUB_TOKEN'),
                         usernamePassword(credentialsId: 'server-ssh-login', usernameVariable: 'SSH_USER', passwordVariable: 'SSH_PASS')
                     ]) {
-                        sh '''
-                            cat > .env <<EOF
+                        sh """
+                            cat > .env <<'EOF'
 DB_HOST=${DB_HOST}
 DB_PORT=${DB_PORT}
 DB_NAME=${DB_NAME}
@@ -200,21 +200,28 @@ SENTRY_DSN=${SENTRY_DSN}
 SENTRY_ENVIRONMENT=${SENTRY_ENVIRONMENT}
 EOF
 
-                            sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no $SSH_USER@${SERVER_HOST} 'mkdir -p /root/docker-compose-prod'
+                            sshpass -p "\$SSH_PASS" ssh -o StrictHostKeyChecking=no \$SSH_USER@\${SERVER_HOST} 'mkdir -p /root/docker-compose-prod'
 
-                            sshpass -p "$SSH_PASS" scp -o StrictHostKeyChecking=no .env $SSH_USER@${SERVER_HOST}:/root/docker-compose-prod/.env
+                            sshpass -p "\$SSH_PASS" scp -o StrictHostKeyChecking=no .env \$SSH_USER@\${SERVER_HOST}:/root/docker-compose-prod/.env
 
-                            sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no $SSH_USER@${SERVER_HOST} '
-                                echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                                cd /root/docker-compose-prod || git clone https://github.com/FC-DEV3-Final-Project/KODAnect-backend-springboot.git /root/docker-compose-prod
-                                cd /root/docker-compose-prod && git pull
-                                docker-compose -f docker-compose.prod.yml pull
+                            sshpass -p "\$SSH_PASS" ssh -o StrictHostKeyChecking=no \$SSH_USER@\${SERVER_HOST} '
+                                echo "\$DOCKER_PASS" | docker login -u "\$DOCKER_USER" --password-stdin
+
+                                if [ ! -d /root/docker-compose-prod ]; then
+                                    git clone https://github.com/FC-DEV3-Final-Project/KODAnect-backend-springboot.git /root/docker-compose-prod
+                                else
+                                    cd /root/docker-compose-prod && git pull
+                                fi
+
+                                cd /root/docker-compose-prod &&
+                                docker-compose -f docker-compose.prod.yml pull &&
                                 docker-compose -f docker-compose.prod.yml up -d
-                                rm -f .env
+
+                                rm -f /root/docker-compose-prod/.env
                             '
 
                             rm -f .env
-                        '''
+                        """
 
                         githubNotify context: 'deploy', status: 'SUCCESS', description: "배포 완료 [${imageTag}]"
 
@@ -264,9 +271,9 @@ EOF
                     githubNotify context: 'healthcheck', status: 'PENDING', description: '헬스체크 중...'
 
                     def healthCheckUrl = "http://10.8.110.14:8080/actuator/health"
+
                     def retries = 3
                     def success = false
-
                     for (int i = 0; i < retries; i++) {
                         def response = sh(script: "curl -s -o /dev/null -w '%{http_code}' ${healthCheckUrl}", returnStdout: true).trim()
                         if (response == '200') {
