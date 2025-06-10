@@ -1,6 +1,7 @@
 package kodanect.domain.recipient.controller;
 
 import kodanect.common.response.CursorPaginationResponse;
+import kodanect.common.response.CursorPaginationTotalcountResponse;
 import kodanect.domain.recipient.dto.*;
 import kodanect.domain.recipient.service.RecipientCommentService;
 import kodanect.domain.recipient.service.RecipientService;
@@ -54,8 +55,8 @@ public class RecipientControllerTest {
         dto.setLetterSeq(1);                       // id 값 세팅
         dto.setLetterTitle("테스트 제목");           // 필요한 필드들 세팅
 
-        CursorPaginationResponse<RecipientListResponseDto, Integer> pageResponse =
-                new CursorPaginationResponse<>(List.of(dto), 1, true);
+        CursorPaginationTotalcountResponse<RecipientListResponseDto, Integer> pageResponse =
+                new CursorPaginationTotalcountResponse<>(List.of(dto), 1, true,1);
 
         when(recipientService.selectRecipientList(any(), any(), anyInt()))
                 .thenReturn(pageResponse);
@@ -69,7 +70,8 @@ public class RecipientControllerTest {
                 .andExpect(jsonPath("$.message").value("게시물 목록 조회 성공"))
                 .andExpect(jsonPath("$.data.content").isArray())
                 .andExpect(jsonPath("$.data.content[0].letterSeq").value(1))
-                .andExpect(jsonPath("$.data.content[0].letterTitle").value("테스트 제목"));
+                .andExpect(jsonPath("$.data.content[0].letterTitle").value("테스트 제목"))
+                .andExpect(jsonPath("$.data.totalCount").value(1));
 
         verify(recipientService, times(1)).selectRecipientList(any(), any(), anyInt());
     }

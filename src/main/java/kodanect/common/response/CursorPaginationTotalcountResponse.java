@@ -27,7 +27,7 @@ import java.util.List;
 @Getter
 @Builder
 @AllArgsConstructor
-public class CursorPaginationResponse<T, C> {
+public class CursorPaginationTotalcountResponse<T, C> {
 
     /** 실제 데이터 응답 리스트 */
     private List<T> content;
@@ -38,4 +38,6 @@ public class CursorPaginationResponse<T, C> {
     /** 다음 페이지가 존재하는지 여부 (true면 다음 요청 가능) */
     private boolean hasNext;
 
+    /** 총 게시물(레코드) 개수 */
+    private Integer totalCount;
 }

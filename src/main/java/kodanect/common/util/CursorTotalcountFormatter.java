@@ -1,6 +1,7 @@
 package kodanect.common.util;
 
 import kodanect.common.response.CursorPaginationResponse;
+import kodanect.common.response.CursorPaginationTotalcountResponse;
 import kodanect.common.response.CursorReplyPaginationResponse;
 
 import java.util.List;
@@ -23,9 +24,9 @@ import java.util.List;
  * - 추모관 댓글 목록: cursorReplyFormat()
  */
 
-public class CursorFormatter {
+public class CursorTotalcountFormatter {
 
-    private CursorFormatter() {
+    private CursorTotalcountFormatter() {
         throw new UnsupportedOperationException("Utility class");
     }
 
@@ -34,10 +35,11 @@ public class CursorFormatter {
      *
      * @param responses 전체 응답 대상 목록
      * @param size 클라이언트 요청 size
-     * @return 다음 커서 정보를 포함한 CursorPaginationResponse
+     * @param totalCount 검색 조건에 맞는 전체 게시물(레코드) 개수
+     * @return 다음 커서 정보를 포함한 CursorPaginationTotalcountResponse
      */
 
-    public static <T extends CursorIdentifiable<C>, C>CursorPaginationResponse<T, C> cursorFormat(List<T> responses, int size) {
+    public static <T extends CursorIdentifiable<C>, C> CursorPaginationTotalcountResponse<T, C> cursorFormat(List<T> responses, int size, int totalCount) {
         /* 기본 cursor 포맷 */
         boolean hasNext = responses.size() > size;
 
@@ -45,33 +47,11 @@ public class CursorFormatter {
 
         C nextCursor = hasNext ? content.get(content.size() - 1).getCursorId() : null;
 
-        return CursorPaginationResponse.<T, C>builder()
+        return CursorPaginationTotalcountResponse.<T, C>builder()
                 .content(content)
                 .nextCursor(nextCursor)
                 .hasNext(hasNext)
-                .build();
-    }
-
-    /**
-     * 댓글 목록 응답 포맷 생성
-     *
-     * @param responses 전체 댓글 응답 대상 목록
-     * @param size 클라이언트 요청 size
-     * @return 다음 커서 정보를 포함한 CursorReplyPaginationResponse
-     */
-
-    public static <T extends CursorIdentifiable<C>, C> CursorReplyPaginationResponse<T, C> cursorReplyFormat(List<T> responses, int size) {
-        /* 댓글 cursor 포맷 */
-        boolean hasNext = responses.size() > size;
-
-        List<T> content = responses.stream().limit(size).toList();
-
-        C nextCursor = hasNext ? content.get(content.size() - 1).getCursorId() : null;
-
-        return CursorReplyPaginationResponse.<T, C>builder()
-                .content(content)
-                .replyNextCursor(nextCursor)
-                .replyHasNext(hasNext)
+                .totalCount(totalCount)
                 .build();
     }
 

@@ -143,7 +143,7 @@ public class RecipientCommentServiceImplTest {
 
         // Then
         thrown.expect(RecipientNotFoundException.class);
-        thrown.expectMessage("게시물을 찾을 수 없거나 이미 삭제된 게시물입니다: " + letterSeq);
+        thrown.expectMessage("[수령 대상 없음] recipientId=" + letterSeq);
 
         // When
         recipientCommentService.insertComment(letterSeq, RecipientCommentRequestDto.builder().build());
@@ -232,7 +232,7 @@ public class RecipientCommentServiceImplTest {
 
         // Then
         thrown.expect(RecipientCommentNotFoundException.class);
-        thrown.expectMessage("댓글을 찾을 수 없거나 이미 삭제되었습니다.");
+        thrown.expectMessage("[댓글 없음] commentId=" + commentSeq);
 
         // When
         recipientCommentService.updateComment(commentSeq, newContents, newWriter, inputPasscode);
@@ -316,7 +316,7 @@ public class RecipientCommentServiceImplTest {
     @Test
     public void deleteComment_CommentNotFound() {
         // Given
-        int letterSeq = activeRecipient.getLetterSeq();
+        int letterSeq = 1;
         int commentSeq = 999; // 존재하지 않는 댓글
         String inputPasscode = "pass";
 
@@ -325,7 +325,7 @@ public class RecipientCommentServiceImplTest {
 
         // Then
         thrown.expect(RecipientCommentNotFoundException.class);
-        thrown.expectMessage("댓글을 찾을 수 없거나 이미 삭제되었습니다.");
+        thrown.expectMessage("[댓글 없음] commentId=" + commentSeq);
 
         // When
         recipientCommentService.deleteComment(letterSeq, commentSeq, inputPasscode);

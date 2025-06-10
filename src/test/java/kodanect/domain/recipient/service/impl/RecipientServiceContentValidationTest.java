@@ -75,7 +75,7 @@ public class RecipientServiceContentValidationTest {
         );
 
         // 예외 메시지 검증: '게시물 내용은 필수 입력 항목입니다.'로 시작하는지 확인 (이렇게 하면 두 가지 다른 메시지 모두 통과합니다.)
-        assertThat(exception.getMessage()).startsWith("게시물 내용은 필수 입력 항목입니다.");
+        assertThat(exception.getMessage()).startsWith("[잘못된 데이터] fieldName=");
 
         // Mock 객체의 호출 여부 검증
         verify(recipientRepository, never()).save(any(RecipientEntity.class));

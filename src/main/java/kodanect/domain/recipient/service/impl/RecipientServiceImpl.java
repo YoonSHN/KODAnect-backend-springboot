@@ -1,8 +1,8 @@
 package kodanect.domain.recipient.service.impl;
 
 import kodanect.common.config.GlobalsProperties;
-import kodanect.common.response.CursorPaginationResponse;
-import kodanect.common.util.CursorFormatter;
+import kodanect.common.response.CursorPaginationTotalcountResponse;
+import kodanect.common.util.CursorTotalcountFormatter;
 import kodanect.domain.recipient.dto.*;
 import kodanect.domain.recipient.exception.RecipientInvalidPasscodeException;
 import kodanect.domain.recipient.exception.RecipientInvalidDataException;
@@ -252,7 +252,7 @@ public class RecipientServiceImpl implements RecipientService {
         // 3. Entity를 RecipientDetailResponseDto 변환 (댓글 포함)
         RecipientDetailResponseDto responseDto = RecipientDetailResponseDto.fromEntity(recipientEntity);
 
-        // 4. 댓글 관련 정보 별도 조회 및 DTO에 설정 _ 전체 댓글 수 조회 (NATIVE QUERY 사용)
+        // 4. 댓글 관련 정보 별도 조회 및 DTO에 설정 _ 전체 댓글 수 조회
         Integer totalCommentCount = recipientRepository.countCommentsByLetterSeq(letterSeq);
         if (totalCommentCount == null) {
             totalCommentCount = 0;
@@ -275,7 +275,7 @@ public class RecipientServiceImpl implements RecipientService {
      * @return 커서 기반 페이지네이션 응답 (게시물)
      */
     @Override
-    public CursorPaginationResponse<RecipientListResponseDto, Integer> selectRecipientList(
+    public CursorPaginationTotalcountResponse<RecipientListResponseDto, Integer> selectRecipientList(
             RecipientSearchCondition searchCondition,
             Integer lastId,
             int size) {
@@ -312,8 +312,11 @@ public class RecipientServiceImpl implements RecipientService {
                 })
                 .toList();
 
-        // 9. CursorFormatter를 사용하여 응답 포맷팅
-        return CursorFormatter.cursorFormat(recipientResponseDtos, size);
+        // 9. 검색 조건에 맞는 전체 게시물 총 개수 조회
+        int totalCount = selectRecipientListTotCnt(searchCondition);
+
+        // 10. CursorTotalcountFormatter 사용하여 응답 포맷팅
+        return CursorTotalcountFormatter.cursorFormat(recipientResponseDtos, size, totalCount);
     }
 
     /**

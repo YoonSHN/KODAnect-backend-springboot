@@ -1,7 +1,7 @@
 package kodanect.domain.recipient.controller;
 
 import kodanect.common.response.ApiResponse;
-import kodanect.common.response.CursorPaginationResponse;
+import kodanect.common.response.CursorPaginationTotalcountResponse;
 import kodanect.domain.recipient.dto.*;
 import kodanect.domain.recipient.service.RecipientCommentService;
 import kodanect.domain.recipient.service.RecipientService;
@@ -36,13 +36,13 @@ public class RecipientController {
             **응답:** `ApiResponse<CursorPaginationResponse<RecipientListResponseDto, Integer>>`
             */
     @GetMapping
-    public ResponseEntity<ApiResponse<CursorPaginationResponse<RecipientListResponseDto, Integer>>> getRecipientList(
+    public ResponseEntity<ApiResponse<CursorPaginationTotalcountResponse<RecipientListResponseDto, Integer>>> getRecipientList(
             RecipientSearchCondition searchCondition,
             @RequestParam(required = false) Integer lastId,     // 첫 조회 시 null, 더보기 시 마지막 게시물 ID
             @RequestParam(defaultValue = "20") int size         // 게시물 한 번에 가져올 개수 (기본값 20)**
     ) {
         logger.info("게시물 목록 조회 요청이 수신되었습니다. lastId: {}, size: {}", lastId, size);
-        CursorPaginationResponse<RecipientListResponseDto, Integer> responseData =
+        CursorPaginationTotalcountResponse<RecipientListResponseDto, Integer> responseData =
                 recipientService.selectRecipientList(searchCondition, lastId, size);
 
         return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK,"게시물 목록 조회 성공", responseData));

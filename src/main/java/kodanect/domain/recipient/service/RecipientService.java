@@ -1,6 +1,6 @@
 package kodanect.domain.recipient.service;
 
-import kodanect.common.response.CursorPaginationResponse;
+import kodanect.common.response.CursorPaginationTotalcountResponse;
 import kodanect.domain.recipient.dto.RecipientDetailResponseDto;
 import kodanect.domain.recipient.dto.RecipientListResponseDto;
 import kodanect.domain.recipient.dto.RecipientRequestDto;
@@ -24,7 +24,7 @@ public interface RecipientService {
     // 특정 게시물 조회
     RecipientDetailResponseDto selectRecipient(int letterSeq);
 
-    CursorPaginationResponse<RecipientListResponseDto, Integer> selectRecipientList(
+    CursorPaginationTotalcountResponse<RecipientListResponseDto, Integer> selectRecipientList(
             RecipientSearchCondition searchCondition,
             Integer lastId,
             int size);
