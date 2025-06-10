@@ -1,5 +1,7 @@
 package kodanect.common.util;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 /**
  *
  * 커서 기반 페이징을 위한 공용 식별자 인터페이스.
@@ -14,5 +16,6 @@ public interface CursorIdentifiable<T> {
      *
      * @return 커서 ID 반환
      * */
+    @JsonIgnore
     T getCursorId();
 }

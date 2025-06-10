@@ -111,6 +111,11 @@ public class MemorialDetailResponse {
         return FormatUtils.formatDonateDate(this.donateDate);
     }
 
+    /** 2020-12-13T02:11:12 -> 2020-12-13 형식 변경 */
+    public String getWriteTime() {
+        return writeTime.toLocalDate().toString();
+    }
+
     /** 기증자 상세 조회 객체 생성 메서드 */
     public static MemorialDetailResponse of(
             Memorial memorial, List<MemorialReplyResponse> replies,
