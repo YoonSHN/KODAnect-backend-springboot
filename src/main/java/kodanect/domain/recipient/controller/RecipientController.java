@@ -3,7 +3,6 @@ package kodanect.domain.recipient.controller;
 import kodanect.common.response.ApiResponse;
 import kodanect.common.response.CursorPaginationResponse;
 import kodanect.domain.recipient.dto.*;
-import kodanect.domain.recipient.service.RecipientCommentService;
 import kodanect.domain.recipient.service.RecipientService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
