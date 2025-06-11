@@ -242,6 +242,14 @@ public class MemorialReplyServiceImpl implements MemorialReplyService {
         return CursorFormatter.cursorReplyFormat(memorialReplyResponses, size);
     }
 
+    /**
+     *
+     * 기증자 추모관 상세 게시글 댓글 총 갯수 반환 메서드
+     *
+     * @param donateSeq 상세 게시글 번호
+     * @return 조건에 맞는 댓글 총 갯수
+     *
+     * */
     public long getTotalReplyCount(Integer donateSeq) {
         return memorialReplyRepository.countByDonateSeq(donateSeq);
     }

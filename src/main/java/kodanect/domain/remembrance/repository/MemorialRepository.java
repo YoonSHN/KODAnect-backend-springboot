@@ -32,9 +32,10 @@ public interface MemorialRepository extends JpaRepository<Memorial, Integer> {
         value = """
             SELECT new kodanect.domain.remembrance.dto.MemorialResponse
                     (m.donateSeq, m.donorName, m.anonymityFlag, m.donateDate,m.genderFlag, m.donateAge,
-                            (SELECT COUNT(r) FROM MemorialReply r WHERE m.donateSeq = r.donateSeq))
+                    (SELECT COUNT(r) FROM MemorialReply r WHERE m.donateSeq = r.donateSeq))
             FROM Memorial m
-            WHERE m.delFlag = 'N' AND (:cursor IS NULL OR m.donateSeq < :cursor)
+            WHERE m.delFlag = 'N'
+                    AND (:cursor IS NULL OR m.donateSeq < :cursor)
             ORDER BY m.donateDate DESC
         """
     )
@@ -46,7 +47,7 @@ public interface MemorialRepository extends JpaRepository<Memorial, Integer> {
      *
      * @param startDate 시작 일
      * @param endDate 종료 일
-     * @param searchWord 검색 문자 (%검색어%)
+     * @param keyWord 검색 문자 (%검색어%)
      * @param cursor 조회할 댓글 페이지 번호(이 ID보다 작은 번호의 댓글을 조회)
      * @param pageable 최대 결과 개수 등 페이징 정보
      * @return 조건에 맞는 게시글 리스트(최신순)
@@ -55,10 +56,12 @@ public interface MemorialRepository extends JpaRepository<Memorial, Integer> {
         value = """
             SELECT new kodanect.domain.remembrance.dto.MemorialResponse
                     (m.donateSeq, m.donorName, m.anonymityFlag, m.donateDate, m.genderFlag, m.donateAge,
-                            (SELECT COUNT(r) FROM MemorialReply r WHERE m.donateSeq = r.donateSeq))
+                    (SELECT COUNT(r) FROM MemorialReply r WHERE m.donateSeq = r.donateSeq))
             FROM Memorial m
-            WHERE m.delFlag = 'N' AND (:cursor IS NULL OR m.donateSeq < :cursor)
-                    AND m.donateDate BETWEEN :startDate AND :endDate AND m.donorName LIKE :searchWord
+            WHERE m.delFlag = 'N'
+                    AND (:cursor IS NULL OR m.donateSeq < :cursor)
+                    AND m.donateDate BETWEEN :startDate AND :endDate
+                    AND m.donorName LIKE :keyWord
             ORDER BY m.donateDate DESC
         """
     )
@@ -67,7 +70,7 @@ public interface MemorialRepository extends JpaRepository<Memorial, Integer> {
             Pageable pageable,
             @Param("startDate") String startDate,
             @Param("endDate") String endDate,
-            @Param("searchWord") String searchWord);
+            @Param("keyWord") String keyWord);
 
     /** 기증자 추모관 이모지 카운팅(Flower) */
     @Modifying
