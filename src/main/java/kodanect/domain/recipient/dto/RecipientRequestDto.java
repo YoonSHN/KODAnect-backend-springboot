@@ -65,10 +65,6 @@ public class RecipientRequestDto {
     // 첨부파일 (MultipartFile 형태로 직접 파일을 받습니다.)
     private MultipartFile imageFile;
 
-    // --- CAPTCHA 인증 토큰 추가 (클라이언트로부터 받음) ---
-    @NotBlank(message = "캡챠 토큰은 필수입니다.")
-    private String captchaToken;
-
     // RequestDto를 Entity로 변환하는 헬퍼 메서드 (등록 시)
     public RecipientEntity toEntity() {
         return RecipientEntity.builder()

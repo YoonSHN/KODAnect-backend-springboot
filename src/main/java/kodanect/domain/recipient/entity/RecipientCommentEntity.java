@@ -26,7 +26,7 @@ public class RecipientCommentEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "comment_seq", nullable = false) // 명시적 컬럼명 지정 (DB와 매핑)
-    private Integer commentSeq;
+    private int commentSeq;
 
     // 수혜자 편지 일련번호 (부모 엔티티 참조)
     @ManyToOne(fetch = FetchType.LAZY)
