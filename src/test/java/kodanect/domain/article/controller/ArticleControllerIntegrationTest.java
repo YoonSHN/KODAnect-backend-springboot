@@ -133,8 +133,8 @@ class ArticleControllerIntegrationTest {
     void getArticles() throws Exception {
         mockMvc.perform(get("/newKoda/notices")
                         .param("optionStr", "1")
-                        .param("searchField", "title")
-                        .param("search", "트랜잭션")
+                        .param("type", "title")
+                        .param("keyword", "트랜잭션")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.content[0].title").value("트랜잭션 테스트"))
@@ -145,8 +145,8 @@ class ArticleControllerIntegrationTest {
     @DisplayName("사전정보 게시판 게시글 목록 조회")
     void getOtherBoardArticles() throws Exception {
         mockMvc.perform(get("/newKoda/makePublic")
-                        .param("searchField", "title")
-                        .param("search", "사전정보공개")
+                        .param("type", "title")
+                        .param("keyword", "사전정보공개")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.content[0].title").value("사전정보공개 제목"))
