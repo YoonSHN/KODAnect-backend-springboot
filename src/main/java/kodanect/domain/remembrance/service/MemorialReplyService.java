@@ -1,7 +1,6 @@
 package kodanect.domain.remembrance.service;
 
 import kodanect.common.response.CursorReplyPaginationResponse;
-import kodanect.domain.remembrance.dto.MemorialReplyDeleteRequest;
 import kodanect.domain.remembrance.dto.MemorialReplyResponse;
 import kodanect.domain.remembrance.dto.MemorialReplyCreateRequest;
 import kodanect.domain.remembrance.dto.MemorialReplyUpdateRequest;
@@ -43,10 +42,10 @@ public interface MemorialReplyService {
      *
      * @param donateSeq 상세 게시글 번호
      * @param replySeq 댓글 번호
-     * @param memorialReplyDeleteRequest 댓글 삭제 요청 dto
+     * @param password 입력한 비밀번호
      *
      * */
-    void deleteReply(Integer donateSeq, Integer replySeq, MemorialReplyDeleteRequest memorialReplyDeleteRequest)
+    void deleteReply(Integer donateSeq, Integer replySeq, String password)
             throws  ReplyPasswordMismatchException,
                     MemorialReplyNotFoundException,
                     MemorialNotFoundException,
@@ -85,4 +84,15 @@ public interface MemorialReplyService {
      * 
      * */
     long getTotalReplyCount(Integer donateSeq);
+
+    /**
+     *
+     * 기증자 추모관 비밀번호 인증 메서드
+     *
+     * @param donateSeq 상세 게시글 번호
+     * @param replySeq 댓글 번호
+     * @param password 입력한 비밀번호
+     *
+     * */
+    void verifyReplyPassword(Integer donateSeq, Integer replySeq, String password);
 }
