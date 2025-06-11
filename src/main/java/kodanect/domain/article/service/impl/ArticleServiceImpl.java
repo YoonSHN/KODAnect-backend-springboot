@@ -59,9 +59,20 @@ public class ArticleServiceImpl implements ArticleService {
 
         articleRepository.increaseHitCount(boardCode, articleSeq);
 
-        Article article = articleRepository.findWithFilesByBoardCodeAndArticleSeq(boardCode, articleSeq)
+        Article article = articleRepository.findByIdBoardCodeAndIdArticleSeq(boardCode, articleSeq)
                 .orElseThrow(() -> new ArticleNotFoundException(articleSeq));
 
-        return ArticleDetailDto.fromArticleDetailDto(article);
+        Article prev = articleRepository.findFirstByIdBoardCodeAndIdArticleSeqLessThanAndDelFlagOrderByIdArticleSeqDesc(boardCode, articleSeq, "N").orElse(null);
+        Article next = articleRepository.findFirstByIdBoardCodeAndIdArticleSeqGreaterThanAndDelFlagOrderByIdArticleSeqAsc(boardCode, articleSeq, "N").orElse(null);
+
+        ArticleDetailDto.AdjacentArticleDto prevDto = prev != null
+                ? ArticleDetailDto.AdjacentArticleDto.from(prev)
+                : ArticleDetailDto.AdjacentArticleDto.noPrev();
+
+        ArticleDetailDto.AdjacentArticleDto nextDto = next != null
+                ? ArticleDetailDto.AdjacentArticleDto.from(next)
+                : ArticleDetailDto.AdjacentArticleDto.noNext();
+
+        return ArticleDetailDto.fromArticleDetailDto(article, prevDto, nextDto);
     }
 }
