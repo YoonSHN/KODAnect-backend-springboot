@@ -27,6 +27,6 @@ public class MemorialReplyPasswordRequest {
 
     /* 댓글 비밀번호 */
     @NotBlank(message = REPLY_PASSWORD_EMPTY, groups = BlankGroup.class)
-    @Pattern(regexp = "^[a-zA-Z0-9]{8,16}$", message = REPLY_PASSWORD_INVALID, groups = Pattern.class)
+    @Pattern(regexp = "^[a-zA-Z0-9]{8,16}$", message = REPLY_PASSWORD_INVALID, groups = PatternGroup.class)
     private String replyPassword;
 }
