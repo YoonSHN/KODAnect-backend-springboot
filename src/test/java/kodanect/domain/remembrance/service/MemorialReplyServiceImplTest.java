@@ -74,6 +74,7 @@ public class MemorialReplyServiceImplTest {
         MemorialReplyUpdateRequest request =
                 MemorialReplyUpdateRequest
                         .builder()
+                        .replyWriter("홍길동")
                         .replyContents("수정 내용")
                         .replyPassword("1234")
                         .build();
@@ -83,6 +84,7 @@ public class MemorialReplyServiceImplTest {
                         .builder()
                         .donateSeq(donateSeq)
                         .replySeq(replySeq)
+                        .replyWriter("홍길동")
                         .replyContents("안바뀐 내용")
                         .replyPassword("1234")
                         .build();
@@ -92,7 +94,7 @@ public class MemorialReplyServiceImplTest {
 
         memorialReplyService.updateReply(donateSeq, replySeq, request);
 
-        verify(memorialReplyRepository, times(1)).updateReplyContents(replySeq,"수정 내용");
+        verify(memorialReplyRepository, times(1)).updateReplyContents(replySeq,"수정 내용", "홍길동");
     }
 
     @Test
@@ -153,7 +155,7 @@ public class MemorialReplyServiceImplTest {
         assertEquals(1, page.get(0).getReplySeq());
         assertEquals("작성자", page.get(0).getReplyWriter());
         assertEquals("내용입니다",  page.get(0).getReplyContents());
-        assertEquals(LocalDateTime.of(2024,6,1,10,0), page.get(0).getReplyWriteTime());
+        assertEquals("2024-06-01", page.get(0).getReplyWriteTime());
 
         verify(memorialReplyRepository, times(1)).findByCursor(eq(donateSeq), eq(cursor), any(Pageable.class));
     }
@@ -186,7 +188,7 @@ public class MemorialReplyServiceImplTest {
         assertEquals(1, content.get(0).getReplySeq());
         assertEquals("작성자", content.get(0).getReplyWriter());
         assertEquals("내용입니다",  content.get(0).getReplyContents());
-        assertEquals(LocalDateTime.of(2024,6,1,10,0), content.get(0).getReplyWriteTime());
+        assertEquals("2024-06-01", content.get(0).getReplyWriteTime());
 
         verify(memorialReplyRepository, times(1)).findByCursor(eq(donateSeq), eq(cursor), any(Pageable.class));
     }

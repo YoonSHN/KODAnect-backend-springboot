@@ -1,5 +1,6 @@
 package kodanect.common.exception.config;
 
+import io.sentry.Sentry;
 import kodanect.common.response.ApiResponse;
 import kodanect.domain.donation.exception.BadRequestException;
 import kodanect.domain.donation.exception.DonationNotFoundException;
@@ -207,6 +208,7 @@ public class GlobalExcepHndlr {
     @ExceptionHandler(IOException.class)
     public ResponseEntity<ApiResponse<Void>> handleIOException(IOException ex) {
         log.error("파일 처리 중 IOException 발생", ex);
+        Sentry.captureException(ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ApiResponse.fail(HttpStatus.INTERNAL_SERVER_ERROR, "파일 처리 중 오류가 발생했습니다."));
     }
@@ -214,7 +216,7 @@ public class GlobalExcepHndlr {
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ApiResponse<Void>> handleRuntimeException(RuntimeException ex) {
         log.error("Unhandled exception: ", ex);
-
+        Sentry.captureException(ex);
         String message = messageSourceAccessor.getMessage("error.internal"); // ← 이 줄이 핵심
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -229,6 +231,7 @@ public class GlobalExcepHndlr {
     public ResponseEntity<ApiResponse<Void>> handleInternalServerError(Exception ex) {
         log.error("Unhandled exception: ", ex);
         String msg = messageSourceAccessor.getMessage("error.internal", "서버 내부 오류가 발생했습니다.");
+        Sentry.captureException(ex);
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ApiResponse.fail(HttpStatus.INTERNAL_SERVER_ERROR, msg));
