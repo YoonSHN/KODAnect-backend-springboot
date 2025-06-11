@@ -1,7 +1,6 @@
 package kodanect.domain.recipient.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import kodanect.common.response.CursorReplyPaginationResponse;
 import kodanect.domain.recipient.entity.RecipientEntity;
 import lombok.AllArgsConstructor;
@@ -28,10 +27,10 @@ public class RecipientDetailResponseDto {
     private String letterContents;
     private String fileName;
     private String orgFileName;
-    @JsonIgnore
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDateTime writeTime;
     private String writerId;
-    @JsonIgnore
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDateTime modifyTime;
     private String modifierId;
     private String delFlag;
@@ -40,16 +39,6 @@ public class RecipientDetailResponseDto {
     private String imageUrl;         // 게시물에 등록된 이미지의 URL
     // 게시물 조회 시 초기 댓글 데이터를 CursorReplyPaginationResponse 형태로 포함
     private CursorReplyPaginationResponse<RecipientCommentResponseDto, Integer> initialCommentData;
-
-    @JsonProperty("writeTime")
-    public String getWriteTimeFormatted() {
-        return writeTime != null ? writeTime.toLocalDate().toString() : null;
-    }
-
-    @JsonProperty("modifyTime")
-    public String getModifyTimeFormatted() {
-        return modifyTime != null ? modifyTime.toLocalDate().toString() : null;
-    }
 
     // Entity -> DTO 변환 메서드 (정적 팩토리 메서드)
     public static RecipientDetailResponseDto fromEntity(RecipientEntity entity) {
