@@ -16,6 +16,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.filter.HiddenHttpMethodFilter;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -91,7 +92,13 @@ public class RecipientControllerTest {
     //    POST /recipientLetters - 게시물 등록 테스트 (multipart/form-data)
     @Test
     public void testWrite_Success() throws Exception {
+        Integer letterSeq = 1;
         RecipientDetailResponseDto responseDto = new RecipientDetailResponseDto();
+        responseDto.setLetterSeq(letterSeq);
+        responseDto.setLetterTitle("테스트 게시물 제목");
+        responseDto.setLetterContents("테스트 게시물 내용입니다.");
+        responseDto.setWriteTime(LocalDateTime.now());
+        responseDto.setModifyTime(LocalDateTime.now());
         // 필요한 필드 세팅
 
         when(recipientService.insertRecipient(any(RecipientRequestDto.class)))
@@ -117,8 +124,13 @@ public class RecipientControllerTest {
     @Test
     public void testView_Success() throws Exception {
         Integer letterSeq = 1;
-        RecipientDetailResponseDto dto = new RecipientDetailResponseDto();
         // dto 세팅
+        RecipientDetailResponseDto dto = new RecipientDetailResponseDto();
+        dto.setLetterSeq(letterSeq);
+        dto.setLetterTitle("테스트 게시물 제목");
+        dto.setLetterContents("테스트 게시물 내용입니다.");
+        dto.setWriteTime(LocalDateTime.now());
+        dto.setModifyTime(LocalDateTime.now());
 
         when(recipientService.selectRecipient(letterSeq)).thenReturn(dto);
 
@@ -157,6 +169,11 @@ public class RecipientControllerTest {
     public void testEdit_Success() throws Exception {
         Integer letterSeq = 1;
         RecipientDetailResponseDto updatedDto = new RecipientDetailResponseDto();
+        updatedDto.setLetterSeq(letterSeq);
+        updatedDto.setLetterTitle("테스트 게시물 제목");
+        updatedDto.setLetterContents("테스트 게시물 내용입니다.");
+        updatedDto.setWriteTime(LocalDateTime.now());
+        updatedDto.setModifyTime(LocalDateTime.now());
         // updatedDto 세팅
 
         when(recipientService.updateRecipient(anyInt(), anyString(), any(RecipientRequestDto.class)))

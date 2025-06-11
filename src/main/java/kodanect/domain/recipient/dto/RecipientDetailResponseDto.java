@@ -35,7 +35,7 @@ public class RecipientDetailResponseDto {
     private boolean hasMoreComments; // 추가 댓글이 있는지 여부
     private String imageUrl;         // 게시물에 등록된 이미지의 URL
     // 게시물 조회 시 초기 댓글 데이터를 CursorReplyPaginationResponse 형태로 포함
-    private CursorReplyPaginationResponse<RecipientCommentResponseDto, Integer> initialCommentData;
+    private CursorReplyPaginationResponse<RecipientCommentResponseDto, Integer> recipientCommentData;
 
     /** 2020-12-13T02:11:12 -> 2020-12-13 형식 변경 */
     public String getWriteTime() {
@@ -69,11 +69,11 @@ public class RecipientDetailResponseDto {
                 .hasMoreComments(false)
                 .imageUrl(entity.getFileName()) // RecipientEntity의 fileName을 이미지 URL로 활용
                 // 초기에는 댓글 데이터를 비워두고, 서비스 계층에서 설정
-                .initialCommentData(null) // 초기화 시 null 또는 기본 빈 객체
+                .recipientCommentData(null) // 초기화 시 null 또는 기본 빈 객체
                 .build();
     }
     // 서비스 계층에서 초기 댓글 데이터를 설정하기 위한 setter
-    public void setInitialCommentData(CursorReplyPaginationResponse<RecipientCommentResponseDto, Integer> initialCommentData) {
-        this.initialCommentData = initialCommentData;
+    public void setRecipientCommentData(CursorReplyPaginationResponse<RecipientCommentResponseDto, Integer> recipientCommentData) {
+        this.recipientCommentData = recipientCommentData;
     }
 }

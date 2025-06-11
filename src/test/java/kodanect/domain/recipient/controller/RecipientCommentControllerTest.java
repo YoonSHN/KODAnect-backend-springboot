@@ -19,6 +19,8 @@ import org.springframework.context.support.MessageSourceAccessor;
 import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+
+import java.time.LocalDateTime;
 import java.util.List;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doNothing;
@@ -53,6 +55,8 @@ class RecipientCommentControllerTest {
         RecipientCommentResponseDto comment = new RecipientCommentResponseDto();
         comment.setCommentSeq(1);
         comment.setCommentContents("테스트 댓글");
+        comment.setWriteTime(LocalDateTime.now());
+        comment.setModifyTime(LocalDateTime.now());
         // 필요한 필드 셋팅 추가
 
         CursorReplyPaginationResponse<RecipientCommentResponseDto, Integer> pageResponse =
@@ -70,7 +74,8 @@ class RecipientCommentControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.content[0].commentSeq").value(1))
-                .andExpect(jsonPath("$.data.content[0].commentContents").value("테스트 댓글"));
+                .andExpect(jsonPath("$.data.content[0].commentContents").value("테스트 댓글"))
+                .andExpect(jsonPath("$.data.content[0].writeTime").exists());
     }
 
     @Test
@@ -85,6 +90,8 @@ class RecipientCommentControllerTest {
         responseDto.setCommentSeq(1);
         responseDto.setCommentContents("새 댓글");
         responseDto.setCommentWriter("작성자");
+        responseDto.setWriteTime(LocalDateTime.now());
+        responseDto.setModifyTime(LocalDateTime.now());
 
         given(recipientCommentService.insertComment(1, requestDto)).willReturn(responseDto);
 
@@ -109,6 +116,8 @@ class RecipientCommentControllerTest {
         responseDto.setCommentSeq(1);
         responseDto.setCommentContents("수정된 댓글");
         responseDto.setCommentWriter("작성자");
+        responseDto.setWriteTime(LocalDateTime.now());
+        responseDto.setModifyTime(LocalDateTime.now());
 
         given(recipientCommentService.updateComment(
                 1,

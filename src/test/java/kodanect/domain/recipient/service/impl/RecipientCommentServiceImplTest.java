@@ -143,7 +143,7 @@ public class RecipientCommentServiceImplTest {
 
         // Then
         thrown.expect(RecipientNotFoundException.class);
-        thrown.expectMessage("[수령 대상 없음] recipientId=" + letterSeq);
+        thrown.expectMessage("[대상 없음] recipientId=" + letterSeq);
 
         // When
         recipientCommentService.insertComment(letterSeq, RecipientCommentRequestDto.builder().build());

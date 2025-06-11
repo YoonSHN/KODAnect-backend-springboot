@@ -274,7 +274,7 @@ public class RecipientServiceImpl implements RecipientService {
                 CursorFormatter.cursorReplyFormat(initialCommentDtos, INITIAL_COMMENT_LOAD_LIMIT); // 실제 클라이언트 요청 size는 INITIAL_COMMENT_LOAD_LIMIT
 
         // 7. DTO에 댓글 관련 데이터 설정
-        responseDto.setInitialCommentData(commentPaginationResponse);
+        responseDto.setRecipientCommentData(commentPaginationResponse);
 
         return responseDto;
     }
