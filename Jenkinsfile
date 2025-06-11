@@ -194,11 +194,11 @@ SENTRY_DSN=${SENTRY_DSN}
 SENTRY_ENVIRONMENT=${SENTRY_ENVIRONMENT}
 EOF
 
-                            sshpass -p "\$SSH_PASS" ssh -o StrictHostKeyChecking=no \$SSH_USER@\${SERVER_HOST} 'mkdir -p /root/docker-compose-prod'
-
-                            sshpass -p "\$SSH_PASS" scp -o StrictHostKeyChecking=no .env \$SSH_USER@\${SERVER_HOST}:/root/docker-compose-prod/.env
-
                             sshpass -p "\$SSH_PASS" ssh -o StrictHostKeyChecking=no \$SSH_USER@\${SERVER_HOST} '
+                                set -a
+                                source /root/docker-compose-prod/.env
+                                set +a
+
                                 echo "\$DOCKER_PASS" | docker login -u "\$DOCKER_USER" --password-stdin
 
                                 if [ ! -d /root/docker-compose-prod ]; then
@@ -234,17 +234,40 @@ EOF
                               -d '{"version": "kodanect@${imageTag}", "projects": ["java-spring-boot"]}'
                         """
 
-                        def status = sh(script: """
-                            curl -s -o /dev/null -w "%{http_code}" https://sentry.io/api/.../commits/ \
-                              -X PUT \
-                              -H "Authorization: Bearer ${SENTRY_AUTH_TOKEN}" \
-                              -H "Content-Type: application/json" \
-                              -d '{"commits": [{"commit": "${GIT_COMMIT}", "repository": "FC-DEV3-Final-Project/KODAnect-backend-springboot"}]}'
-                        """, returnStatus: true)
+                        def sentryOrg = "my-sentry-3h"
+                        def sentryRepo = "FC-DEV3-Final-Project/KODAnect-backend-springboot"
+                        def releaseVersion = "kodanect@${imageTag}"
 
-                        if (status != 200) {
-                            echo "Sentry 커밋 연동 실패 (HTTP ${status})"
+                        def sentryCommitUrl = "https://sentry.io/api/0/organizations/${sentryOrg}/releases/${releaseVersion}/commits/"
+                        def GIT_COMMIT = sh(script: "git rev-parse HEAD", returnStdout: true).trim()
+                        def commitPayload = """
+                        {
+                          "commits": [
+                            {
+                              "commit": "${GIT_COMMIT}",
+                              "repository": "${sentryRepo}"
+                            }
+                          ]
                         }
+                        """
+
+                        catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
+                            def status = sh(
+                                script: """curl -s -o /dev/null -w "%{http_code}" '${sentryCommitUrl}' \\
+                                    -X PUT \\
+                                    -H 'Authorization: Bearer ${SENTRY_AUTH_TOKEN}' \\
+                                    -H 'Content-Type: application/json' \\
+                                    -d '${commitPayload.replaceAll("\n", "").trim()}'""",
+                                returnStdout: true
+                            ).trim()
+
+                            if (status != '200') {
+                                echo "Sentry 커밋 연동 실패 (HTTP ${status}) - 무시하고 계속 진행합니다."
+                            } else {
+                                echo "Sentry 커밋 연동 성공"
+                            }
+                        }
+
 
                         if (currentBuild.currentResult == 'FAILURE') {
                             githubNotify context: 'deploy', status: 'FAILURE', description: '배포 실패'
