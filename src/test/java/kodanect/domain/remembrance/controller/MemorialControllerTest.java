@@ -176,15 +176,15 @@ class MemorialControllerTest {
                 .andExpect(jsonPath("$.data.proudCount").value(5))
                 .andExpect(jsonPath("$.data.hardCount").value(6))
                 .andExpect(jsonPath("$.data.sadCount").value(7))
-                .andExpect(jsonPath("$.data.writeTime").value("2024-01-01T12:00:00"))
+                .andExpect(jsonPath("$.data.writeTime").value("2024-01-01"))
                 .andExpect(jsonPath("$.data.memorialReplyResponses[0].replySeq").value(1))
                 .andExpect(jsonPath("$.data.memorialReplyResponses[0].replyWriter").value("홍길동"))
                 .andExpect(jsonPath("$.data.memorialReplyResponses[0].replyContents").value("안녕하세요"))
-                .andExpect(jsonPath("$.data.memorialReplyResponses[0].replyWriteTime").value("2024-01-01T12:00:00"))
+                .andExpect(jsonPath("$.data.memorialReplyResponses[0].replyWriteTime").value("2024-01-01"))
                 .andExpect(jsonPath("$.data.memorialReplyResponses[1].replySeq").value(2))
                 .andExpect(jsonPath("$.data.memorialReplyResponses[1].replyWriter").value("김길동"))
                 .andExpect(jsonPath("$.data.memorialReplyResponses[1].replyContents").value("잘가세요"))
-                .andExpect(jsonPath("$.data.memorialReplyResponses[1].replyWriteTime").value("2022-01-01T12:00:00"))
+                .andExpect(jsonPath("$.data.memorialReplyResponses[1].replyWriteTime").value("2022-01-01"))
                 .andExpect(jsonPath("$.data.memorialReplyResponses.length()").value(2));
 
 
