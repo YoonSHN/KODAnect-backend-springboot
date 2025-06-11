@@ -136,7 +136,7 @@ public class ArticleServiceImplTest {
                 .writerId("관리자")
                 .build();
 
-        when(articleRepository.findWithFilesByBoardCodeAndArticleSeq("7", 1))
+        when(articleRepository.findByIdBoardCodeAndIdArticleSeq("7", 1))
                 .thenReturn(Optional.of(article));
 
         // when
@@ -151,7 +151,7 @@ public class ArticleServiceImplTest {
     @Test(expected = ArticleNotFoundException.class)
     public void getArticle_notExistArticle_throwException() {
         // given
-        when(articleRepository.findWithFilesByBoardCodeAndArticleSeq("7", 999))
+        when(articleRepository.findByIdBoardCodeAndIdArticleSeq("7", 999))
                 .thenReturn(Optional.empty());
 
         // when
@@ -180,7 +180,7 @@ public class ArticleServiceImplTest {
                 .files(List.of(file))
                 .build();
 
-        when(articleRepository.findWithFilesByBoardCodeAndArticleSeq("7", 1))
+        when(articleRepository.findByIdBoardCodeAndIdArticleSeq("7", 1))
                 .thenReturn(Optional.of(article));
 
         // when

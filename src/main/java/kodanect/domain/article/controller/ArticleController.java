@@ -52,7 +52,7 @@ public class ArticleController {
     private ResponseEntity<ApiResponse<Page<? extends ArticleDTO>>> getArticlesCommon(
             List<String> boardCodes, SearchCondition condition, Pageable pageable) {
 
-        Page<? extends ArticleDTO> articles = service.getArticles(boardCodes, condition.getSearchField(), condition.getSearch(), pageable);
+        Page<? extends ArticleDTO> articles = service.getArticles(boardCodes, condition.getType(), condition.getKeyWord(), pageable);
         String message = messageSourceAccessor.getMessage(ARTICLE_LIST_SUCCESS);
         return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, message, articles));
     }

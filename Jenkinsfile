@@ -234,14 +234,16 @@ EOF
                               -d '{"version": "kodanect@${imageTag}", "projects": ["java-spring-boot"]}'
                         """
 
-                        catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
-                            sh """
-                                curl https://sentry.io/api/0/organizations/my-sentry-3h/releases/kodanect@${imageTag}/commits/ \\
-                                  -X POST \\
-                                  -H "Authorization: Bearer ${SENTRY_AUTH_TOKEN}" \\
-                                  -H "Content-Type: application/json" \\
-                                  -d '{"commits": [{"commit": "${GIT_COMMIT}", "repository": "FC-DEV3-Final-Project/KODAnect-backend-springboot"}]}'
-                            """
+                        def status = sh(script: """
+                            curl -s -o /dev/null -w "%{http_code}" https://sentry.io/api/.../commits/ \
+                              -X PUT \
+                              -H "Authorization: Bearer ${SENTRY_AUTH_TOKEN}" \
+                              -H "Content-Type: application/json" \
+                              -d '{"commits": [{"commit": "${GIT_COMMIT}", "repository": "FC-DEV3-Final-Project/KODAnect-backend-springboot"}]}'
+                        """, returnStatus: true)
+
+                        if (status != 200) {
+                            echo "Sentry 커밋 연동 실패 (HTTP ${status})"
                         }
 
                         if (currentBuild.currentResult == 'FAILURE') {
