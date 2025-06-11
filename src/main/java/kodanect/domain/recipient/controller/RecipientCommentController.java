@@ -35,11 +35,11 @@ public class RecipientCommentController {
     @GetMapping("/{letterSeq}/comments")
     public ResponseEntity<ApiResponse<CursorReplyPaginationResponse<RecipientCommentResponseDto, Integer>>> getPaginatedCommentsForRecipient(
             @PathVariable("letterSeq") Integer letterSeq,
-            @RequestParam(required = false) Integer lastCommentId,
+            @RequestParam(required = false) Integer cusor,
             @RequestParam(defaultValue = "3") int size) {  // **댓글 한 번에 가져올 개수 (기본값 3)**
-        logger.info("페이징된 댓글 조회 요청: letterSeq={}, lastCommentId={}, size={}", letterSeq, lastCommentId, size);
+        logger.info("페이징된 댓글 조회 요청: letterSeq={}, lastCommentId={}, size={}", letterSeq, cusor, size);
         CursorReplyPaginationResponse<RecipientCommentResponseDto, Integer> responseData =
-                recipientCommentService.selectPaginatedCommentsForRecipient(letterSeq, lastCommentId, size);
+                recipientCommentService.selectPaginatedCommentsForRecipient(letterSeq, cusor, size);
         return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, "댓글 목록 조회 성공", responseData));
     }
 

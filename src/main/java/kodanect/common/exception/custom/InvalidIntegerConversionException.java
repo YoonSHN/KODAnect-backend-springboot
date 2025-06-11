@@ -1,20 +1,25 @@
 package kodanect.common.exception.custom;
 
+import kodanect.common.exception.config.MessageKeys;
 import org.springframework.http.HttpStatus;
 
 public class InvalidIntegerConversionException extends AbstractCustomException {
 
-    private static final String MESSAGE_KEY = "common.invalid.integer.conversion";
-    private final String input;
+    private final String input; // input 값을 저장
 
     public InvalidIntegerConversionException(String input) {
-        super(MESSAGE_KEY);
+        super(MessageKeys.COMMON_INVALID_INTEGER_CONVERSION);
         this.input = input;
     }
 
     @Override
+    public String getMessageKey() {
+        return MessageKeys.COMMON_INVALID_INTEGER_CONVERSION;
+    }
+
+    @Override
     public Object[] getArguments() {
-        return new Object[]{input};
+        return new Object[]{input}; // input 값을 메시지 파라미터로 반환
     }
 
     @Override
@@ -22,13 +27,4 @@ public class InvalidIntegerConversionException extends AbstractCustomException {
         return HttpStatus.BAD_REQUEST;
     }
 
-    @Override
-    public String getMessage() {
-        return String.format("[숫자 변환 오류] input=%s", input);
-    }
-
-    @Override
-    public String getMessageKey() {
-        return MESSAGE_KEY;
-    }
 }

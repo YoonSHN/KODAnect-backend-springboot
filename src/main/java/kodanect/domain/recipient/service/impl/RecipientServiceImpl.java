@@ -13,6 +13,7 @@ import kodanect.domain.recipient.entity.RecipientEntity;
 import kodanect.domain.recipient.repository.RecipientCommentRepository;
 import kodanect.domain.recipient.repository.RecipientRepository;
 import kodanect.domain.recipient.service.RecipientService;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -38,7 +39,7 @@ import java.util.stream.Collectors;
 
 import static kodanect.common.exception.config.MessageKeys.RECIPIENT_NOT_FOUND;
 
-
+@Slf4j
 @Service("recipientService")
 public class RecipientServiceImpl implements RecipientService {
 
@@ -263,6 +264,8 @@ public class RecipientServiceImpl implements RecipientService {
                 0, // lastCommentId는 첫 조회이므로 0
                 commentPageable // Pageable을 사용하여 LIMIT 적용
         );
+        log.info("조회된 초기 댓글 수: {}", initialComments.size());
+        initialComments.forEach(c -> log.info("commentSeq={}, delFlag={}", c.getCommentSeq(), c.getDelFlag()));
 
         // 5. 초기 댓글 Entity를 DTO로 변환
         List<RecipientCommentResponseDto> initialCommentDtos = initialComments.stream()
@@ -274,7 +277,7 @@ public class RecipientServiceImpl implements RecipientService {
                 CursorFormatter.cursorReplyFormat(initialCommentDtos, INITIAL_COMMENT_LOAD_LIMIT); // 실제 클라이언트 요청 size는 INITIAL_COMMENT_LOAD_LIMIT
 
         // 7. DTO에 댓글 관련 데이터 설정
-        responseDto.setRecipientCommentData(commentPaginationResponse);
+        responseDto.setInitialCommentData(commentPaginationResponse);
 
         return responseDto;
     }
@@ -355,20 +358,20 @@ public class RecipientServiceImpl implements RecipientService {
             predicates.add(cb.equal(root.get(DEL_FLAG), "N"));
 
             // 검색어 (searchKeyword)가 있고 검색 타입 (searchType)이 있는 경우
-            String searchKeyword = searchCondition.getSearchKeyword();
-            SearchType searchType = searchCondition.getSearchType();
+            String keyword = searchCondition.getKeyWord();
+            SearchType type = searchCondition.getType();
 
-            if (StringUtils.hasText(searchKeyword)) {
-                String likeKeyword = "%" + searchKeyword.trim().toLowerCase() + "%"; // 대소문자 무시 검색
+            if (StringUtils.hasText(keyword)) {
+                String likeKeyword = "%" + keyword.trim().toLowerCase() + "%"; // 대소문자 무시 검색
 
-                if (searchType == null || searchType == SearchType.ALL) { // 검색 타입이 없거나 'ALL'인 경우 (제목+내용)
+                if (type == null || type == SearchType.ALL) { // 검색 타입이 없거나 'ALL'인 경우 (제목+내용)
                     predicates.add(cb.or(
                             cb.like(cb.lower(root.get("letterTitle")), likeKeyword), // 제목 검색
                             cb.like(cb.lower(root.get("letterContents")), likeKeyword)  // 내용 검색
                     ));
-                } else if (searchType == SearchType.TITLE) { // 제목만 검색
+                } else if (type == SearchType.TITLE) { // 제목만 검색
                     predicates.add(cb.like(cb.lower(root.get("letterTitle")), likeKeyword));
-                } else if (searchType == SearchType.CONTENTS) { // 내용만 검색
+                } else if (type == SearchType.CONTENTS) { // 내용만 검색
                     predicates.add(cb.like(cb.lower(root.get("letterContents")), likeKeyword));
                 }
             }

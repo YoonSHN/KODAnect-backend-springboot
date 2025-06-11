@@ -1,5 +1,7 @@
 package kodanect.domain.recipient.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import kodanect.common.util.CursorIdentifiable;
 import kodanect.domain.recipient.entity.RecipientEntity;
 import lombok.AllArgsConstructor;
@@ -25,12 +27,24 @@ public class RecipientListResponseDto implements CursorIdentifiable<Integer> {
     private int readCount;
     private String fileName;
     private String orgFileName;
+    @JsonIgnore
     private LocalDateTime writeTime;
     private String writerId;
+    @JsonIgnore
     private LocalDateTime modifyTime;
     private String modifierId;
     private String delFlag; // char 타입으로 유지
     private int commentCount; // 댓글 수는 조회 시 필요한 정보이므로 DTO에 포함
+
+    @JsonProperty("writeTime")
+    public String getWriteTimeFormatted() {
+        return writeTime != null ? writeTime.toLocalDate().toString() : null;
+    }
+
+    @JsonProperty("modifyTime")
+    public String getModifyTimeFormatted() {
+        return modifyTime != null ? modifyTime.toLocalDate().toString() : null;
+    }
 
     // Entity -> DTO 변환 메서드 (정적 팩토리 메서드)
     public static RecipientListResponseDto fromEntity(RecipientEntity entity) {

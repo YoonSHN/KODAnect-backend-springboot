@@ -1,5 +1,7 @@
 package kodanect.domain.recipient.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import kodanect.common.response.CursorReplyPaginationResponse;
 import kodanect.domain.recipient.entity.RecipientEntity;
 import lombok.AllArgsConstructor;
@@ -26,8 +28,10 @@ public class RecipientDetailResponseDto {
     private String letterContents;
     private String fileName;
     private String orgFileName;
+    @JsonIgnore
     private LocalDateTime writeTime;
     private String writerId;
+    @JsonIgnore
     private LocalDateTime modifyTime;
     private String modifierId;
     private String delFlag;
@@ -35,14 +39,16 @@ public class RecipientDetailResponseDto {
     private boolean hasMoreComments; // 추가 댓글이 있는지 여부
     private String imageUrl;         // 게시물에 등록된 이미지의 URL
     // 게시물 조회 시 초기 댓글 데이터를 CursorReplyPaginationResponse 형태로 포함
-    private CursorReplyPaginationResponse<RecipientCommentResponseDto, Integer> recipientCommentData;
+    private CursorReplyPaginationResponse<RecipientCommentResponseDto, Integer> initialCommentData;
 
-    /** 2020-12-13T02:11:12 -> 2020-12-13 형식 변경 */
-    public String getWriteTime() {
-        return writeTime.toLocalDate().toString();
+    @JsonProperty("writeTime")
+    public String getWriteTimeFormatted() {
+        return writeTime != null ? writeTime.toLocalDate().toString() : null;
     }
-    public String getModifyTime() {
-        return modifyTime.toLocalDate().toString();
+
+    @JsonProperty("modifyTime")
+    public String getModifyTimeFormatted() {
+        return modifyTime != null ? modifyTime.toLocalDate().toString() : null;
     }
 
     // Entity -> DTO 변환 메서드 (정적 팩토리 메서드)
@@ -69,11 +75,11 @@ public class RecipientDetailResponseDto {
                 .hasMoreComments(false)
                 .imageUrl(entity.getFileName()) // RecipientEntity의 fileName을 이미지 URL로 활용
                 // 초기에는 댓글 데이터를 비워두고, 서비스 계층에서 설정
-                .recipientCommentData(null) // 초기화 시 null 또는 기본 빈 객체
+                .initialCommentData(null) // 초기화 시 null 또는 기본 빈 객체
                 .build();
     }
     // 서비스 계층에서 초기 댓글 데이터를 설정하기 위한 setter
-    public void setRecipientCommentData(CursorReplyPaginationResponse<RecipientCommentResponseDto, Integer> recipientCommentData) {
-        this.recipientCommentData = recipientCommentData;
+    public void setInitialCommentData(CursorReplyPaginationResponse<RecipientCommentResponseDto, Integer> initialCommentData) {
+        this.initialCommentData = initialCommentData;
     }
 }

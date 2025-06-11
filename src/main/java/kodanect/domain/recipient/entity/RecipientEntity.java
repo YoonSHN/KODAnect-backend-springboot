@@ -104,11 +104,11 @@ public class RecipientEntity {
 
     // 검색 키워드용
     @Transient
-    private String searchKeyword;
+    private String keyWord;
 
     // 검색 타입용
     @Transient
-    private String searchType;
+    private String type;
 
     // 게시물과 댓글의 연관 관계 매핑
     @OneToMany(mappedBy = "letterSeq", fetch = FetchType.LAZY) // mappedBy는 RecipientCommentEntity의 필드명

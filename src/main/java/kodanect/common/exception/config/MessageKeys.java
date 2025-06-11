@@ -19,6 +19,7 @@ public final class MessageKeys {
     public static final String RECIPIENT_INVALID_DATA = "recipient.invalid.data";
     public static final String RECIPIENT_INVALID_PASSCODE = "recipient.invalid.passcode";
     public static final String RECIPIENT_NOT_FOUND = "recipient.notfound";
+    public static final String COMMON_INVALID_INTEGER_CONVERSION = "common.invalid.integer.conversion";
 
     // 추모관 관련
     public static final String DONATE_NOT_FOUND = "error.donate.notFound";
