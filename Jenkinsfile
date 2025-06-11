@@ -194,6 +194,8 @@ SENTRY_DSN=${SENTRY_DSN}
 SENTRY_ENVIRONMENT=${SENTRY_ENVIRONMENT}
 EOF
 
+                            scp .env \$SSH_USER@${SERVER_HOST}:/root/docker-compose-prod/.env
+
                             sshpass -p "\$SSH_PASS" ssh -o StrictHostKeyChecking=no \$SSH_USER@\${SERVER_HOST} '
                                 set -a
                                 source /root/docker-compose-prod/.env
