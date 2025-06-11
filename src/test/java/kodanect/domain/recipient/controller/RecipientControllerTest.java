@@ -176,7 +176,7 @@ public class RecipientControllerTest {
         updatedDto.setModifyTime(LocalDateTime.now());
         // updatedDto 세팅
 
-        when(recipientService.updateRecipient(anyInt(), anyString(), any(RecipientRequestDto.class)))
+        when(recipientService.updateRecipient(anyInt(), any(RecipientRequestDto.class)))
                 .thenReturn(updatedDto);
 
         MockMultipartFile imageFile = new MockMultipartFile("imageFile", "update.jpg",
@@ -185,7 +185,6 @@ public class RecipientControllerTest {
         mockMvc.perform(multipart("/recipientLetters/{letterSeq}", letterSeq)
                         .file(imageFile)
                         .param("letterWriter", "테스트작성자")    // 필수값 추가
-                        .param("letterPasscode", "abc12345")     // 패턴 맞게 수정
                         .param("letterTitle", "수정 제목")
                         .param("letterContents", "수정 내용")
                         .param("_method", "PATCH")
@@ -195,7 +194,7 @@ public class RecipientControllerTest {
                 .andExpect(jsonPath("$.message").value("게시물이 성공적으로 수정되었습니다."));
 
         verify(recipientService, times(1))
-                .updateRecipient(eq(letterSeq), anyString(), any(RecipientRequestDto.class));
+                .updateRecipient(eq(letterSeq), any(RecipientRequestDto.class));
     }
 
     //    DELETE /recipientLetters/{letterSeq} - 게시물 삭제

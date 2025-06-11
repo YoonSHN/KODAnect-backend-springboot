@@ -29,8 +29,6 @@ import java.nio.file.Path;
 import java.util.*;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
@@ -90,7 +88,6 @@ public class RecipientServiceImplTest {
         recipientDto.setOrganCode("ORGAN001");
         recipientDto.setLetterTitle("제목 없음");
         recipientDto.setRecipientYear("2023");
-        recipientDto.setLetterPasscode("pass1234");
         recipientDto.setLetterWriter("파일 없음");
         recipientDto.setAnonymityFlag("Y");
         recipientDto.setLetterContents("이미지 파일이 없는 게시물");
@@ -101,7 +98,6 @@ public class RecipientServiceImplTest {
                 .organCode(recipientDto.getOrganCode())
                 .letterTitle(recipientDto.getLetterTitle())
                 .recipientYear(recipientDto.getRecipientYear())
-                .letterPasscode(recipientDto.getLetterPasscode())
                 .letterWriter(ANONYMOUS_WRITER_VALUE)
                 .anonymityFlag(recipientDto.getAnonymityFlag())
                 .letterContents(recipientDto.getLetterContents())
@@ -166,7 +162,7 @@ public class RecipientServiceImplTest {
         when(recipientRepository.save(any(RecipientEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // When
-        RecipientDetailResponseDto result = recipientService.updateRecipient(letterSeq, passcode, requestDto);
+        RecipientDetailResponseDto result = recipientService.updateRecipient(letterSeq, requestDto);
 
         // Then
         assertThat(result.getImageUrl()).isNotNull();
@@ -188,7 +184,7 @@ public class RecipientServiceImplTest {
         String passcode = "12345678";
         RecipientEntity existingEntity = RecipientEntity.builder()
                 .letterSeq(letterSeq)
-                .letterPasscode(passcode).delFlag("N")
+                .delFlag("N")
                 .fileName("old_uuid.jpg")
                 .orgFileName("old_original.jpg")
                 .letterContents("기존 내용입니다.")
@@ -205,7 +201,7 @@ public class RecipientServiceImplTest {
         when(recipientRepository.save(any(RecipientEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // When
-        RecipientDetailResponseDto result = recipientService.updateRecipient(letterSeq, passcode, requestDto);
+        RecipientDetailResponseDto result = recipientService.updateRecipient(letterSeq, requestDto);
 
         // Then
         assertThat(result.getImageUrl()).isNotNull(); // 기존 URL이 유지되므로 null이 아님
