@@ -11,7 +11,7 @@ public interface RecipientService {
     boolean verifyLetterPassword(Integer letterSeq, String letterPasscode);
 
     // 게시물 수정
-    RecipientDetailResponseDto updateRecipient(Integer letterSeq, String requestPasscode, RecipientRequestDto requestDto);
+    RecipientDetailResponseDto updateRecipient(Integer letterSeq, RecipientRequestDto requestDto);
 
     // 게시물 삭제
     // 조건 : 등록된 게시물의 비밀번호와 일치하는 경우

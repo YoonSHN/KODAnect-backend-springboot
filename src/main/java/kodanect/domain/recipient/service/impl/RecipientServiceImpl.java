@@ -92,15 +92,12 @@ public class RecipientServiceImpl implements RecipientService {
 
     // 게시물 수정
     @Override
-    public RecipientDetailResponseDto updateRecipient(Integer letterSeq, String requestPasscode, RecipientRequestDto requestDto) {
+    public RecipientDetailResponseDto updateRecipient(Integer letterSeq, RecipientRequestDto requestDto) {
 
         // 1. 게시물 조회 (삭제되지 않은 게시물만 조회)
         RecipientEntity recipientEntityold = recipientRepository.findById(letterSeq)
                 .filter(entity -> "N".equalsIgnoreCase(entity.getDelFlag()))
                 .orElseThrow(() -> new RecipientNotFoundException(RECIPIENT_NOT_FOUND, letterSeq));
-
-        // 2. 비밀번호 검증
-        verifyLetterPassword(letterSeq, requestPasscode); // 비밀번호 불일치 시 예외 발생
 
         // 엔티티 필드 업데이트
         recipientEntityold.setOrganCode(requestDto.getOrganCode());
@@ -112,11 +109,6 @@ public class RecipientServiceImpl implements RecipientService {
         String writerToSave = "Y".equalsIgnoreCase(requestDto.getAnonymityFlag()) ? anonymousWriterValue : requestDto.getLetterWriter();
         recipientEntityold.setLetterWriter(writerToSave);
         recipientEntityold.setAnonymityFlag(requestDto.getAnonymityFlag());
-
-        // 비밀번호 업데이트
-        if (requestDto.getLetterPasscode() != null && !requestDto.getLetterPasscode().isEmpty()) {
-            recipientEntityold.setLetterPasscode(requestDto.getLetterPasscode());
-        }
 
         // 내용(HTML) 필터링 및 유효성 검사
         recipientEntityold.setLetterContents(cleanAndValidateContents(requestDto.getLetterContents()));

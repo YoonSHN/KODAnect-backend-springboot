@@ -58,7 +58,6 @@ public class RecipientServiceContentValidationTest {
         // content 필드만 파라미터화된 값(null, "   ", "<p>&nbsp;</p><br>")을 사용합니다.
         RecipientRequestDto requestDto = createRequestDto(
                 "테스트작가",   // letterWriter (NotBlank, Size)
-                "testpass123",          // letterPasscode (NotBlank, Pattern)
                 content,                // letterContents (파라미터화된 내용)
                 "N",                    // anonymityFlag (String "Y"/"N", 실제 DTO는 boolean)
                 "ORGAN001",             // organCode (Pattern)
@@ -85,7 +84,6 @@ public class RecipientServiceContentValidationTest {
     // DTO의 모든 @NotBlank, @Pattern, @NotNull 필수 필드를 커버하도록 인자 추가 및 수정
     private RecipientRequestDto createRequestDto(
             String letterWriter,
-            String letterPasscode,
             String letterContents,
             String anonymityFlagString,
             String organCode,
@@ -96,7 +94,6 @@ public class RecipientServiceContentValidationTest {
     ) {
         RecipientRequestDto dto = new RecipientRequestDto();
         dto.setLetterWriter(letterWriter);
-        dto.setLetterPasscode(letterPasscode);
         dto.setLetterContents(letterContents);
         dto.setAnonymityFlag(anonymityFlagString);
         dto.setOrganCode(organCode);

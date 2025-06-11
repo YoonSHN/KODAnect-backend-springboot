@@ -42,13 +42,6 @@ public class RecipientRequestDto {
     @Max(value = 2030, message = "기증받은 년도는 1995년에서 2030년 사이의 값이어야 합니다.")
     private String recipientYear;
 
-    // 편지 비밀번호 (새로운 비밀번호를 입력할 때만 사용)
-    // 등록 시에는 필수로 필요하고, 수정 시에는 변경될 수 있습니다.
-    // 수정 시 비밀번호 검증은 별도의 @RequestParam 또는 @RequestBody로 받아서 처리합니다.
-    @NotBlank(message = "비밀번호는 필수 입력 항목입니다.") // 등록 시 유효성 검사
-    @Pattern(regexp = "^(?=.*[a-zA-Z])(?=.*\\d).{8,}$", message = "비밀번호는 영문 숫자 8자 이상 이어야 합니다.")
-    private String letterPasscode;
-
     // 편지 작성자
     @Size(max = 10, message = "작성자는 10자(한글) 이하여야 합니다.")
     @NotBlank(message = "작성자는 필수 입력 항목입니다.")
@@ -72,7 +65,6 @@ public class RecipientRequestDto {
                 .organEtc(this.organEtc)
                 .letterTitle(this.letterTitle)
                 .recipientYear(this.recipientYear)
-                .letterPasscode(this.letterPasscode) // 등록 시 비밀번호
                 .letterWriter(this.letterWriter)
                 .anonymityFlag(this.anonymityFlag)
                 .letterContents(this.letterContents)

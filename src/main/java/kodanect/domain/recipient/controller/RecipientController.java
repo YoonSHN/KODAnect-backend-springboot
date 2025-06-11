@@ -3,7 +3,6 @@ package kodanect.domain.recipient.controller;
 import kodanect.common.response.ApiResponse;
 import kodanect.common.response.CursorPaginationResponse;
 import kodanect.domain.recipient.dto.*;
-import kodanect.domain.recipient.service.RecipientCommentService;
 import kodanect.domain.recipient.service.RecipientService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,11 +21,9 @@ public class RecipientController {
     private static final Logger logger = LoggerFactory.getLogger(RecipientController.class);
 
     private final RecipientService recipientService;
-    private final RecipientCommentService recipientCommentService;
 
-    public RecipientController(RecipientService recipientService, RecipientCommentService recipientCommentService) {
+    public RecipientController(RecipientService recipientService) {
         this.recipientService = recipientService;
-        this.recipientCommentService = recipientCommentService;
     }
 
     /** ## 게시물 목록 조회 (커서 기반 페이징 적용)
@@ -115,7 +112,6 @@ public class RecipientController {
         logger.info("게시물 수정 요청: letterSeq={}, title={}", letterSeq, recipientRequestDto.getLetterTitle());
         RecipientDetailResponseDto updatedRecipient = recipientService.updateRecipient(
                 letterSeq,
-                recipientRequestDto.getLetterPasscode(),
                 recipientRequestDto
         );
         return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, "게시물이 성공적으로 수정되었습니다.", updatedRecipient));
