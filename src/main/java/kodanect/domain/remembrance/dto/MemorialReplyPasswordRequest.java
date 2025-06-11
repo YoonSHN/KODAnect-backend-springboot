@@ -13,17 +13,17 @@ import static kodanect.common.exception.config.MessageKeys.REPLY_PASSWORD_INVALI
 
 /**
  *
- * 기증자 추모관 댓글 삭제 요청 dto
+ * 기증자 추모관 비밀번호 검증 요청 dto
  *
- * <p>replyPassword : 댓글 비밀번호</p>
+ * <p>password : 입력한 비밀번호</p>
  *
  * */
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter @ToString
-@GroupSequence({MemorialReplyDeleteRequest.class, BlankGroup.class, PatternGroup.class})
-public class MemorialReplyDeleteRequest {
+@GroupSequence({MemorialReplyPasswordRequest.class, BlankGroup.class, PatternGroup.class})
+public class MemorialReplyPasswordRequest {
 
     /* 댓글 비밀번호 */
     @NotBlank(message = REPLY_PASSWORD_EMPTY, groups = BlankGroup.class)

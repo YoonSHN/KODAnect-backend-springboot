@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import kodanect.common.config.EgovConfigCommon;
 import kodanect.common.response.CursorReplyPaginationResponse;
 import kodanect.domain.remembrance.dto.MemorialReplyCreateRequest;
-import kodanect.domain.remembrance.dto.MemorialReplyDeleteRequest;
+import kodanect.domain.remembrance.dto.MemorialReplyPasswordRequest;
 import kodanect.domain.remembrance.dto.MemorialReplyResponse;
 import kodanect.domain.remembrance.dto.MemorialReplyUpdateRequest;
 import kodanect.domain.remembrance.service.MemorialReplyService;
@@ -46,7 +46,7 @@ class MemorialReplyControllerTest {
 
     private MemorialReplyCreateRequest replyCreateDto;
     private MemorialReplyUpdateRequest replyUpdateDto;
-    private MemorialReplyDeleteRequest replyDeleteDto;
+    private MemorialReplyPasswordRequest passwordDto;
 
     @BeforeEach
     void setupCreate() {
@@ -58,11 +58,10 @@ class MemorialReplyControllerTest {
 
         this.replyUpdateDto = MemorialReplyUpdateRequest.builder()
                 .replyWriter("홍길동")
-                .replyPassword("1234asdf")
                 .replyContents("내용")
                 .build();
 
-        this.replyDeleteDto = MemorialReplyDeleteRequest.builder()
+        this.passwordDto = MemorialReplyPasswordRequest.builder()
                 .replyPassword("1234asdf")
                 .build();
     }
@@ -145,14 +144,28 @@ class MemorialReplyControllerTest {
     @Test
     @DisplayName("추모관 댓글 삭제")
     void 추모관_댓글_삭제() throws Exception {
-        doNothing().when(memorialReplyService).deleteReply(donateSeq, replySeq, replyDeleteDto);
+        doNothing().when(memorialReplyService).deleteReply(donateSeq, replySeq, passwordDto.getReplyPassword());
 
         mockMvc.perform(delete("/remembrance/1/replies/1")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(replyDeleteDto)))
+                        .content(objectMapper.writeValueAsString(passwordDto)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.message").value("댓글 삭제 성공"));
+    }
+
+    @Test
+    @DisplayName("추모관 비밀번호 인증")
+    void 추모관_비밀번호_인증() throws Exception {
+        doNothing().when(memorialReplyService).verifyReplyPassword(donateSeq, replySeq, passwordDto.getReplyPassword());
+
+        mockMvc.perform(post("/remembrance/1/replies/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(passwordDto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.message").value("비밀번호 인증 성공"));
     }
 }

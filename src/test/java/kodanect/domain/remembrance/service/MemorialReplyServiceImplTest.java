@@ -4,7 +4,7 @@ import kodanect.common.response.CursorReplyPaginationResponse;
 import kodanect.common.util.MemorialFinder;
 import kodanect.common.util.MemorialReplyFinder;
 import kodanect.domain.remembrance.dto.MemorialReplyCreateRequest;
-import kodanect.domain.remembrance.dto.MemorialReplyDeleteRequest;
+import kodanect.domain.remembrance.dto.MemorialReplyPasswordRequest;
 import kodanect.domain.remembrance.dto.MemorialReplyResponse;
 import kodanect.domain.remembrance.dto.MemorialReplyUpdateRequest;
 import kodanect.domain.remembrance.entity.Memorial;
@@ -76,7 +76,6 @@ public class MemorialReplyServiceImplTest {
                         .builder()
                         .replyWriter("홍길동")
                         .replyContents("수정 내용")
-                        .replyPassword("1234")
                         .build();
 
         MemorialReply mockReply =
@@ -104,8 +103,8 @@ public class MemorialReplyServiceImplTest {
         Integer donateSeq = 1;
         Integer replySeq = 1;
 
-        MemorialReplyDeleteRequest request =
-                MemorialReplyDeleteRequest
+        MemorialReplyPasswordRequest request =
+                MemorialReplyPasswordRequest
                         .builder()
                         .replyPassword("1234")
                         .build();
@@ -121,7 +120,7 @@ public class MemorialReplyServiceImplTest {
         when(memorialReplyFinder.findByIdOrThrow(replySeq)).thenReturn(mockReply);
         when(memorialReplyRepository.save(any(MemorialReply.class))).thenReturn(null);
 
-        memorialReplyService.deleteReply(donateSeq, replySeq, request);
+        memorialReplyService.deleteReply(donateSeq, replySeq, request.getReplyPassword());
 
         assertEquals("Y", mockReply.getDelFlag());
         verify(memorialReplyRepository, times(1)).save(mockReply);
