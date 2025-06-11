@@ -13,6 +13,9 @@
         <Logger name="egovframework" level="DEBUG" additivity="false">
             <AppenderRef ref="console" />
         </Logger>
+        <Logger name="com.zaxxer.hikari" level="DEBUG" additivity="false">
+            <AppenderRef ref="console" />
+        </Logger>
         <Logger name="kodanect" level="DEBUG" additivity="false">
             <AppenderRef ref="console" />
         </Logger>

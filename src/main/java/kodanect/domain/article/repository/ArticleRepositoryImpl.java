@@ -67,7 +67,6 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
 
         List<Article> content = queryFactory
                 .selectFrom(article)
-                .leftJoin(article.files)
                 .where(where)
                 .orderBy(article.fixFlag.desc(), article.writeTime.desc())
                 .offset(pageable.getOffset())

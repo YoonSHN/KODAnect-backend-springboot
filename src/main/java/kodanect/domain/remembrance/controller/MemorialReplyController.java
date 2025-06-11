@@ -2,7 +2,7 @@ package kodanect.domain.remembrance.controller;
 
 import kodanect.common.response.CursorReplyPaginationResponse;
 import kodanect.domain.remembrance.dto.MemorialReplyCreateRequest;
-import kodanect.domain.remembrance.dto.MemorialReplyDeleteRequest;
+import kodanect.domain.remembrance.dto.MemorialReplyPasswordRequest;
 import kodanect.domain.remembrance.dto.MemorialReplyResponse;
 import kodanect.domain.remembrance.dto.MemorialReplyUpdateRequest;
 import kodanect.domain.remembrance.exception.*;
@@ -100,8 +100,7 @@ public class MemorialReplyController {
             @PathVariable @Min(value = 1, message = DONATE_INVALID) Integer donateSeq,
             @PathVariable @Min(value = 1, message = REPLY_INVALID) Integer replySeq,
             @RequestBody @Valid MemorialReplyUpdateRequest memorialReplyUpdateRequest)
-            throws  ReplyPasswordMismatchException,
-                    MemorialReplyNotFoundException,
+            throws  MemorialReplyNotFoundException,
                     MemorialNotFoundException,
                     ReplyAlreadyDeleteException
     {
@@ -118,14 +117,14 @@ public class MemorialReplyController {
      *
      * @param donateSeq 댓글 삭제할 상세 게시글 번호
      * @param replySeq 삭제할 댓글 번호
-     * @param memorialReplyDeleteRequest 댓글 삭제 요청 dto
+     * @param request 입력한 비밀번호
      *
      * */
     @DeleteMapping("/{replySeq}")
     public ResponseEntity<ApiResponse<String>> deleteMemorialReply(
             @PathVariable @Min(value = 1, message = DONATE_INVALID) Integer donateSeq,
             @PathVariable @Min(value = 1, message = REPLY_INVALID) Integer replySeq,
-            @RequestBody @Valid MemorialReplyDeleteRequest memorialReplyDeleteRequest)
+            @RequestBody @Valid MemorialReplyPasswordRequest request)
             throws  ReplyPasswordMismatchException,
                     MemorialReplyNotFoundException,
                     MemorialNotFoundException,
@@ -134,7 +133,31 @@ public class MemorialReplyController {
         /* 게시글 댓글 삭제 - 소프트 삭제 */
 
         String successMessage = messageSourceAccessor.getMessage("board.reply.delete.success", new Object[] {});
-        memorialReplyService.deleteReply(donateSeq, replySeq, memorialReplyDeleteRequest);
+        memorialReplyService.deleteReply(donateSeq, replySeq, request.getReplyPassword());
+        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, successMessage));
+    }
+
+    /**
+     *
+     * 기증자 추모관 댓글 비밀번호 인증 메서드
+     *
+     * @param donateSeq 비밀번호 인증할 상세 게시글 번호
+     * @param replySeq 비밀번호 인증할 댓글 번호
+     * @param request 입력한 비밀번호
+     * */
+    @PostMapping("/{replySeq}")
+    public ResponseEntity<ApiResponse<String>> verifyReplyPassword(
+            @PathVariable @Min(value = 1, message = DONATE_INVALID) Integer donateSeq,
+            @PathVariable @Min(value = 1, message = REPLY_INVALID) Integer replySeq,
+            @RequestBody @Valid MemorialReplyPasswordRequest request)
+            throws  ReplyPasswordMismatchException,
+                    MemorialReplyNotFoundException,
+                    MemorialNotFoundException,
+                    ReplyAlreadyDeleteException
+
+    {
+        String successMessage = messageSourceAccessor.getMessage("board.reply.verify.success", new Object[] {});
+        memorialReplyService.verifyReplyPassword(donateSeq, replySeq, request.getReplyPassword());
         return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, successMessage));
     }
 }

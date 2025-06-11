@@ -5,7 +5,6 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import kodanect.common.response.CursorReplyPaginationResponse;
 import kodanect.common.util.CursorFormatter;
 import kodanect.domain.remembrance.dto.MemorialReplyCreateRequest;
-import kodanect.domain.remembrance.dto.MemorialReplyDeleteRequest;
 import kodanect.domain.remembrance.dto.MemorialReplyUpdateRequest;
 import kodanect.domain.remembrance.entity.MemorialReply;
 import kodanect.domain.remembrance.dto.MemorialReplyResponse;
@@ -112,10 +111,9 @@ public class MemorialReplyServiceImpl implements MemorialReplyService {
      * */
     @Override
     public void updateReply(Integer donateSeq, Integer replySeq, MemorialReplyUpdateRequest memorialReplyUpdateRequest)
-            throws  ReplyPasswordMismatchException,
-            MemorialReplyNotFoundException,
-            MemorialNotFoundException,
-            ReplyAlreadyDeleteException
+            throws  MemorialReplyNotFoundException,
+                    MemorialNotFoundException,
+                    ReplyAlreadyDeleteException
     {
         /* 게시글 댓글 수정 */
         ReentrantReadWriteLock lock = getLock(donateSeq);
@@ -127,9 +125,6 @@ public class MemorialReplyServiceImpl implements MemorialReplyService {
 
             /* 댓글 조회 */
             MemorialReply memorialReply = memorialReplyFinder.findByIdOrThrow(replySeq);
-
-            /* 비밀번호 일치 여부 검증 */
-            memorialReply.validateReplyPassword(memorialReplyUpdateRequest.getReplyPassword());
 
             /* 댓글 삭제 여부 검증 */
             memorialReply.validateNotDeleted();
@@ -152,11 +147,11 @@ public class MemorialReplyServiceImpl implements MemorialReplyService {
      *
      * @param donateSeq 상세 게시글 번호
      * @param replySeq 댓글 번호
-     * @param memorialReplyDeleteRequest 댓글 삭제 요청 dto
+     * @param password 입력한 비밀번호
      *
      * */
     @Override
-    public void deleteReply(Integer donateSeq, Integer replySeq, MemorialReplyDeleteRequest memorialReplyDeleteRequest)
+    public void deleteReply(Integer donateSeq, Integer replySeq, String password)
             throws  ReplyPasswordMismatchException,
             MemorialReplyNotFoundException,
             MemorialNotFoundException,
@@ -174,7 +169,7 @@ public class MemorialReplyServiceImpl implements MemorialReplyService {
             MemorialReply memorialReply = memorialReplyFinder.findByIdOrThrow(replySeq);
 
             /* 비밀번호 일치 여부 검증 */
-            memorialReply.validateReplyPassword(memorialReplyDeleteRequest.getReplyPassword());
+            memorialReply.validateReplyPassword(password);
 
             /* 댓글 삭제 여부 검증 */
             memorialReply.validateNotDeleted();
@@ -252,6 +247,32 @@ public class MemorialReplyServiceImpl implements MemorialReplyService {
      * */
     public long getTotalReplyCount(Integer donateSeq) {
         return memorialReplyRepository.countByDonateSeq(donateSeq);
+    }
+
+    /**
+     *
+     * 기증자 추모관 비밀번호 인증 메서드
+     *
+     * @param donateSeq 상세 게시글 번호
+     * @param replySeq 댓글 번호
+     * @param password 입력한 비밀번호
+     *
+     * */
+    @Override
+    public void verifyReplyPassword(Integer donateSeq, Integer replySeq, String password) {
+        /* 비밀번호 검증 */
+
+        /* 게시판 조회 */
+        memorialFinder.findByIdOrThrow(donateSeq);
+
+        /* 댓글 조회 */
+        MemorialReply memorialReply = memorialReplyFinder.findByIdOrThrow(replySeq);
+
+        /* 비밀번호 일치 여부 검증 */
+        memorialReply.validateReplyPassword(password);
+
+        /* 댓글 삭제 여부 검증 */
+        memorialReply.validateNotDeleted();
     }
 }
 
