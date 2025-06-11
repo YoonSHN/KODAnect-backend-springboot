@@ -11,13 +11,13 @@ public class FormatUtils {
         throw new UnsupportedOperationException("Utility class");
     }
 
-    public static String formatSearchWord(String searchWord) {
+    public static String formatSearchWord(String keyWord) {
         /* 검색 포매팅 */
-        if(searchWord == null || searchWord.isEmpty()) {
-            searchWord = "";
+        if(keyWord == null || keyWord.isEmpty()) {
+            keyWord = "";
         }
 
-        return "%"+searchWord.trim()+"%";
+        return "%"+keyWord.trim()+"%";
     }
 
     public static String formatDate(String startDate) {

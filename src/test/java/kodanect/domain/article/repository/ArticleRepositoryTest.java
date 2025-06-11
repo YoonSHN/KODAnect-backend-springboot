@@ -82,7 +82,7 @@ class ArticleRepositoryTest {
         articleRepository.save(article);
 
         // when
-        Optional<Article> result = articleRepository.findWithFilesByBoardCodeAndArticleSeq("7", 1);
+        Optional<Article> result = articleRepository.findByIdBoardCodeAndIdArticleSeq("7", 1);
 
         // then
         assertThat(result).isPresent();

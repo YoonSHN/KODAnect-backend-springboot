@@ -84,7 +84,7 @@ public class MemorialController {
      *
      * @param startDate 시작 일
      * @param endDate 종료 일
-     * @param searchWord 검색할 문자
+     * @param keyWord 검색할 문자
      * @param cursor 페이지 번호
      * @param size 페이지 사이즈
      *
@@ -93,7 +93,7 @@ public class MemorialController {
     public ResponseEntity<ApiResponse<CursorPaginationResponse<MemorialResponse, Integer>>> getSearchMemorialList(
             @RequestParam(defaultValue = "1900-01-01") String startDate,
             @RequestParam(defaultValue = "2100-12-31") String endDate,
-            @RequestParam(defaultValue = "") String searchWord,
+            @RequestParam(defaultValue = "") String keyWord,
             @RequestParam(required = false) Integer cursor,
             @RequestParam(defaultValue = "20") int size)
             throws  InvalidPaginationRangeException,
@@ -110,7 +110,7 @@ public class MemorialController {
         validatePagination(cursor, size);
 
         String successMessage = messageSourceAccessor.getMessage("board.search.read.success", new Object[] {});
-        CursorPaginationResponse<MemorialResponse, Integer> memorialResponses = memorialService.getSearchMemorialList(startDate, endDate, searchWord, cursor, size);
+        CursorPaginationResponse<MemorialResponse, Integer> memorialResponses = memorialService.getSearchMemorialList(startDate, endDate, keyWord, cursor, size);
         return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, successMessage, memorialResponses));
     }
 

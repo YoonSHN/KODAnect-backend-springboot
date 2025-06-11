@@ -23,13 +23,13 @@ public interface MemorialService {
      *
      * @param startDate 시작 일
      * @param endDate 종료 일
-     * @param searchWord 검색 문자
+     * @param keyWord 검색 문자
      * @param cursor 조회할 댓글 페이지 번호(이 ID보다 작은 번호의 댓글을 조회)
      * @param size 조회할 댓글 페이지 사이즈
      * @return 조건에 맞는 게시글 리스트(최신순)
      *
      * */
-    CursorPaginationResponse<MemorialResponse, Integer> getSearchMemorialList(String startDate, String endDate, String searchWord, Integer cursor, int size);
+    CursorPaginationResponse<MemorialResponse, Integer> getSearchMemorialList(String startDate, String endDate, String keyWord, Integer cursor, int size);
     /**
      *
      * 기증자 추모관 게시글 조회 메서드

@@ -31,7 +31,42 @@ public class ArticleDetailDto {
 
     private String writerId;
 
-    public static ArticleDetailDto fromArticleDetailDto(Article article) {
+    private AdjacentArticleDto prevArticle;
+    private AdjacentArticleDto nextArticle;
+
+    @Getter
+    @Builder
+    public static class AdjacentArticleDto {
+        private Integer articleSeq;
+        private String title;
+
+        public static AdjacentArticleDto from(Article article) {
+            return AdjacentArticleDto.builder()
+                    .articleSeq(article.getId().getArticleSeq())
+                    .title(article.getTitle())
+                    .build();
+        }
+
+        public static AdjacentArticleDto noPrev() {
+            return AdjacentArticleDto.builder()
+                    .articleSeq(null)
+                    .title("이전 글이 없습니다")
+                    .build();
+        }
+
+        public static AdjacentArticleDto noNext() {
+            return AdjacentArticleDto.builder()
+                    .articleSeq(null)
+                    .title("다음 글이 없습니다")
+                    .build();
+        }
+    }
+
+    public static ArticleDetailDto fromArticleDetailDto(
+            Article article,
+            AdjacentArticleDto prevArticle,
+            AdjacentArticleDto nextArticle
+    ) {
         return ArticleDetailDto.builder()
                 .boardCode(article.getId().getBoardCode())
                 .articleSeq(article.getId().getArticleSeq())
@@ -48,6 +83,8 @@ public class ArticleDetailDto {
                                 .orgFileName(f.getOrgFileName())
                                 .build())
                         .toList())
+                .prevArticle(prevArticle)
+                .nextArticle(nextArticle)
                 .build();
     }
 }

@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.DynamicInsert;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -30,10 +31,10 @@ public class RecipientEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "letter_seq", nullable = false)
-    private Integer letterSeq;
+    private int letterSeq;
 
     // 장기 구분 코드
-    @Column(name = "organ_code", length = 10) // nullable = true 는 컬럼 정의에 있으면 충분
+    @Column(name = "organ_code", length = 10)
     private String organCode;
 
     // 기타 장기
@@ -45,7 +46,7 @@ public class RecipientEntity {
     private String letterTitle;
 
     // 수혜 연도
-    @Column(name = "recipient_year", length = 4) // nullable = true 는 컬럼 정의에 있으면 충분
+    @Column(name = "recipient_year", length = 4)
     private String recipientYear;
 
     // 편지 비밀번호
@@ -57,7 +58,7 @@ public class RecipientEntity {
     private String letterWriter;
 
     // 편지 익명여부
-    @Column(name = "anonymity_flag", length = 1) // nullable = true 는 컬럼 정의에 있으면 충분
+    @Column(name = "anonymity_flag", length = 1)
     private String anonymityFlag;
 
     // 조회 건수 (Request 시에는 0으로 초기화되거나 무시)
@@ -101,20 +102,21 @@ public class RecipientEntity {
     @Builder.Default
     private String delFlag = "N";
 
-    // 검색 키워드용 (Transient는 유지)
+    // 검색 키워드용
     @Transient
-    private String searchKeyword;
+    private String keyWord;
 
-    // 검색 타입용 (Transient는 유지)
+    // 검색 타입용
     @Transient
-    private String searchType;
+    private String type;
 
     // 게시물과 댓글의 연관 관계 매핑
     @OneToMany(mappedBy = "letterSeq", fetch = FetchType.LAZY) // mappedBy는 RecipientCommentEntity의 필드명
-    @OrderBy("writeTime ASC") // 댓글을 작성 시간 오름차순으로 정렬
+    @BatchSize(size = 100) // N+1 쿼리 문제를 완화하기 위해 추가 (BatchSize는 원하는 숫자로 설정)
+    @OrderBy("writeTime ASC")
     private List<RecipientCommentEntity> comments = new ArrayList<>(); // NullPointerException 방지를 위해 초기화
 
-    // 비즈니스 로직을 위한 메서드 (유지)
+    // 비즈니스 로직을 위한 메서드
     public void incrementReadCount() {
         this.readCount = this.readCount + 1;
     }
@@ -127,7 +129,7 @@ public class RecipientEntity {
         }
     }
 
-    // 비밀번호 일치 여부 확인 (서비스에서 사용) (유지)
+    // 비밀번호 일치 여부 확인
     public boolean checkPasscode(String inputPasscode) {
         return this.letterPasscode != null && this.letterPasscode.equals(inputPasscode);
     }

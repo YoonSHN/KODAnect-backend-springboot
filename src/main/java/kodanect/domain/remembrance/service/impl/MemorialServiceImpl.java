@@ -114,7 +114,7 @@ public class MemorialServiceImpl implements MemorialService {
      * 
      * @param startDate 시작 일
      * @param endDate 종료 일
-     * @param searchWord 검색 문자
+     * @param keyWord 검색 문자
      * @param cursor 조회할 댓글 페이지 번호(이 ID보다 작은 번호의 댓글을 조회)
      * @param size 조회할 댓글 페이지 사이즈
      * @return 조건에 맞는 게시글 리스트(최신순)
@@ -122,10 +122,10 @@ public class MemorialServiceImpl implements MemorialService {
      * */
     @Override
     public CursorPaginationResponse<MemorialResponse, Integer> getSearchMemorialList(
-            String startDate, String endDate, String searchWord, Integer cursor, int size)
+            String startDate, String endDate, String keyWord, Integer cursor, int size)
     {
         /* 검색 문자 포매팅 */
-        searchWord = formatSearchWord(searchWord);
+        keyWord = formatSearchWord(keyWord);
 
         /* 날짜 포매팅 */
         String startDateStr = formatDate(startDate);
@@ -134,7 +134,7 @@ public class MemorialServiceImpl implements MemorialService {
         /* 페이징 포매팅 */
         Pageable pageable = PageRequest.of(0, size +1);
 
-        List<MemorialResponse> memorialResponses = memorialRepository.findSearchByCursor(cursor, pageable, startDateStr, endDateStr, searchWord);
+        List<MemorialResponse> memorialResponses = memorialRepository.findSearchByCursor(cursor, pageable, startDateStr, endDateStr, keyWord);
 
         long totalCount = memorialRepository.count();
 

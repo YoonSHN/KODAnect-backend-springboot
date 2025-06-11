@@ -33,7 +33,8 @@ public interface MemorialReplyRepository extends JpaRepository<MemorialReply, In
             UPDATE MemorialReply r
             SET r.replyContents = :contents,
                 r.replyWriter = :writer
-            WHERE r.replySeq = :replySeq AND r.delFlag = 'N'
+            WHERE r.replySeq = :replySeq
+                    AND r.delFlag = 'N'
         """
     )
     void updateReplyContents(@Param("replySeq") Integer replySeq, @Param("contents") String contents, @Param("writer") String writer);
@@ -53,7 +54,9 @@ public interface MemorialReplyRepository extends JpaRepository<MemorialReply, In
             SELECT new kodanect.domain.remembrance.dto.MemorialReplyResponse
                     (r.replySeq, r.replyWriter, r.replyContents, r.replyWriteTime)
             FROM MemorialReply r
-            WHERE r.donateSeq = :donateSeq AND r.delFlag = 'N' AND (:cursor IS NULL OR r.replySeq < :cursor)
+            WHERE r.donateSeq = :donateSeq
+                    AND r.delFlag = 'N'
+                    AND (:cursor IS NULL OR r.replySeq < :cursor)
             ORDER BY r.replySeq DESC
         """
     )

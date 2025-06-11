@@ -127,7 +127,7 @@ public class ArticleControllerTest {
 
         mockMvc.perform(get("/newKoda/notices")
                         .param("optionStr", "1")
-                        .param("searchField", "invalidField")
+                        .param("type", "invalidField")
                         .param("page", "0")
                         .param("size", "20"))
                 .andExpect(status().isBadRequest())
@@ -143,7 +143,7 @@ public class ArticleControllerTest {
 
         mockMvc.perform(get("/newKoda/notices")
                         .param("optionStr", "1")
-                        .param("searchField", "title")
+                        .param("type", "title")
                         .param("search", longKeyword)
                         .param("page", "0")
                         .param("size", "20"))
