@@ -239,19 +239,19 @@ EOF
                         def releaseVersion = "kodanect@${imageTag}"
 
                         def sentryCommitUrl = "https://sentry.io/api/0/organizations/${sentryOrg}/releases/${releaseVersion}/commits/"
-                        def GIT_COMMIT = sh(script: "git rev-parse HEAD", returnStdout: true).trim()
-                        def commitPayload = """
-                        {
-                          "commits": [
-                            {
-                              "commit": "${GIT_COMMIT}",
-                              "repository": "${sentryRepo}"
-                            }
-                          ]
-                        }
-                        """
-
                         catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
+                            def GIT_COMMIT = sh(script: "git rev-parse HEAD", returnStdout: true).trim()
+                            def commitPayload = """
+                            {
+                              "commits": [
+                                {
+                                  "commit": "${GIT_COMMIT}",
+                                  "repository": "${sentryRepo}"
+                                }
+                              ]
+                            }
+                            """
+
                             def status = sh(
                                 script: """curl -s -o /dev/null -w "%{http_code}" '${sentryCommitUrl}' \\
                                     -X PUT \\
@@ -267,6 +267,7 @@ EOF
                                 echo "Sentry 커밋 연동 성공"
                             }
                         }
+
 
 
                         if (currentBuild.currentResult == 'FAILURE') {
