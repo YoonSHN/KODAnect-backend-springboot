@@ -32,7 +32,6 @@ import org.springframework.boot.test.context.TestConfiguration;
 @RunWith(SpringJUnit4ClassRunner.class)
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE) // 실제 DB 사용
-// @ContextConfiguration(classes = Application.class) // 필요한 경우 주석 해제 (전체 컨텍스트 로드 시)
 @ActiveProfiles("test")
 public class RecipientCommentRepositoryTest {
 
@@ -90,8 +89,7 @@ public class RecipientCommentRepositoryTest {
     @Before
     @Transactional // 각 테스트 메서드 전에 실행되며, 트랜잭션으로 묶여 롤백됩니다.
     public void setup() {
-        // 모든 댓글 및 게시물 데이터 삭제 (테스트 간의 간섭 방지)
-        // 외래 키 제약 조건 때문에 자식(댓글)부터 삭제해야 합니다.
+
         recipientCommentRepository.deleteAll();
         recipientRepository.deleteAll();
         entityManager.clear(); // 영속성 컨텍스트 초기화
@@ -241,8 +239,8 @@ public class RecipientCommentRepositoryTest {
 
         for (Object[] row : commentCounts) {
             Integer letterSeq = (Integer) row[0];
-            // BigInteger로 받은 다음 longValue()를 호출하여 Long으로 변환합니다.
-            Long count = ((Number) row[1]).longValue();
+            // BigInteger로 받은 다음 intValue()를 호출하여 int 로 변환합니다.
+            Integer count = ((Number) row[1]).intValue();
 
             if (letterSeq.equals(recipient1.getLetterSeq())) {
                 assertThat(count).isEqualTo(2L);

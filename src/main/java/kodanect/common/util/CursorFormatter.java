@@ -25,7 +25,6 @@ import java.util.List;
 
 public class CursorFormatter {
 
-
     private CursorFormatter() {
         throw new UnsupportedOperationException("Utility class");
     }

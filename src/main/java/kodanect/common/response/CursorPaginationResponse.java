@@ -37,5 +37,5 @@ public class CursorPaginationResponse<T, C> {
     private boolean hasNext;
 
     /** 총 게시물 개수 */
-    private long totalCount;
+    private Long totalCount;
 }

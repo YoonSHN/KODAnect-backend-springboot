@@ -1,6 +1,7 @@
 package kodanect.domain.recipient.service.impl;
 
-import kodanect.common.util.HcaptchaService;
+import kodanect.common.response.CursorReplyPaginationResponse;
+import kodanect.common.util.CursorFormatter;
 import kodanect.domain.recipient.dto.RecipientCommentRequestDto;
 import kodanect.domain.recipient.dto.RecipientCommentResponseDto;
 import kodanect.domain.recipient.entity.RecipientCommentEntity;
@@ -17,10 +18,18 @@ import org.jsoup.Jsoup;
 import org.jsoup.safety.Safelist;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import javax.persistence.criteria.Predicate;
+import java.util.ArrayList;
 import java.util.List;
+
+import static kodanect.common.exception.config.MessageKeys.RECIPIENT_NOT_FOUND;
 
 @Service("recipientCommentService")
 @RequiredArgsConstructor // final 필드에 대한 생성자 주입
@@ -28,22 +37,20 @@ public class RecipientCommentServiceImpl implements RecipientCommentService {
 
     // 중복되는 에러 메시지
     private static final String COMMENT_NOT_FOUND_MESSAGE = "댓글을 찾을 수 없거나 이미 삭제되었습니다.";
+    private static final String RECIPIENT_NOT_FOUND_MESSAGE = "게시물을 찾을 수 없거나 이미 삭제된 게시물입니다.";
 
-    // 캡차 에러 메시지
-    private static final String CAPTCHA_FAILED_MESSAGE = "캡차 인증에 실패했습니다. 다시 시도해주세요.";
-
-    // 스택 트레이스에서 호출한 메서드의 인덱스 상수
-    private static final int CALLING_METHOD_STACK_INDEX = 2;
+    // 필드명 상수 (Specification에서 사용)
+    private static final String LETTER_SEQ = "letterSeq";
+    private static final String DEL_FLAG = "delFlag";
+    private static final String COMMENT_SEQ = "commentSeq";
 
     @Resource(name = "recipientCommentRepository")
     private final RecipientCommentRepository recipientCommentRepository;
     private final RecipientRepository recipientRepository;
-    private final HcaptchaService hcaptchaService;
 
     private final Logger logger = LoggerFactory.getLogger(RecipientCommentServiceImpl.class);
 
     // --- 헬퍼 메서드 추출 ---
-
     /**
      * 특정 letterSeq에 해당하는 활성화된 게시물을 조회합니다.
      * @param letterSeq 게시물 시퀀스
@@ -55,22 +62,8 @@ public class RecipientCommentServiceImpl implements RecipientCommentService {
                 .filter(entity -> "N".equalsIgnoreCase(entity.getDelFlag()))
                 .orElseThrow(() -> {
                     logger.warn("게시물을 찾을 수 없거나 이미 삭제된 게시물입니다: {}", letterSeq);
-                    return new RecipientNotFoundException("게시물을 찾을 수 없거나 이미 삭제된 게시물입니다: " + letterSeq);
+                    return new RecipientNotFoundException(RECIPIENT_NOT_FOUND, letterSeq);
                 });
-    }
-
-    /**
-     * hCaptcha 인증을 수행합니다.
-     * @param captchaToken hCaptcha 토큰
-     * @throws RecipientInvalidDataException 캡차 인증에 실패한 경우
-     */
-    private void verifyHcaptcha(String captchaToken) {
-        if (!hcaptchaService.verifyCaptcha(captchaToken)) {
-            logger.warn(CAPTCHA_FAILED_MESSAGE);
-            throw new RecipientInvalidDataException(CAPTCHA_FAILED_MESSAGE);
-        }
-        logger.info("hCaptcha 인증 성공. {} 진행.",
-                Thread.currentThread().getStackTrace()[CALLING_METHOD_STACK_INDEX].getMethodName()); // 호출한 메서드 이름을 로그에 남김
     }
 
     /**
@@ -119,49 +112,29 @@ public class RecipientCommentServiceImpl implements RecipientCommentService {
         return recipientCommentRepository.findByCommentSeqAndDelFlag(commentSeq, "N")
                 .orElseThrow(() -> {
                     logger.warn("댓글 조회 실패: {}", COMMENT_NOT_FOUND_MESSAGE);
-                    return new RecipientCommentNotFoundException(COMMENT_NOT_FOUND_MESSAGE);
+                    return new RecipientCommentNotFoundException(commentSeq);
                 });
     }
 
     // --- 서비스 메서드 구현 ---
 
-    // 특정 게시물의 댓글 조회
-    @Override
-    public List<RecipientCommentResponseDto> selectRecipientCommentByLetterSeq(int letterSeq) {
-        logger.info("댓글 목록 조회 시작: letterSeq={}", letterSeq);
-
-        // 1. 해당 게시물이 삭제되지 않았는지 확인 (헬퍼 메서드 사용)
-        RecipientEntity activeRecipient = getActiveRecipient(letterSeq);
-
-        // 2. 삭제되지 않은 댓글만 조회하고, 작성시간 기준 오름차순으로 정렬
-        List<RecipientCommentEntity> comments = recipientCommentRepository.findCommentsByLetterSeqAndDelFlagSorted(activeRecipient, "N");
-
-        logger.info("댓글 목록 조회 성공. {}개의 댓글 반환.", comments.size());
-        return comments.stream()
-                .map(RecipientCommentResponseDto::fromEntity) // Entity를 Response DTO로 변환
-                .toList();
-    }
-
     // 댓글 작성
     @Override
-    public RecipientCommentResponseDto insertComment(int letterSeq, RecipientCommentRequestDto requestDto, String captchaToken) {
+    public RecipientCommentResponseDto insertComment(Integer letterSeq, RecipientCommentRequestDto requestDto) {
         logger.info("댓글 작성 요청 시작: letterSeq={}", letterSeq);
 
-        // 1. hCaptcha 인증 (헬퍼 메서드 사용)
-        verifyHcaptcha(captchaToken);
-
-        // 2. 게시물 유효성 확인 (삭제되지 않은 게시물인지) (헬퍼 메서드 사용)
+        // 1. 게시물 유효성 확인 (삭제되지 않은 게시물인지) (헬퍼 메서드 사용)
         RecipientEntity parentLetter = getActiveRecipient(letterSeq);
 
-        // 3. HTML 태그 필터링 및 내용 검증 (헬퍼 메서드 사용)
+        // 2. HTML 태그 필터링 및 내용 검증 (헬퍼 메서드 사용)
         String finalContents = cleanAndValidateCommentContents(requestDto.getCommentContents());
 
-        // 4. DTO를 Entity로 변환 (댓글 내용, 작성자, 비밀번호 설정)
+        // 3. DTO를 Entity로 변환 (댓글 내용, 작성자, 비밀번호 설정)
         RecipientCommentEntity commentEntity = requestDto.toEntity();
         commentEntity.setLetterSeq(parentLetter); // 부모 게시물 엔티티 연결
         commentEntity.setCommentContents(finalContents); // 클린한 내용으로 설정
 
-        // 5. writerId는 사용하지 않을 경우, 필요하다면 여기에 null 또는 특정 값 설정
+        // 4. writerId는 사용하지 않을 경우, 필요하다면 여기에 null 또는 특정 값 설정
         commentEntity.setWriterId(null); // 사용하지 않을 필드라면 null 처리
 
         RecipientCommentEntity savedComment = recipientCommentRepository.save(commentEntity);
@@ -171,26 +144,23 @@ public class RecipientCommentServiceImpl implements RecipientCommentService {
 
     // 댓글 수정
     @Override
-    public RecipientCommentResponseDto updateComment(int commentSeq, String newContents, String newWriter, String inputPasscode, String captchaToken) {
+    public RecipientCommentResponseDto updateComment(Integer commentSeq, String newContents, String newWriter, String inputPasscode) {
         logger.info("댓글 수정 요청 시작: commentSeq={}", commentSeq);
 
-        // 1. hCaptcha 인증 (헬퍼 메서드 사용)
-        verifyHcaptcha(captchaToken);
-
-        // 2. 삭제되지 않은 기존 댓글 조회 (헬퍼 메서드 사용)
+        // 1. 삭제되지 않은 기존 댓글 조회 (헬퍼 메서드 사용)
         RecipientCommentEntity existingComment = getActiveComment(commentSeq);
 
-        // 3. 비밀번호 검증 (헬퍼 메서드 사용)
+        // 2. 비밀번호 검증 (헬퍼 메서드 사용)
         validateCommentPasscode(existingComment, inputPasscode);
 
-        // 4. 입력받은 데이터로 댓글 정보 업데이트
+        // 3. 입력받은 데이터로 댓글 정보 업데이트
         // HTML 태그 필터링 및 내용 검증 (헬퍼 메서드 사용)
         String finalContents = cleanAndValidateCommentContents(newContents);
 
         existingComment.setCommentContents(finalContents);
         existingComment.setCommentWriter(newWriter); // 작성자 수정 허용
 
-        // 5. 업데이트된 댓글 저장
+        // 4. 업데이트된 댓글 저장
         RecipientCommentEntity updatedComment = recipientCommentRepository.save(existingComment);
         logger.info("댓글 성공적으로 수정됨: commentSeq={}", updatedComment.getCommentSeq());
         return RecipientCommentResponseDto.fromEntity(updatedComment);
@@ -198,22 +168,74 @@ public class RecipientCommentServiceImpl implements RecipientCommentService {
 
     // 댓글 삭제
     @Override
-    public void deleteComment(Integer letterSeq, Integer commentSeq, String inputPasscode, String captchaToken) {
+    public void deleteComment(Integer letterSeq, Integer commentSeq, String inputPasscode) {
         logger.info("댓글 삭제 요청 시작: commentSeq={}", commentSeq);
 
-        // 1. hCaptcha 인증 (헬퍼 메서드 사용)
-        verifyHcaptcha(captchaToken);
-
-        // 2. 삭제되지 않은 기존 댓글 조회 (헬퍼 메서드 사용)
+        // 1. 삭제되지 않은 기존 댓글 조회 (헬퍼 메서드 사용)
         RecipientCommentEntity existingComment = getActiveComment(commentSeq);
 
-        // 3. 비밀번호 확인 (헬퍼 메서드 사용)
+        // 2. 비밀번호 확인 (헬퍼 메서드 사용)
         validateCommentPasscode(existingComment, inputPasscode);
 
-        // 4. 댓글 소프트 삭제
+        // 3. 댓글 소프트 삭제
         existingComment.setDelFlag("Y");
         recipientCommentRepository.save(existingComment);
 
         logger.info("댓글 성공적으로 삭제됨: commentSeq={}", commentSeq);
+    }
+
+    /**
+     * 특정 게시물의 페이징된 댓글 조회 (커서 방식으로 변경)
+     * @param letterSeq 게시물 ID
+     * @param lastCommentId 마지막으로 조회된 댓글의 ID (커서)
+     * @param size 한 번에 가져올 댓글 수
+     * @return 커서 기반 페이지네이션 응답 (댓글)
+     */
+    @Override
+    public CursorReplyPaginationResponse<RecipientCommentResponseDto, Integer> selectPaginatedCommentsForRecipient(Integer letterSeq, Integer lastCommentId, Integer size) {
+        logger.info("Selecting paginated comments for letterSeq: {}, lastCommentId: {}, size: {}", letterSeq, lastCommentId, size);
+
+        // 1. 해당 게시물이 삭제되지 않았는지 확인
+        RecipientEntity activeRecipient = recipientRepository.findById(letterSeq)
+                .filter(entity -> "N".equalsIgnoreCase(entity.getDelFlag()))
+                .orElseThrow(() -> new RecipientNotFoundException(RECIPIENT_NOT_FOUND, letterSeq));
+
+        // 2. 쿼리할 데이터의 실제 size (클라이언트 요청 size + 1 하여 다음 커서 존재 여부 확인)
+        int querySize = size + 1;
+
+        // 3. Specification 생성: 게시물 ID, 삭제 여부, lastCommentId 조건 포함
+        Specification<RecipientCommentEntity> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            predicates.add(cb.equal(root.get(LETTER_SEQ), activeRecipient));
+            predicates.add(cb.equal(root.get(DEL_FLAG), "N"));
+
+            // lastCommentId가 null이 아니고 0이 아니면 커서 조건 추가 (commentSeq는 int 타입이므로 intValue() 사용)
+            if (lastCommentId != null && lastCommentId != 0) {
+                // 커서 방식에서 commentSeq가 오름차순 정렬이므로, lastCommentId보다 큰 값을 찾습니다.
+                predicates.add(cb.greaterThan(root.get(COMMENT_SEQ), lastCommentId));
+            }
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+
+        // 4. 정렬 조건 설정 (commentSeq 기준 오름차순 - 오래된 댓글부터)
+        Sort sort = Sort.by(Sort.Direction.ASC, COMMENT_SEQ);
+
+        // 5. Pageable 설정 (PageRequest.of(0, querySize)를 사용하여 limit만 적용)
+        Pageable pageable = PageRequest.of(0, querySize, sort);
+
+        // 6. 댓글 조회
+        List<RecipientCommentEntity> comments = recipientCommentRepository.findAll(spec, pageable).getContent();
+
+        // 7. Entity를 DTO로 변환하고, 삭제된 댓글은 필터링
+        // fromEntity()에서 null을 반환하는 경우가 아니라, 실제 엔티티가 없으면 리스트에 추가되지 않으므로
+        // Objects::nonNull 필터링은 필요 없을 수 있습니다.
+        // 다만, 혹시 모를 상황에 대비하여 유지하는 것도 나쁘지 않습니다.
+        List<RecipientCommentResponseDto> commentResponseDtos = comments.stream()
+                .map(RecipientCommentResponseDto::fromEntity)
+                // .filter(Objects::nonNull) // fromEntity에서 null 반환할 수 있으므로 null 필터링 (필요시 활성화)
+                .toList();
+
+        // 8. CursorFormatter를 사용하여 응답 포맷팅
+        return CursorFormatter.cursorReplyFormat(commentResponseDtos, size);
     }
 }

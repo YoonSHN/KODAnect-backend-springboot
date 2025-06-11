@@ -15,6 +15,11 @@ public final class MessageKeys {
     public static final String FILE_ACCESS_VIOLATION = "file.accessViolation";
     public static final String ARTICLE_DETAIL_SUCCESS = "article.detailSuccess";
     public static final String ARTICLE_LIST_SUCCESS = "article.listSuccess";
+    public static final String RECIPIENT_COMMENT_NOT_FOUND = "recipient.comment.notfound";
+    public static final String RECIPIENT_INVALID_DATA = "recipient.invalid.data";
+    public static final String RECIPIENT_INVALID_PASSCODE = "recipient.invalid.passcode";
+    public static final String RECIPIENT_NOT_FOUND = "recipient.notfound";
+    public static final String COMMON_INVALID_INTEGER_CONVERSION = "common.invalid.integer.conversion";
 
     // 추모관 관련
     public static final String DONATE_NOT_FOUND = "error.donate.notFound";
