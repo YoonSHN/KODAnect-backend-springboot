@@ -2,6 +2,7 @@ package kodanect.domain.recipient.service.impl;
 
 import kodanect.common.config.GlobalsProperties;
 import kodanect.common.response.CursorPaginationResponse;
+import kodanect.common.response.CursorReplyPaginationResponse;
 import kodanect.common.util.CursorFormatter;
 import kodanect.domain.recipient.dto.*;
 import kodanect.domain.recipient.exception.RecipientInvalidPasscodeException;
@@ -241,7 +242,7 @@ public class RecipientServiceImpl implements RecipientService {
     @Override
     public RecipientDetailResponseDto selectRecipient(Integer letterSeq) {
         // 1. 해당 게시물 조회 (삭제되지 않은 게시물만 조회하도록 필터링)
-        RecipientEntity recipientEntity = recipientRepository.findByIdWithComments(letterSeq)
+        RecipientEntity recipientEntity = recipientRepository.findById(letterSeq)
                 .filter(entity -> "N".equalsIgnoreCase(entity.getDelFlag()))
                 .orElseThrow(() -> new RecipientNotFoundException(RECIPIENT_NOT_FOUND, letterSeq));
 
@@ -252,33 +253,28 @@ public class RecipientServiceImpl implements RecipientService {
         // 3. Entity를 RecipientDetailResponseDto 변환 (댓글 포함)
         RecipientDetailResponseDto responseDto = RecipientDetailResponseDto.fromEntity(recipientEntity);
 
-        // 4. 댓글 관련 정보 별도 조회 및 DTO에 설정 _ 전체 댓글 수 조회
-        Integer totalCommentCount = recipientRepository.countCommentsByLetterSeq(letterSeq);
-        if (totalCommentCount == null) {
-            totalCommentCount = 0;
-        }
+        // 4. 상위 INITIAL_COMMENT_LOAD_LIMIT 개 댓글 조회
+        // lastCommentId는 첫 조회이므로 0 (또는 null), size는 INITIAL_COMMENT_LOAD_LIMIT + 1 (다음 커서 확인용)
+        Pageable commentPageable = PageRequest.of(0, INITIAL_COMMENT_LOAD_LIMIT + 1, // +1 하여 다음 커서 존재 여부 확인
+                Sort.by(Sort.Direction.ASC, COMMENT_SEQ)); // COMMENT_SEQ 상수가 정의되어 있다고 가정
 
-        // 5. 상위 N개 댓글 조회 (커서 기능 적용)
-        // findPaginatedComments를 사용하여 INITIAL_COMMENT_LOAD_LIMIT 만큼만 가져옵니다.
-        Pageable commentPageable = PageRequest.of(0, INITIAL_COMMENT_LOAD_LIMIT, Sort.by(Sort.Direction.ASC, WRITE_TIME, COMMENT_SEQ)); // 정렬 기준 명확화
         List<RecipientCommentEntity> initialComments = recipientCommentRepository.findPaginatedComments(
-                recipientEntity, // letterSeq 대신 RecipientEntity 객체를 전달
-                0, // lastCommentId는 첫 조회이므로 0 (또는 null)
-                commentPageable
+                recipientEntity, // letterSeq 대신 RecipientEntity 객체를 전달 (RecipientCommentRepository 확인)
+                0, // lastCommentId는 첫 조회이므로 0
+                commentPageable // Pageable을 사용하여 LIMIT 적용
         );
 
-        // 6. 상위 N개 댓글 DTO로 변환
-        List<RecipientCommentResponseDto> topCommentsDto = initialComments.stream()
+        // 5. 초기 댓글 Entity를 DTO로 변환
+        List<RecipientCommentResponseDto> initialCommentDtos = initialComments.stream()
                 .map(RecipientCommentResponseDto::fromEntity)
                 .toList();
 
+        // 6. CursorFormatter를 사용하여 댓글 응답 포맷 생성
+        CursorReplyPaginationResponse<RecipientCommentResponseDto, Integer> commentPaginationResponse =
+                CursorFormatter.cursorReplyFormat(initialCommentDtos, INITIAL_COMMENT_LOAD_LIMIT); // 실제 클라이언트 요청 size는 INITIAL_COMMENT_LOAD_LIMIT
 
         // 7. DTO에 댓글 관련 데이터 설정
-        responseDto.setCommentData(
-                totalCommentCount,
-                totalCommentCount > INITIAL_COMMENT_LOAD_LIMIT, // 전체 댓글 수가 3개보다 많으면 더보기 버튼 활성화
-                topCommentsDto // 상위 N개 댓글 목록 전달
-        );
+        responseDto.setInitialCommentData(commentPaginationResponse);
 
         return responseDto;
     }

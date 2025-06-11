@@ -31,6 +31,6 @@ public class RecipientNotFoundException extends AbstractCustomException {
 
     @Override
     public String getMessage() {
-        return String.format("[수령 대상 없음] recipientId=%d", letterSeq);
+        return String.format("[대상 없음] recipientId=%d", letterSeq);
     }
 }

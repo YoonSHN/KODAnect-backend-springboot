@@ -1,5 +1,6 @@
 package kodanect.domain.recipient.dto;
 
+import kodanect.common.response.CursorReplyPaginationResponse;
 import kodanect.domain.recipient.entity.RecipientEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -7,7 +8,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Data
 @Builder
@@ -34,7 +34,16 @@ public class RecipientDetailResponseDto {
     private int commentCount;        // 댓글 수는 조회 시 필요한 정보이므로 DTO에 포함
     private boolean hasMoreComments; // 추가 댓글이 있는지 여부
     private String imageUrl;         // 게시물에 등록된 이미지의 URL
-    private List<RecipientCommentResponseDto> topComments; // 초기에 보여줄 댓글 목록 필드
+    // 게시물 조회 시 초기 댓글 데이터를 CursorReplyPaginationResponse 형태로 포함
+    private CursorReplyPaginationResponse<RecipientCommentResponseDto, Integer> initialCommentData;
+
+    /** 2020-12-13T02:11:12 -> 2020-12-13 형식 변경 */
+    public String getWriteTime() {
+        return writeTime.toLocalDate().toString();
+    }
+    public String getModifyTime() {
+        return modifyTime.toLocalDate().toString();
+    }
 
     // Entity -> DTO 변환 메서드 (정적 팩토리 메서드)
     public static RecipientDetailResponseDto fromEntity(RecipientEntity entity) {
@@ -59,13 +68,12 @@ public class RecipientDetailResponseDto {
                 .commentCount(0)
                 .hasMoreComments(false)
                 .imageUrl(entity.getFileName()) // RecipientEntity의 fileName을 이미지 URL로 활용
-                .topComments(List.of())
+                // 초기에는 댓글 데이터를 비워두고, 서비스 계층에서 설정
+                .initialCommentData(null) // 초기화 시 null 또는 기본 빈 객체
                 .build();
     }
-    // 서비스 계층에서 댓글 관련 데이터 (총 댓글 수, 더보기 여부, 상위 N개 댓글)를 설정하기 위한 setter
-    public void setCommentData(int commentCount, boolean hasMoreComments, List<RecipientCommentResponseDto> topComments) {
-        this.commentCount = commentCount;
-        this.hasMoreComments = hasMoreComments;
-        this.topComments = topComments;
+    // 서비스 계층에서 초기 댓글 데이터를 설정하기 위한 setter
+    public void setInitialCommentData(CursorReplyPaginationResponse<RecipientCommentResponseDto, Integer> initialCommentData) {
+        this.initialCommentData = initialCommentData;
     }
 }

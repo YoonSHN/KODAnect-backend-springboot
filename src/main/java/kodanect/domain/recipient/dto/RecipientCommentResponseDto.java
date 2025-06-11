@@ -23,6 +23,14 @@ public class RecipientCommentResponseDto implements CursorIdentifiable<Integer> 
     private LocalDateTime modifyTime;
     private String delFlag;
 
+    /** 2020-12-13T02:11:12 -> 2020-12-13 형식 변경 */
+    public String getWriteTime() {
+        return writeTime.toLocalDate().toString();
+    }
+    public String getModifyTime() {
+        return modifyTime.toLocalDate().toString();
+    }
+
     // Entity -> DTO 변환 메서드 (정적 팩토리 메서드)
     public static RecipientCommentResponseDto fromEntity(RecipientCommentEntity entity) {
         if (entity.getDelFlag() != null && entity.getDelFlag().equalsIgnoreCase("Y")) {
