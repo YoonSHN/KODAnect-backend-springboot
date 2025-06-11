@@ -12,6 +12,7 @@ import static kodanect.common.exception.config.MessageKeys.REPLY_WRITER_EMPTY;
 import static kodanect.common.exception.config.MessageKeys.REPLY_PASSWORD_EMPTY;
 import static kodanect.common.exception.config.MessageKeys.REPLY_PASSWORD_INVALID;
 import static kodanect.common.exception.config.MessageKeys.REPLY_CONTENTS_EMPTY;
+import static kodanect.common.exception.config.MessageKeys.REPLY_WRITER_INVALID;
 
 /**
  *
@@ -31,6 +32,7 @@ public class MemorialReplyCreateRequest{
 
     /* 댓글 작성 닉네임 */
     @NotBlank(message = REPLY_WRITER_EMPTY, groups = BlankGroup.class)
+    @Pattern(regexp = "^[a-zA-Z가-힣\\s]{1,30}$", message = REPLY_WRITER_INVALID, groups = PatternGroup.class)
     private String replyWriter;
 
     /* 댓글 비밀번호 */

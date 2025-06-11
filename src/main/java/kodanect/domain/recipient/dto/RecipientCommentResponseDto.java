@@ -1,7 +1,6 @@
 package kodanect.domain.recipient.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import kodanect.common.util.CursorIdentifiable;
 import kodanect.domain.recipient.entity.RecipientCommentEntity;
 import lombok.AllArgsConstructor;
@@ -21,21 +20,12 @@ public class RecipientCommentResponseDto implements CursorIdentifiable<Integer> 
     private Integer letterSeq;
     private String commentWriter;
     private String commentContents;
-    @JsonIgnore
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDateTime writeTime;
-    @JsonIgnore
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDateTime modifyTime;
     private String delFlag;
 
-    @JsonProperty("writeTime")
-    public String getWriteTimeFormatted() {
-        return writeTime != null ? writeTime.toLocalDate().toString() : null;
-    }
-
-    @JsonProperty("modifyTime")
-    public String getModifyTimeFormatted() {
-        return modifyTime != null ? modifyTime.toLocalDate().toString() : null;
-    }
     // Entity -> DTO 변환 메서드 (정적 팩토리 메서드)
     public static RecipientCommentResponseDto fromEntity(RecipientCommentEntity entity) {
         return RecipientCommentResponseDto.builder()
