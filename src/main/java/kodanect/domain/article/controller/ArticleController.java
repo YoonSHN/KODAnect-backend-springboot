@@ -28,10 +28,24 @@ import java.util.List;
 import static kodanect.common.exception.config.MessageKeys.ARTICLE_DETAIL_SUCCESS;
 import static kodanect.common.exception.config.MessageKeys.ARTICLE_LIST_SUCCESS;
 
+/**
+ * 게시판 관련 API를 제공하는 REST 컨트롤러입니다.
+ *
+ * <p>공지사항, 채용공고, 일반 게시판 등 다양한 유형의 게시글 조회 및 파일 다운로드 기능을 포함합니다.
+ * <ul>
+ *     <li>/notices - 공지사항/채용공고 전용</li>
+ *     <li>/{boardCode} - 일반 게시판</li>
+ * </ul>
+ * 내부적으로 {@link BoardCategoryCache}를 통해 게시판 코드 URL 매핑을 처리합니다.
+ *
+ * @see ArticleService
+ * @see FileDownloadService
+ * @see BoardCategoryCache
+ */
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/newKoda")
+@RequestMapping("")
 public class ArticleController {
 
     public static final int DEFAULT_ARTICLE_PAGE_SIZE = 20;

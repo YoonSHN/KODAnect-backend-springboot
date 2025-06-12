@@ -30,7 +30,8 @@ public class WebMvcConfig implements WebMvcConfigurer {
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
                 .allowedOrigins(
-                        "https://kodanect-frontend.netlify.app"
+                        "https://kodanect-frontend.netlify.app",
+                        "https://kodanect-test.netlify.app"
                 )
                 .allowedMethods("*")
                 .allowedHeaders("*")

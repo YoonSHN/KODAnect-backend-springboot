@@ -65,7 +65,7 @@ class ArticleExceptionHandlerTest {
         when(messageSourceAccessor.getMessage(anyString(), any(Object[].class), anyString()))
                 .thenReturn("게시글을 찾을 수 없습니다.");
 
-        mockMvc.perform(get("/newKoda/notices/{articleSeq}", articleSeq)
+        mockMvc.perform(get("/notices/{articleSeq}", articleSeq)
                         .param("optionStr", optionStr)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
@@ -85,7 +85,7 @@ class ArticleExceptionHandlerTest {
         when(messageSourceAccessor.getMessage(anyString(), any(Object[].class), anyString()))
                 .thenReturn("잘못된 게시판 코드입니다.");
 
-        mockMvc.perform(get("/newKoda/{boardCode}/{articleSeq}", boardCode, 1)
+        mockMvc.perform(get("/{boardCode}/{articleSeq}", boardCode, 1)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
@@ -119,7 +119,7 @@ class ArticleExceptionHandlerTest {
                 .thenReturn("파일을 찾을 수 없습니다.");
 
         // when & then
-        mockMvc.perform(get("/newKoda/notices/{articleSeq}/files/{fileName}", articleSeq, fileName)
+        mockMvc.perform(get("/notices/{articleSeq}/files/{fileName}", articleSeq, fileName)
                         .param("optionStr", optionStr)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())

@@ -131,7 +131,7 @@ class ArticleControllerIntegrationTest {
     @Test
     @DisplayName("게시글 목록 조회")
     void getArticles() throws Exception {
-        mockMvc.perform(get("/newKoda/notices")
+        mockMvc.perform(get("/notices")
                         .param("optionStr", "1")
                         .param("type", "title")
                         .param("keyword", "트랜잭션")
@@ -144,7 +144,7 @@ class ArticleControllerIntegrationTest {
     @Test
     @DisplayName("사전정보 게시판 게시글 목록 조회")
     void getOtherBoardArticles() throws Exception {
-        mockMvc.perform(get("/newKoda/makePublic")
+        mockMvc.perform(get("/makePublic")
                         .param("type", "title")
                         .param("keyword", "사전정보공개")
                         .accept(MediaType.APPLICATION_JSON))
@@ -156,7 +156,7 @@ class ArticleControllerIntegrationTest {
     @Test
     @DisplayName("사전 정보 게시판 상세 조회")
     void getOtherBoardArticleDetail() throws Exception {
-        mockMvc.perform(get("/newKoda/makePublic/2")
+        mockMvc.perform(get("/makePublic/2")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.title").value("사전정보공개 제목"))
@@ -187,7 +187,7 @@ class ArticleControllerIntegrationTest {
 
         articleFileRepository.save(file);
 
-        mockMvc.perform(get("/newKoda/makePublic/2/files/sample.txt"))
+        mockMvc.perform(get("/makePublic/2/files/sample.txt"))
                 .andExpect(status().isOk())
                 .andExpect(header().string(HttpHeaders.CONTENT_DISPOSITION,
                         containsString("filename*=UTF-8''sample.txt")))
@@ -200,7 +200,7 @@ class ArticleControllerIntegrationTest {
     @Test
     @DisplayName("사전정보 게시판 첨부파일 다운로드 - 파일 없음")
     void downloadOtherBoardFileNotFound() throws Exception {
-        mockMvc.perform(get("/newKoda/makePublic/2/files/notfound.txt")
+        mockMvc.perform(get("/makePublic/2/files/notfound.txt")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").exists())
@@ -210,7 +210,7 @@ class ArticleControllerIntegrationTest {
     @Test
     @DisplayName("게시글 상세 조회")
     void getArticleDetail() throws Exception {
-        mockMvc.perform(get("/newKoda/notices/1")
+        mockMvc.perform(get("/notices/1")
                         .param("optionStr", "1")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -221,7 +221,7 @@ class ArticleControllerIntegrationTest {
     @Test
     @DisplayName("첨부파일 다운로드 - 파일 미존재 시 오류 처리")
     void downloadFileNotFound() throws Exception {
-        mockMvc.perform(get("/newKoda/notices/1/files/nonexistent.txt")
+        mockMvc.perform(get("/notices/1/files/nonexistent.txt")
                         .param("optionStr", "1")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())

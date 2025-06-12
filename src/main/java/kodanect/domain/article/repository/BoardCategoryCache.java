@@ -12,10 +12,13 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * 게시판 분류(BoardCategory) 정보를 캐싱하여 boardCode, URL param 등을 통한 조회를 빠르게 제공.
- * DB 접근을 최소화하고 enum 기반 매핑 제거, URL param 매핑 지원 등의 목적.
- * 현재 캐싱 방식은 인메모리 캐싱 방식을 사용하기 때문에 백오프에서 DB 추가구현시 reload 메서드 적용 필요
+ * 게시판 분류 {@link BoardCategory} 정보를 애플리케이션 내 메모리에 캐싱하여 빠르게 제공하는 컴포넌트입니다.
+ *
+ * <p>현재는 단순 인메모리 캐시이므로, 게시판 정보가 변경된 경우 수동 {@link #reload()} 호출이 필요합니다.</p>
  * 사실 컬럼 하나 추가하면 끝나긴하지만 현재 DB를 변경없이 작동하는 방식을 고려
+ *
+ * @see BoardCategoryRepository
+ * @see BoardCategory
  */
 @Slf4j
 @Component

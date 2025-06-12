@@ -13,7 +13,14 @@ import org.springframework.data.domain.Pageable;
 import java.util.List;
 
 /**
- * 게시글 커스텀 조회 구현체
+ * {@link ArticleRepositoryCustom}의 구현체로,
+ * 게시글의 커스텀 조회 및 비즈니스 쿼리를 처리합니다.
+ *
+ * <p>QueryDSL을 사용하여 동적 검색 조건과 조회수 증가 기능을 제공합니다.</p>
+ *
+ * @author gkr97
+ * @see ArticleRepositoryCustom
+ * @see Article
  */
 @Slf4j
 @RequiredArgsConstructor
@@ -25,13 +32,13 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
      * 게시글 목록 검색 (조건: 게시판코드, 검색 필드, 키워드, 페이징)
      *
      * @param boardCodes 게시판 코드 리스트
-     * @param searchField "title" | "contents" | "all"
-     * @param keyword 검색어
+     * @param type "title" | "contents" | "all"
+     * @param keyWord 검색어
      * @param pageable 페이지 정보
      * @return Page<Article> 결과 목록
      */
     @Override
-    public Page<Article> searchArticles(List<String> boardCodes, String searchField, String keyword, Pageable pageable) {
+    public Page<Article> searchArticles(List<String> boardCodes, String type, String keyWord, Pageable pageable) {
 
         QArticle article = QArticle.article;
 
@@ -42,24 +49,24 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
             where.and(article.id.boardCode.in(boardCodes));
         }
 
-        if (keyword != null && !keyword.isBlank()) {
+        if (keyWord != null && !keyWord.isBlank()) {
             BooleanBuilder keywordCondition = new BooleanBuilder();
 
-            String effectiveField = (searchField != null) ? searchField : "all";
+            String effectiveField = (type != null) ? type : "all";
 
             switch (effectiveField) {
                 case "title":
-                    keywordCondition.or(article.title.containsIgnoreCase(keyword));
+                    keywordCondition.or(article.title.containsIgnoreCase(keyWord));
                     break;
                 case "contents":
-                    keywordCondition.or(article.contents.containsIgnoreCase(keyword));
+                    keywordCondition.or(article.contents.containsIgnoreCase(keyWord));
                     break;
                 case "all":
-                    keywordCondition.or(article.title.containsIgnoreCase(keyword));
-                    keywordCondition.or(article.contents.containsIgnoreCase(keyword));
+                    keywordCondition.or(article.title.containsIgnoreCase(keyWord));
+                    keywordCondition.or(article.contents.containsIgnoreCase(keyWord));
                     break;
                 default:
-                    log.warn("잘못된 searchField 값: {}", searchField);
+                    log.warn("잘못된 searchField 값: {}", type);
             }
 
             where.and(keywordCondition);

@@ -70,7 +70,7 @@ public class ArticleControllerTest {
                 any(PageRequest.class)))
                 .thenReturn((Page) new PageImpl<>(List.of(dto)));
 
-        mockMvc.perform(get("/newKoda/notices")
+        mockMvc.perform(get("/notices")
                         .param("optionStr", "1")
                         .param("page", "0")
                         .param("size", "20"))
@@ -93,7 +93,7 @@ public class ArticleControllerTest {
                 any(PageRequest.class)))
                 .thenReturn((Page) new PageImpl<>(List.of(dto)));
 
-        mockMvc.perform(get("/newKoda/makePublic")
+        mockMvc.perform(get("/makePublic")
                         .param("page", "0")
                         .param("size", "20"))
                 .andExpect(status().isOk())
@@ -112,7 +112,7 @@ public class ArticleControllerTest {
         when(boardCategoryCache.getBoardCodeByUrlParam("1")).thenReturn("7");
         when(articleService.getArticle("7", 1)).thenReturn(detailDto);
 
-        mockMvc.perform(get("/newKoda/notices/1")
+        mockMvc.perform(get("/notices/1")
                         .param("optionStr", "1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("게시글 상세 조회에 성공했습니다."))
@@ -125,7 +125,7 @@ public class ArticleControllerTest {
     public void testInvalidSearchField() throws Exception {
         when(boardCategoryCache.getBoardCodeByUrlParam("1")).thenReturn("7");
 
-        mockMvc.perform(get("/newKoda/notices")
+        mockMvc.perform(get("/notices")
                         .param("optionStr", "1")
                         .param("type", "invalidField")
                         .param("page", "0")
@@ -141,7 +141,7 @@ public class ArticleControllerTest {
 
         String longKeyword = "a".repeat(101);
 
-        mockMvc.perform(get("/newKoda/notices")
+        mockMvc.perform(get("/notices")
                         .param("optionStr", "1")
                         .param("type", "title")
                         .param("search", longKeyword)
