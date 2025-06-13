@@ -1,6 +1,6 @@
 package kodanect.domain.recipient.service;
 
-import kodanect.common.response.CursorReplyPaginationResponse;
+import kodanect.common.response.CursorCommentPaginationResponse;
 import kodanect.domain.recipient.dto.RecipientCommentRequestDto;
 import kodanect.domain.recipient.dto.RecipientCommentResponseDto;
 
@@ -15,5 +15,5 @@ public interface RecipientCommentService {
     void deleteComment(Integer letterSeq, Integer commentSeq, String inputPasscode);
 
     // 특정 개시물의 페이징된 댓글 조회
-    CursorReplyPaginationResponse<RecipientCommentResponseDto, Integer> selectPaginatedCommentsForRecipient(Integer letterSeq, Integer lastCommentId, Integer size);
+    CursorCommentPaginationResponse<RecipientCommentResponseDto, Integer> selectPaginatedCommentsForRecipient(Integer letterSeq, Integer lastCommentId, Integer size);
 }

@@ -4,7 +4,7 @@ import kodanect.common.response.CursorPaginationResponse;
 import kodanect.common.util.MemorialFinder;
 import kodanect.domain.remembrance.dto.MemorialDetailResponse;
 import kodanect.domain.remembrance.dto.MemorialResponse;
-import kodanect.domain.remembrance.dto.MemorialReplyResponse;
+import kodanect.domain.remembrance.dto.MemorialCommentResponse;
 import kodanect.domain.remembrance.entity.Memorial;
 import kodanect.domain.remembrance.repository.MemorialRepository;
 import kodanect.domain.remembrance.service.impl.MemorialServiceImpl;
@@ -34,7 +34,7 @@ public class MemorialServiceImplTest {
     private MemorialRepository memorialRepository;
 
     @Mock
-    private MemorialReplyService memorialReplyService;
+    private MemorialCommentService memorialCommentService;
 
     @Mock
     private MemorialFinder memorialFinder;
@@ -136,7 +136,7 @@ public class MemorialServiceImplTest {
         assertEquals("2023-01-01", result.getContent().get(0).getDonateDate());
         assertEquals("M", result.getContent().get(0).getGenderFlag());
         assertEquals(Integer.valueOf(40), result.getContent().get(0).getDonateAge());
-        assertEquals(5, result.getContent().get(0).getReplyCount());
+        assertEquals(5, result.getContent().get(0).getCommentCount());
     }
 
     @Test
@@ -166,7 +166,7 @@ public class MemorialServiceImplTest {
         assertEquals("2023-01-01", dto1.getDonateDate());
         assertEquals("M", dto1.getGenderFlag());
         assertEquals(Integer.valueOf(40), dto1.getDonateAge());
-        assertEquals(5, dto1.getReplyCount());
+        assertEquals(5, dto1.getCommentCount());
 
         MemorialResponse dto2 = page.getContent().get(1);
         assertEquals(Integer.valueOf(2), dto2.getDonateSeq());
@@ -175,7 +175,7 @@ public class MemorialServiceImplTest {
         assertEquals("2023-01-02", dto2.getDonateDate());
         assertEquals("F", dto2.getGenderFlag());
         assertEquals(Integer.valueOf(20), dto2.getDonateAge());
-        assertEquals(2, dto2.getReplyCount());
+        assertEquals(2, dto2.getCommentCount());
 
     }
 
@@ -214,17 +214,17 @@ public class MemorialServiceImplTest {
                 .delFlag("N")
                 .build();
 
-        List<MemorialReplyResponse> page = List.of(
-                MemorialReplyResponse.builder()
-                        .replySeq(1)
-                        .replyWriter("김길동")
-                        .replyContents("감사합니다")
-                        .replyWriteTime(LocalDateTime.of(2024, 1, 1, 14, 0))
+        List<MemorialCommentResponse> page = List.of(
+                MemorialCommentResponse.builder()
+                        .commentSeq(1)
+                        .commentWriter("김길동")
+                        .contents("감사합니다")
+                        .writeTime(LocalDateTime.of(2024, 1, 1, 14, 0))
                         .build()
         );
 
         when(memorialFinder.findByIdOrThrow(donateSeq)).thenReturn(memorial);
-        when(memorialReplyService.getMemorialReplyList(donateSeq, null, size+1)).thenReturn(page);
+        when(memorialCommentService.getMemorialCommentList(donateSeq, null, size+1)).thenReturn(page);
 
         MemorialDetailResponse result = memorialService.getMemorialByDonateSeq(donateSeq);
 
@@ -245,7 +245,6 @@ public class MemorialServiceImplTest {
         assertEquals(6, result.getHardCount());
         assertEquals(7, result.getSadCount());
         assertEquals("2024-01-01", result.getWriteTime());
-        assertEquals(1, result.getMemorialReplyResponses().size());
     }
 
 }

@@ -1,19 +1,22 @@
 package kodanect.domain.donation.dto.response;
 
 
-import kodanect.domain.donation.entity.DonationStory;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import kodanect.common.util.CursorIdentifiable;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Builder
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class DonationStoryListDto {
+public class DonationStoryListDto implements CursorIdentifiable<Long> {
 
     private Long storySeq;
 
@@ -21,15 +24,23 @@ public class DonationStoryListDto {
     private String storyWriter;
 
     private Integer readCount;
-    private LocalDateTime writeTime;
 
-    public static DonationStoryListDto fromEntity(DonationStory story){ //정적 팩토리 메서드(DTO변환용)
-        return DonationStoryListDto.builder()
-                .storySeq(story.getStorySeq())
-                .storyTitle(story.getStoryTitle())
-                .storyWriter(story.getStoryWriter())
-                .readCount(story.getReadCount() != null ? story.getReadCount() : 0)
-                .writeTime(story.getWriteTime() != null ? story.getWriteTime() : LocalDateTime.now())
-                .build();
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+    private LocalDate writeTime;
+
+    public DonationStoryListDto(Long storySeq, String storyTitle, String storyWriter,
+                                Integer readCount, LocalDateTime writeTime) {
+        this.storySeq = storySeq;
+        this.storyTitle = storyTitle;
+        this.storyWriter = storyWriter;
+        this.readCount = readCount;
+        this.writeTime = writeTime != null ? writeTime.toLocalDate() : null;
+    }
+
+
+    @Override
+    @JsonIgnore
+    public Long getCursorId(){
+        return storySeq;
     }
 }

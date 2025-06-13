@@ -60,7 +60,7 @@ pipeline {
                 script {
                     githubNotify context: 'build', status: 'PENDING', description: '빌드 시작...'
                     catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-                        sh './mvnw clean compile'
+                        sh env.BRANCH_NAME == 'main' ? './mvnw clean compile' : './mvnw compile'
                     }
 
                     if (currentBuild.currentResult == 'FAILURE') {
@@ -253,16 +253,24 @@ EOF
                     githubNotify context: 'healthcheck', status: 'PENDING', description: '헬스체크 중...'
 
                     def healthCheckUrl = "http://10.8.110.14:8080/actuator/health"
-                    def retries = 3
+                    def retries = 5
                     def success = false
 
                     for (int i = 0; i < retries; i++) {
-                        def response = sh(script: "curl -s -o /dev/null -w '%{http_code}' ${healthCheckUrl}", returnStdout: true).trim()
-                        if (response == '200') {
-                            success = true
-                            break
+                        try {
+                            def response = sh(
+                                script: "curl -s -o /dev/null -w '%{http_code}' ${healthCheckUrl}",
+                                returnStdout: true
+                            ).trim()
+                            echo "헬스체크 응답 코드: ${response}"
+                            if (response == '200') {
+                                success = true
+                                break
+                            }
+                        } catch (Exception e) {
+                            echo "헬스체크 중 오류 발생 (시도 ${i+1}/${retries}): ${e.getMessage()}"
                         }
-                        sleep(5)
+                        sleep 5
                     }
 
                     if (success) {
@@ -280,6 +288,7 @@ EOF
     post {
         success {
             script {
+                githubNotify context: 'continuous-integration/jenkins/branch', status: 'SUCCESS', description: '전체 빌드 및 테스트 성공', targetUrl: "${env.BUILD_URL}"
                 if (env.CHANGE_ID != null || env.BRANCH_NAME?.trim() == 'main') {
                     slackSend(
                         channel: '4_파이널프로젝트_1조_jenkins',
@@ -298,9 +307,9 @@ EOF
                 }
             }
         }
-
         failure {
             script {
+                githubNotify context: 'continuous-integration/jenkins/branch', status: 'FAILURE', description: '전체 빌드 또는 테스트 실패', targetUrl: "${env.BUILD_URL}"
                 if (env.CHANGE_ID != null || env.BRANCH_NAME?.trim() == 'main') {
                     slackSend(
                         channel: '4_파이널프로젝트_1조_jenkins',

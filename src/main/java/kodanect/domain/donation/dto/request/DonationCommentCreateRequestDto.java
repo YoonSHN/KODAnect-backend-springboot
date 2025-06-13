@@ -21,6 +21,4 @@ public class DonationCommentCreateRequestDto {
     private String commentPasscode;
     @NotBlank(message="donation.comment.contents.blank")
     private String contents;
-    @NotBlank(message="donation.captcha.token.blank")
-    private String captchaToken;
 }

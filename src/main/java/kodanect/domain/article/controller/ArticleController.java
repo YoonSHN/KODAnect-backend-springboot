@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.support.MessageSourceAccessor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -63,10 +64,10 @@ public class ArticleController {
      * @param pageable 페이징 및 정렬 정보
      * @return ApiResponse
      */
-    private ResponseEntity<ApiResponse<Page<? extends ArticleDTO>>> getArticlesCommon(
+    private ResponseEntity<ApiResponse<Page<ArticleDTO>>> getArticlesCommon(
             List<String> boardCodes, SearchCondition condition, Pageable pageable) {
 
-        Page<? extends ArticleDTO> articles = service.getArticles(boardCodes, condition.getType(), condition.getKeyWord(), pageable);
+        Page<ArticleDTO> articles = service.getArticles(boardCodes, condition.getType(), condition.getKeyWord(), pageable);
         String message = messageSourceAccessor.getMessage(ARTICLE_LIST_SUCCESS);
         return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, message, articles));
     }
@@ -98,19 +99,21 @@ public class ArticleController {
      * @return ApiResponse
      */
     @GetMapping("/notices")
-    public ResponseEntity<ApiResponse<Page<? extends ArticleDTO>>> getArticles(
+    public ResponseEntity<ApiResponse<Page<ArticleDTO>>> getArticles(
             @RequestParam(defaultValue = "all") String optionStr,
             @Validated @ModelAttribute SearchCondition condition,
-            @PageableDefault(size = DEFAULT_ARTICLE_PAGE_SIZE, sort = "writeTime", direction = Sort.Direction.DESC) Pageable pageable
+            @PageableDefault(size = DEFAULT_ARTICLE_PAGE_SIZE) Pageable pageable
     ) {
+        Pageable sortedPageable = applyDefaultSort(pageable);
+
         List<String> boardCodes;
         if ("all".equalsIgnoreCase(optionStr)) {
             boardCodes = boardCategoryCache.getAllBoardCodesForOptions();
         } else {
             String boardCode = boardCategoryCache.getBoardCodeByUrlParam(optionStr);
-            boardCodes = List.of(boardCode);
+            boardCodes = boardCode != null ? List.of(boardCode) : List.of();
         }
-        return getArticlesCommon(boardCodes,condition, pageable);
+        return getArticlesCommon(boardCodes, condition, sortedPageable);
     }
 
     /**
@@ -161,13 +164,14 @@ public class ArticleController {
      * @return ApiResponse
      */
     @GetMapping("/{boardCode}")
-    public ResponseEntity<ApiResponse<Page<? extends ArticleDTO>>> getOtherBoardArticles(
+    public ResponseEntity<ApiResponse<Page<ArticleDTO>>> getOtherBoardArticles(
             @PathVariable String boardCode,
             @Validated @ModelAttribute SearchCondition condition,
-            @PageableDefault(size = DEFAULT_ARTICLE_PAGE_SIZE, sort = "writeTime", direction = Sort.Direction.DESC) Pageable pageable
+            @PageableDefault(size = DEFAULT_ARTICLE_PAGE_SIZE) Pageable pageable
     ) {
+        Pageable sortedPageable = applyDefaultSort(pageable);
         String dbBoardCode = boardCategoryCache.getBoardCodeByUrlParam(boardCode);
-        return getArticlesCommon(List.of(dbBoardCode), condition, pageable);
+        return getArticlesCommon(List.of(dbBoardCode), condition, sortedPageable);
     }
 
     /**
@@ -207,6 +211,17 @@ public class ArticleController {
                 .contentType(MediaType.parseMediaType(file.getContentType()))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + file.getEncodedFileName())
                 .body(file.getResource());
+    }
+
+    private Pageable applyDefaultSort(Pageable pageable) {
+        return PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                Sort.by(
+                        Sort.Order.desc("fixFlag"),
+                        Sort.Order.desc("writeTime")
+                )
+        );
     }
 
 }

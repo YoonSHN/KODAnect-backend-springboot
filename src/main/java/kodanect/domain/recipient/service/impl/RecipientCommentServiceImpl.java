@@ -1,6 +1,6 @@
 package kodanect.domain.recipient.service.impl;
 
-import kodanect.common.response.CursorReplyPaginationResponse;
+import kodanect.common.response.CursorCommentPaginationResponse;
 import kodanect.common.util.CursorFormatter;
 import kodanect.domain.recipient.dto.RecipientCommentRequestDto;
 import kodanect.domain.recipient.dto.RecipientCommentResponseDto;
@@ -192,7 +192,7 @@ public class RecipientCommentServiceImpl implements RecipientCommentService {
      * @return 커서 기반 페이지네이션 응답 (댓글)
      */
     @Override
-    public CursorReplyPaginationResponse<RecipientCommentResponseDto, Integer> selectPaginatedCommentsForRecipient(Integer letterSeq, Integer lastCommentId, Integer size) {
+    public CursorCommentPaginationResponse<RecipientCommentResponseDto, Integer> selectPaginatedCommentsForRecipient(Integer letterSeq, Integer lastCommentId, Integer size) {
         logger.info("Selecting paginated comments for letterSeq: {}, lastCommentId: {}, size: {}", letterSeq, lastCommentId, size);
 
         // 1. 해당 게시물이 삭제되지 않았는지 확인
@@ -236,6 +236,6 @@ public class RecipientCommentServiceImpl implements RecipientCommentService {
                 .toList();
 
         // 8. CursorFormatter를 사용하여 응답 포맷팅
-        return CursorFormatter.cursorReplyFormat(commentResponseDtos, size);
+        return CursorFormatter.cursorCommentFormat(commentResponseDtos, size);
     }
 }

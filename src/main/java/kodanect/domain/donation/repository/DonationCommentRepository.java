@@ -11,33 +11,42 @@ import java.util.List;
 
 public interface DonationCommentRepository extends JpaRepository<DonationStoryComment, Long> {
 
-    /**
-     * 특정 게시글(storySeq)에 작성된 댓글 목록을 조회 (페이지네이션 적용 가능)
-     * - Pageable을 이용한 더보기 기능 구현 가능
-     * - commentSeq 오름차순 정렬
-     *
-     * @param storySeq 게시글 ID
-     * @param pageable 페이징 정보 (offset, limit)
-     * @return DonationStoryCommentDto 리스트
-     */
     @Query("""
-            SELECT new kodanect.domain.donation.dto.response.DonationStoryCommentDto(
-                c.commentSeq, c.commentWriter, c.contents, c.writeTime
-            )
-            FROM DonationStoryComment c
-            WHERE c.story.storySeq = :storySeq
-            ORDER BY c.commentSeq ASC
-            """)
-    List<DonationStoryCommentDto> findCommentsByStoryId(@Param("storySeq") Long storySeq, Pageable pageable);
+        SELECT d
+        FROM DonationStoryComment d
+        WHERE d.story.storySeq = :storySeq
+          AND (:cursor IS NULL OR d.commentSeq < :cursor)
+        ORDER BY d.commentSeq DESC
+        """)
+    List<DonationStoryComment> findByCursorEntity(
+            @Param("storySeq") Long storySeq,
+            @Param("cursor") Long cursor,
+            Pageable pageable);
+
 
     /**
-     * 특정 게시글(storySeq)에 작성된 전체 댓글 개수 반환
-     * - 더보기 기능의 hasNext 여부 판단에 활용
-     *
-     * @param storySeq 게시글 ID
-     * @return 댓글 수
+     * 최신 댓글 N개를 DTO로 바로 조회 (정적 팩토리 사용)
      */
-    @Query("SELECT COUNT(c) FROM DonationStoryComment c WHERE c.story.storySeq = :storySeq")
-    long countCommentsByStoryId(@Param("storySeq") Long storySeq);
+    @Query("""
+        SELECT new kodanect.domain.donation.dto.response.DonationStoryCommentDto(
+            c.commentSeq,
+            c.commentWriter,
+            c.contents,
+            c.writeTime
+        )
+        FROM DonationStoryComment c
+        WHERE c.story.storySeq = :storySeq
+          AND c.delFlag = 'N'
+        ORDER BY c.commentSeq DESC
+        """)
+    List<DonationStoryCommentDto> findLatestComments(
+            @Param("storySeq") Long storySeq,
+            Pageable pageable
+    );
+
+    @Query(value =  "SELECT COUNT(*) FROM tb25_421_donation_story_comment WHERE story_seq = :storySeq ", nativeQuery=true)
+    long countAllByStorySeq(Long storySeq);
+
+
 
 }

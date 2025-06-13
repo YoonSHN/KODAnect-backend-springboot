@@ -1,7 +1,7 @@
 package kodanect.common.response;
 
-import lombok.Builder;
 import lombok.Getter;
+import lombok.experimental.SuperBuilder;
 
 import java.util.List;
 
@@ -14,26 +14,26 @@ import java.util.List;
  *
  * <p><b>특징:</b>
  * <ul>
- *     <li>댓글 전용 페이징 응답 구조로, 필드명에 <code>reply</code> 접두어 사용</li>
+ *     <li>댓글 전용 페이징 응답 구조로, 필드명에 <code>comment</code> 접두어 사용</li>
  *     <li>무한 스크롤 등에서 댓글을 일정 단위로 끊어 불러오기 용이</li>
  *     <li>커서 방식으로 정렬 순서를 안정적으로 유지하면서 이어받기 가능</li>
  * </ul>
  *
  * <p><b>사용 예:</b><br>
- * - 댓글 조회 API: <code>/remembrance/{donateSeq}/replies?cursor=xxx&amp;size=10</code><br>
- * - 클라이언트에서 추가 댓글 요청 시 <code>replyNextCursor</code> 기준으로 이어서 조회
+ * - 댓글 조회 API: <code>/remembrance/{donateSeq}/comment?cursor=xxx&amp;size=10</code><br>
+ * - 클라이언트에서 추가 댓글 요청 시 <code>commentNextCursor</code> 기준으로 이어서 조회
  */
 
 @Getter
-@Builder
-public class CursorReplyPaginationResponse<T, C> {
+@SuperBuilder
+public class CursorCommentPaginationResponse<T, C> {
 
     /** 실제 데이터 응답 리스트 */
     private List<T> content;
 
     /** 다음 요청 시 사용할 커서 값*/
-    private C replyNextCursor;
+    private C commentNextCursor;
 
     /** 다음 페이지가 존재하는지 여부 (true면 다음 요청 가능) */
-    private boolean replyHasNext;
+    private boolean commentHasNext;
 }

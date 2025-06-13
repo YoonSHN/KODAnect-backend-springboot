@@ -17,6 +17,5 @@ import java.util.List;
 @AllArgsConstructor
 public class DonationStoryWriteFormDto {
 
-
     private List<AreaCode> areaOptions; //db에 저장된 권역 정보
 }

@@ -2,17 +2,18 @@ package kodanect.domain.remembrance.service.impl;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import kodanect.common.response.CursorReplyPaginationResponse;
+import kodanect.common.response.CursorCommentPaginationResponse;
 import kodanect.common.util.CursorFormatter;
-import kodanect.domain.remembrance.dto.MemorialReplyCreateRequest;
-import kodanect.domain.remembrance.dto.MemorialReplyUpdateRequest;
-import kodanect.domain.remembrance.entity.MemorialReply;
-import kodanect.domain.remembrance.dto.MemorialReplyResponse;
+import kodanect.domain.remembrance.dto.MemorialCommentCreateRequest;
+import kodanect.domain.remembrance.dto.MemorialCommentPasswordRequest;
+import kodanect.domain.remembrance.dto.MemorialCommentUpdateRequest;
+import kodanect.domain.remembrance.entity.MemorialComment;
+import kodanect.domain.remembrance.dto.MemorialCommentResponse;
 import kodanect.domain.remembrance.exception.*;
-import kodanect.domain.remembrance.repository.MemorialReplyRepository;
-import kodanect.domain.remembrance.service.MemorialReplyService;
+import kodanect.domain.remembrance.repository.MemorialCommentRepository;
+import kodanect.domain.remembrance.service.MemorialCommentService;
 import kodanect.common.util.MemorialFinder;
-import kodanect.common.util.MemorialReplyFinder;
+import kodanect.common.util.MemorialCommentFinder;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -29,16 +30,16 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  *
  **/
 @Service
-public class MemorialReplyServiceImpl implements MemorialReplyService {
+public class MemorialCommentServiceImpl implements MemorialCommentService {
 
     /** 스레드 생존 기간 */
     private static final int CACHE_EXPIRE_MINUTES = 10;
     /** 멀티 스레딩 갯수 */
     private static final int CACHE_MAX_SIZE = 100_000;
 
-    private final MemorialReplyRepository memorialReplyRepository;
+    private final MemorialCommentRepository memorialCommentRepository;
     private final MemorialFinder memorialFinder;
-    private final MemorialReplyFinder memorialReplyFinder;
+    private final MemorialCommentFinder memorialCommentFinder;
 
     /**
      *
@@ -51,10 +52,10 @@ public class MemorialReplyServiceImpl implements MemorialReplyService {
     private final Cache<Integer, ReentrantReadWriteLock> lockCache =
             Caffeine.newBuilder().expireAfterAccess(CACHE_EXPIRE_MINUTES, TimeUnit.MINUTES).maximumSize(CACHE_MAX_SIZE).build();
 
-    public MemorialReplyServiceImpl(MemorialReplyRepository memorialReplyRepository, MemorialFinder memorialFinder, MemorialReplyFinder memorialReplyFinder){
-        this.memorialReplyRepository = memorialReplyRepository;
+    public MemorialCommentServiceImpl(MemorialCommentRepository memorialCommentRepository, MemorialFinder memorialFinder, MemorialCommentFinder memorialCommentFinder){
+        this.memorialCommentRepository = memorialCommentRepository;
         this.memorialFinder = memorialFinder;
-        this.memorialReplyFinder = memorialReplyFinder;
+        this.memorialCommentFinder = memorialCommentFinder;
     }
 
     /**
@@ -75,11 +76,11 @@ public class MemorialReplyServiceImpl implements MemorialReplyService {
      * 기증자 추모관 댓글 수정 메서드
      *
      * @param donateSeq 상세 게시글 번호
-     * @param memorialReplyCreateRequest 댓글 생성 요청 dto
+     * @param memorialCommentCreateRequest 댓글 생성 요청 dto
      *
      * */
     @Override
-    public void createReply(Integer donateSeq, MemorialReplyCreateRequest memorialReplyCreateRequest)
+    public void createComment(Integer donateSeq, MemorialCommentCreateRequest memorialCommentCreateRequest)
             throws  MemorialNotFoundException
     {
         /* 게시글 댓글 작성 */
@@ -91,9 +92,9 @@ public class MemorialReplyServiceImpl implements MemorialReplyService {
             memorialFinder.findByIdOrThrow(donateSeq);
 
             /* 객체 생성 */
-            MemorialReply memorialReply = MemorialReply.of(memorialReplyCreateRequest, donateSeq);
+            MemorialComment memorialComment = MemorialComment.of(memorialCommentCreateRequest, donateSeq);
 
-            memorialReplyRepository.save(memorialReply);
+            memorialCommentRepository.save(memorialComment);
         }
         finally {
             lock.writeLock().unlock();
@@ -105,15 +106,15 @@ public class MemorialReplyServiceImpl implements MemorialReplyService {
      * 기증자 추모관 댓글 수정 메서드
      *
      * @param donateSeq 상세 게시글 번호
-     * @param replySeq 댓글 번호
-     * @param memorialReplyUpdateRequest 댓글 수정 요청 dto
+     * @param commentSeq 댓글 번호
+     * @param memorialCommentUpdateRequest 댓글 수정 요청 dto
      *
      * */
     @Override
-    public void updateReply(Integer donateSeq, Integer replySeq, MemorialReplyUpdateRequest memorialReplyUpdateRequest)
-            throws  MemorialReplyNotFoundException,
+    public void updateComment(Integer donateSeq, Integer commentSeq, MemorialCommentUpdateRequest memorialCommentUpdateRequest)
+            throws  MemorialCommentNotFoundException,
                     MemorialNotFoundException,
-                    ReplyAlreadyDeleteException
+                    CommentAlreadyDeleteException
     {
         /* 게시글 댓글 수정 */
         ReentrantReadWriteLock lock = getLock(donateSeq);
@@ -124,16 +125,16 @@ public class MemorialReplyServiceImpl implements MemorialReplyService {
             memorialFinder.findByIdOrThrow(donateSeq);
 
             /* 댓글 조회 */
-            MemorialReply memorialReply = memorialReplyFinder.findByIdOrThrow(replySeq);
+            MemorialComment memorialComment = memorialCommentFinder.findByIdOrThrow(commentSeq);
 
             /* 댓글 삭제 여부 검증 */
-            memorialReply.validateNotDeleted();
+            memorialComment.validateNotDeleted();
 
             /* 댓글 수정 */
-            memorialReplyRepository.updateReplyContents(
-                    replySeq,
-                    memorialReplyUpdateRequest.getReplyContents(),
-                    memorialReplyUpdateRequest.getReplyWriter()
+            memorialCommentRepository.updateCommentContents(
+                    commentSeq,
+                    memorialCommentUpdateRequest.getContents(),
+                    memorialCommentUpdateRequest.getCommentWriter()
             );
         }
         finally {
@@ -146,16 +147,16 @@ public class MemorialReplyServiceImpl implements MemorialReplyService {
      * 기증자 추모관 댓글 삭제 메서드
      *
      * @param donateSeq 상세 게시글 번호
-     * @param replySeq 댓글 번호
-     * @param password 입력한 비밀번호
+     * @param commentSeq 댓글 번호
+     * @param memorialCommentPasswordRequest 댓글 삭제 요청 dto
      *
      * */
     @Override
-    public void deleteReply(Integer donateSeq, Integer replySeq, String password)
-            throws  ReplyPasswordMismatchException,
-            MemorialReplyNotFoundException,
-            MemorialNotFoundException,
-            ReplyAlreadyDeleteException
+    public void deleteComment(Integer donateSeq, Integer commentSeq, MemorialCommentPasswordRequest memorialCommentPasswordRequest)
+            throws  CommentPasswordMismatchException,
+                    MemorialCommentNotFoundException,
+                    MemorialNotFoundException,
+                    CommentAlreadyDeleteException
     {
         /* 게시글 댓글 삭제 del_flag = 'Y' 설정 */
         ReentrantReadWriteLock lock = getLock(donateSeq);
@@ -166,22 +167,50 @@ public class MemorialReplyServiceImpl implements MemorialReplyService {
             memorialFinder.findByIdOrThrow(donateSeq);
 
             /* 댓글 조회 */
-            MemorialReply memorialReply = memorialReplyFinder.findByIdOrThrow(replySeq);
+            MemorialComment memorialComment = memorialCommentFinder.findByIdOrThrow(commentSeq);
 
             /* 비밀번호 일치 여부 검증 */
-            memorialReply.validateReplyPassword(password);
+            memorialComment.validateCommentPassword(memorialCommentPasswordRequest.getCommentPasscode());
 
             /* 댓글 삭제 여부 검증 */
-            memorialReply.validateNotDeleted();
+            memorialComment.validateNotDeleted();
 
             /* 소프트 삭제 */
-            memorialReply.setDelFlag("Y");
+            memorialComment.setDelFlag("Y");
 
-            memorialReplyRepository.save(memorialReply);
+            memorialCommentRepository.save(memorialComment);
         }
         finally {
             lock.writeLock().unlock();
         }
+    }
+
+    /**
+     *
+     * 기증자 추모관 댓글 비밀번호 검증 메서드
+     *
+     * @param donateSeq 상세 게시글 번호
+     * @param commentSeq 댓글 번호
+     * @param memorialCommentPasswordRequest 비밀번호 검증 dto
+     *
+     * */
+    public void varifyComment(Integer donateSeq, Integer commentSeq, MemorialCommentPasswordRequest memorialCommentPasswordRequest)
+            throws  CommentPasswordMismatchException,
+                    MemorialCommentNotFoundException,
+                    MemorialNotFoundException,
+                    CommentAlreadyDeleteException
+    {
+        /* 게시글 조회 */
+        memorialFinder.findByIdOrThrow(donateSeq);
+
+        /* 댓글 조회 */
+        MemorialComment memorialComment = memorialCommentFinder.findByIdOrThrow(commentSeq);
+
+        /* 비밀번호 일치 여부 검증 */
+        memorialComment.validateCommentPassword(memorialCommentPasswordRequest.getCommentPasscode());
+
+        /* 댓글 삭제 여부 검증 */
+        memorialComment.validateNotDeleted();
     }
 
     /**
@@ -195,7 +224,7 @@ public class MemorialReplyServiceImpl implements MemorialReplyService {
      *
      * */
     @Override
-    public List<MemorialReplyResponse> getMemorialReplyList(Integer donateSeq, Integer cursor, int size)
+    public List<MemorialCommentResponse> getMemorialCommentList(Integer donateSeq, Integer cursor, int size)
             throws  MemorialNotFoundException
     {
         /* 게시글 댓글 리스트 조회 */
@@ -206,7 +235,7 @@ public class MemorialReplyServiceImpl implements MemorialReplyService {
         Pageable pageable = PageRequest.of(0, size +1);
 
         /* 조건에 맞는 댓글 리스트 조회 */
-        return memorialReplyRepository.findByCursor(donateSeq, cursor, pageable);
+        return memorialCommentRepository.findByCursor(donateSeq, cursor, pageable);
 
     }
 
@@ -220,7 +249,7 @@ public class MemorialReplyServiceImpl implements MemorialReplyService {
      * @return 조건에 맞는 댓글 리스트(최신순)
      *
      * */
-    public CursorReplyPaginationResponse<MemorialReplyResponse, Integer> getMoreReplyList(Integer donateSeq, Integer cursor, int size)
+    public CursorCommentPaginationResponse<MemorialCommentResponse, Integer> getMoreCommentList(Integer donateSeq, Integer cursor, int size)
             throws  MemorialNotFoundException
     {
         /* 게시글 댓글 리스트 더보기 */
@@ -232,9 +261,9 @@ public class MemorialReplyServiceImpl implements MemorialReplyService {
         Pageable pageable = PageRequest.of(0, size +1);
 
         /* 댓글 리스트 모두 조회 */
-        List<MemorialReplyResponse> memorialReplyResponses = memorialReplyRepository.findByCursor(donateSeq, cursor, pageable);
+        List<MemorialCommentResponse> memorialCommentResponses = memorialCommentRepository.findByCursor(donateSeq, cursor, pageable);
 
-        return CursorFormatter.cursorReplyFormat(memorialReplyResponses, size);
+        return CursorFormatter.cursorCommentFormat(memorialCommentResponses, size);
     }
 
     /**
@@ -245,34 +274,8 @@ public class MemorialReplyServiceImpl implements MemorialReplyService {
      * @return 조건에 맞는 댓글 총 갯수
      *
      * */
-    public long getTotalReplyCount(Integer donateSeq) {
-        return memorialReplyRepository.countByDonateSeq(donateSeq);
-    }
-
-    /**
-     *
-     * 기증자 추모관 비밀번호 인증 메서드
-     *
-     * @param donateSeq 상세 게시글 번호
-     * @param replySeq 댓글 번호
-     * @param password 입력한 비밀번호
-     *
-     * */
-    @Override
-    public void verifyReplyPassword(Integer donateSeq, Integer replySeq, String password) {
-        /* 비밀번호 검증 */
-
-        /* 게시판 조회 */
-        memorialFinder.findByIdOrThrow(donateSeq);
-
-        /* 댓글 조회 */
-        MemorialReply memorialReply = memorialReplyFinder.findByIdOrThrow(replySeq);
-
-        /* 비밀번호 일치 여부 검증 */
-        memorialReply.validateReplyPassword(password);
-
-        /* 댓글 삭제 여부 검증 */
-        memorialReply.validateNotDeleted();
+    public long getTotalCommentCount(Integer donateSeq) {
+        return memorialCommentRepository.countByDonateSeq(donateSeq);
     }
 }
 

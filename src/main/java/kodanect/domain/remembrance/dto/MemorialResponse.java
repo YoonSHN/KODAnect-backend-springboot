@@ -14,7 +14,7 @@ import lombok.*;
  * <p>donateDate : 기증 일시</p>
  * <p>genderFlag : 기증자 성별</p>
  * <p>donateAge : 기증자 나이</p>
- * <p>replyCount : 댓글 개수</p>
+ * <p>commentCount : 댓글 개수</p>
  *
  * */
 @Builder
@@ -42,7 +42,7 @@ public class MemorialResponse implements CursorIdentifiable<Integer> {
     private Integer donateAge;
 
     /* 댓글 개수 조회 */
-    private long replyCount;
+    private long commentCount;
 
     /** 20101212 -> 2010-12-12 형식 변경 메서드 */
     public String getDonateDate() {

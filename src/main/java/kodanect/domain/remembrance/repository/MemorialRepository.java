@@ -32,7 +32,7 @@ public interface MemorialRepository extends JpaRepository<Memorial, Integer> {
         value = """
             SELECT new kodanect.domain.remembrance.dto.MemorialResponse
                     (m.donateSeq, m.donorName, m.anonymityFlag, m.donateDate,m.genderFlag, m.donateAge,
-                    (SELECT COUNT(r) FROM MemorialReply r WHERE m.donateSeq = r.donateSeq))
+                    (SELECT COUNT(r) FROM MemorialComment r WHERE m.donateSeq = r.donateSeq AND r.delFlag='N'))
             FROM Memorial m
             WHERE m.delFlag = 'N'
                     AND (:cursor IS NULL OR m.donateSeq < :cursor)
@@ -53,10 +53,10 @@ public interface MemorialRepository extends JpaRepository<Memorial, Integer> {
      * @return 조건에 맞는 게시글 리스트(최신순)
      * */
     @Query(
-        value = """
+            value = """
             SELECT new kodanect.domain.remembrance.dto.MemorialResponse
                     (m.donateSeq, m.donorName, m.anonymityFlag, m.donateDate, m.genderFlag, m.donateAge,
-                    (SELECT COUNT(r) FROM MemorialReply r WHERE m.donateSeq = r.donateSeq))
+                    (SELECT COUNT(r) FROM MemorialComment r WHERE m.donateSeq = r.donateSeq))
             FROM Memorial m
             WHERE m.delFlag = 'N'
                     AND (:cursor IS NULL OR m.donateSeq < :cursor)
@@ -71,6 +71,31 @@ public interface MemorialRepository extends JpaRepository<Memorial, Integer> {
             @Param("startDate") String startDate,
             @Param("endDate") String endDate,
             @Param("keyWord") String keyWord);
+
+    /**
+     *
+     * 기증자 추모관 게시글 리스트 날짜 + 문자 조건 조회
+     *
+     * @param startDate 시작 일
+     * @param endDate 종료 일
+     * @param keyWord 검색 문자 (%검색어%)
+     * @return 조건에 맞는 게시글 리스트(최신순)
+     * */
+    @Query(
+            value = """
+            SELECT COUNT(*)
+            FROM tb25_400_memorial m
+            WHERE m.del_flag = 'N'
+                    AND m.donate_date BETWEEN :startDate AND :endDate
+                    AND m.donor_name LIKE :keyWord
+        """, nativeQuery = true
+    )
+    long countBySearch(
+            @Param("startDate") String startDate,
+            @Param("endDate") String endDate,
+            @Param("keyWord") String keyWord);
+
+
 
     /** 기증자 추모관 이모지 카운팅(Flower) */
     @Modifying

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN" monitorInterval="30">
+    <Appenders>
+        <Console name="console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%c{1}.%M:%L] - %msg %n%throwable"/>
+        </Console>
+    </Appenders>
+    <Loggers>
+        <!-- SQL 로그 -->
+        <Logger name="java.sql" level="DEBUG" additivity="false">
+            <AppenderRef ref="console"/>
+        </Logger>
+
+        <!-- Egov 프레임워크 로그 -->
+        <Logger name="egovframework" level="DEBUG" additivity="false">
+            <AppenderRef ref="console"/>
+        </Logger>
+
+        <!-- 사용자 로그 -->
+        <Logger name="kodanect" level="DEBUG" additivity="false">
+            <AppenderRef ref="console"/>
+        </Logger>
+
+        <!-- Spring 프레임워크 로그 -->
+        <Logger name="org.springframework" level="INFO" additivity="false">
+            <AppenderRef ref="console"/>
+        </Logger>
+
+        <!-- SQL 실행 시간 측정 로그 -->
+        <Logger name="jdbc.sqltiming" level="DEBUG" additivity="false">
+            <AppenderRef ref="console"/>
+        </Logger>
+
+        <!-- 루트 로그 -->
+        <Root level="DEBUG">
+            <AppenderRef ref="console"/>
+        </Root>
+    </Loggers>
+</Configuration>

@@ -3,26 +3,26 @@ package kodanect.domain.remembrance.exception;
 import kodanect.common.exception.custom.AbstractCustomException;
 import org.springframework.http.HttpStatus;
 
-import static kodanect.common.exception.config.MessageKeys.REPLY_ALREADY_DELETED;
+import static kodanect.common.exception.config.MessageKeys.COMMENT_ALREADY_DELETED;
 
 /** 이미 삭제된 댓글일 경우 발생하는 예외 */
-public class ReplyAlreadyDeleteException extends AbstractCustomException {
+public class CommentAlreadyDeleteException extends AbstractCustomException {
 
-    private final Integer replySeq;
+    private final Integer commentSeq;
 
-    public ReplyAlreadyDeleteException(Integer replySeq) {
-        super(REPLY_ALREADY_DELETED);
-        this.replySeq = replySeq;
+    public CommentAlreadyDeleteException(Integer commentSeq) {
+        super(COMMENT_ALREADY_DELETED);
+        this.commentSeq = commentSeq;
     }
 
     @Override
     public String getMessageKey() {
-        return REPLY_ALREADY_DELETED;
+        return COMMENT_ALREADY_DELETED;
     }
 
     @Override
     public Object[] getArguments() {
-        return new Object[]{replySeq};
+        return new Object[]{commentSeq};
     }
 
     @Override

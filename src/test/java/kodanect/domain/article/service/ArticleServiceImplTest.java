@@ -191,4 +191,29 @@ public class ArticleServiceImplTest {
         assertEquals(1, dto.getFiles().size());
         assertEquals("첨부파일.pdf", dto.getFiles().get(0).getOrgFileName());
     }
+
+    @Test
+    public void getArticles_isNew_shouldBeTrueForRecentPost() {
+        // given
+        Article recentArticle = Article.builder()
+                .id(new ArticleId("7", 101))
+                .title("최근 게시글")
+                .writeTime(LocalDateTime.now().minusHours(3))
+                .fixFlag("N")
+                .delFlag("N")
+                .writerId("user")
+                .build();
+
+        Page<Article> articlePage = new PageImpl<>(List.of(recentArticle));
+
+        when(articleRepository.searchArticles(any(), any(), any(), any()))
+                .thenReturn(articlePage);
+
+        // when
+        Page<? extends ArticleDTO> result = articleService.getArticles(List.of("7"), null, null, PageRequest.of(0, 10));
+
+        // then
+        assertTrue(result.getContent().get(0).isNew());
+    }
+
 }

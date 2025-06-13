@@ -1,7 +1,7 @@
 package kodanect.domain.recipient.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import kodanect.common.response.CursorReplyPaginationResponse;
+import kodanect.common.response.CursorCommentPaginationResponse;
 import kodanect.domain.recipient.dto.CommentDeleteRequestDto;
 import kodanect.domain.recipient.dto.RecipientCommentRequestDto;
 import kodanect.domain.recipient.dto.RecipientCommentResponseDto;
@@ -58,11 +58,11 @@ class RecipientCommentControllerTest {
         comment.setModifyTime(LocalDateTime.now());
         // 필요한 필드 셋팅 추가
 
-        CursorReplyPaginationResponse<RecipientCommentResponseDto, Integer> pageResponse =
-                CursorReplyPaginationResponse.<RecipientCommentResponseDto, Integer>builder()
+        CursorCommentPaginationResponse<RecipientCommentResponseDto, Integer> pageResponse =
+                CursorCommentPaginationResponse.<RecipientCommentResponseDto, Integer>builder()
                         .content(List.of(comment))
-                        .replyNextCursor(1)
-                        .replyHasNext(false)
+                        .commentNextCursor(1)
+                        .commentHasNext(false)
                         .build();
 
         given(recipientCommentService.selectPaginatedCommentsForRecipient(1, null, 3))

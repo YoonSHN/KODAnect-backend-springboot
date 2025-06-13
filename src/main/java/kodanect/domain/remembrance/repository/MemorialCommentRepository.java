@@ -1,7 +1,7 @@
 package kodanect.domain.remembrance.repository;
 
-import kodanect.domain.remembrance.entity.MemorialReply;
-import kodanect.domain.remembrance.dto.MemorialReplyResponse;
+import kodanect.domain.remembrance.entity.MemorialComment;
+import kodanect.domain.remembrance.dto.MemorialCommentResponse;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.repository.query.Param;
@@ -17,27 +17,27 @@ import java.util.List;
  * 댓글의 생성, 수정, 삭제, 조회 등의 JPA 기반 기능 제공
  *
  **/
-public interface MemorialReplyRepository extends JpaRepository<MemorialReply, Integer> {
+public interface MemorialCommentRepository extends JpaRepository<MemorialComment, Integer> {
 
     /**
      *
      * 기증자 추모관 댓글 수정 메서드
      *
-     * @param replySeq 댓글 번호
+     * @param commentSeq 댓글 번호
      * @param contents 댓글 내용
      *
      **/
     @Modifying(clearAutomatically = true)
     @Query(
             value = """
-            UPDATE MemorialReply r
-            SET r.replyContents = :contents,
-                r.replyWriter = :writer
-            WHERE r.replySeq = :replySeq
+            UPDATE MemorialComment r
+            SET r.contents = :contents,
+                r.commentWriter = :writer
+            WHERE r.commentSeq = :commentSeq
                     AND r.delFlag = 'N'
         """
     )
-    void updateReplyContents(@Param("replySeq") Integer replySeq, @Param("contents") String contents, @Param("writer") String writer);
+    void updateCommentContents(@Param("commentSeq") Integer commentSeq, @Param("contents") String contents, @Param("writer") String writer);
 
     /**
      *
@@ -51,17 +51,25 @@ public interface MemorialReplyRepository extends JpaRepository<MemorialReply, In
      **/
     @Query(
             value = """
-            SELECT new kodanect.domain.remembrance.dto.MemorialReplyResponse
-                    (r.replySeq, r.replyWriter, r.replyContents, r.replyWriteTime)
-            FROM MemorialReply r
+            SELECT new kodanect.domain.remembrance.dto.MemorialCommentResponse
+                    (r.commentSeq, r.commentWriter, r.contents, r.writeTime)
+            FROM MemorialComment r
             WHERE r.donateSeq = :donateSeq
                     AND r.delFlag = 'N'
-                    AND (:cursor IS NULL OR r.replySeq < :cursor)
-            ORDER BY r.replySeq DESC
+                    AND (:cursor IS NULL OR r.commentSeq < :cursor)
+            ORDER BY r.commentSeq DESC
         """
     )
-    List<MemorialReplyResponse> findByCursor(@Param("donateSeq") Integer donateSeq, @Param("cursor") Integer cursor, Pageable pageable);
+    List<MemorialCommentResponse> findByCursor(@Param("donateSeq") Integer donateSeq, @Param("cursor") Integer cursor, Pageable pageable);
 
     /** 게시물 번호 기준 총 댓글 수 */
+    @Query(
+            value = """
+            SELECT COUNT(*)
+            FROM tb25_401_memorial_reply r
+            WHERE r.donate_seq = :donateSeq
+                    AND r.del_flag = 'N'
+        """, nativeQuery = true
+    )
     long countByDonateSeq(@Param("donateSeq") Integer donateSeq);
 }

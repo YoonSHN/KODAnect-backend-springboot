@@ -1,6 +1,8 @@
 package kodanect.domain.donation.dto.response;
 
-
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import kodanect.common.util.CursorIdentifiable;
 import kodanect.domain.donation.entity.DonationStoryComment;
 import lombok.Builder;
 import lombok.Getter;
@@ -9,27 +11,39 @@ import java.time.LocalDateTime;
 
 @Getter
 @Builder
-public class DonationStoryCommentDto {
+public class DonationStoryCommentDto implements CursorIdentifiable<Long> {
 
     private Long commentSeq;
 
-    private String commentWriter; //추모자
+    private String commentWriter; // 추모자
 
     private String comments;
-    private LocalDateTime commentWriteTime;
 
-    public DonationStoryCommentDto(Long commentSeq, String commentWriter, String comments, LocalDateTime commentWriteTime) {
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+    private LocalDateTime commentWriteTime; // yyyy-MM-dd 형식의 문자열
+
+    public DonationStoryCommentDto(Long commentSeq, String commentWriter, String comments, LocalDateTime writeTime) {
         this.commentSeq = commentSeq;
         this.commentWriter = commentWriter;
         this.comments = comments;
-        this.commentWriteTime = commentWriteTime;
+        this.commentWriteTime = writeTime;
     }
 
-    public static DonationStoryCommentDto fromEntity(DonationStoryComment domainStoryComment) {
+    @Override
+    @JsonIgnore
+    public Long getCursorId() {
+        return commentSeq;
+    }
+
+    /**
+     * Entity → DTO 변환용 정적 메서드
+     */
+    public static DonationStoryCommentDto fromEntity(DonationStoryComment storyComment) {
         return DonationStoryCommentDto.builder()
-                .commentSeq(domainStoryComment.getCommentSeq())
-                .commentWriter(domainStoryComment.getCommentWriter())
-                .comments(domainStoryComment.getContents())
-                .commentWriteTime(domainStoryComment.getWriteTime()).build();
+                .commentSeq(storyComment.getCommentSeq())
+                .commentWriter(storyComment.getCommentWriter())
+                .comments(storyComment.getContents())
+                .commentWriteTime(storyComment.getWriteTime())
+                .build();
     }
 }

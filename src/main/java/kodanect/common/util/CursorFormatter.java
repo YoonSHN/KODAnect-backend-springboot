@@ -1,7 +1,8 @@
 package kodanect.common.util;
 
+import kodanect.common.response.CursorCommentCountPaginationResponse;
 import kodanect.common.response.CursorPaginationResponse;
-import kodanect.common.response.CursorReplyPaginationResponse;
+import kodanect.common.response.CursorCommentPaginationResponse;
 
 import java.util.List;
 
@@ -61,7 +62,7 @@ public class CursorFormatter {
      * @return 다음 커서 정보를 포함한 CursorReplyPaginationResponse
      */
 
-    public static <T extends CursorIdentifiable<C>, C> CursorReplyPaginationResponse<T, C> cursorReplyFormat(List<T> responses, int size) {
+    public static <T extends CursorIdentifiable<C>, C> CursorCommentPaginationResponse<T, C> cursorCommentFormat(List<T> responses, int size) {
         /* 댓글 cursor 포맷 */
         boolean hasNext = responses.size() > size;
 
@@ -69,10 +70,26 @@ public class CursorFormatter {
 
         C nextCursor = hasNext ? content.get(content.size() - 1).getCursorId() : null;
 
-        return CursorReplyPaginationResponse.<T, C>builder()
+        return CursorCommentPaginationResponse.<T, C>builder()
                 .content(content)
-                .replyNextCursor(nextCursor)
-                .replyHasNext(hasNext)
+                .commentNextCursor(nextCursor)
+                .commentHasNext(hasNext)
+                .build();
+    }
+
+    public static <T extends CursorIdentifiable<C>, C> CursorCommentCountPaginationResponse<T, C> cursorCommentCountFormat(List<T> responses, int size, long totalCount) {
+        /* 댓글 cursor 포맷 */
+        boolean hasNext = responses.size() > size;
+
+        List<T> content = responses.stream().limit(size).toList();
+
+        C nextCursor = hasNext ? content.get(content.size() - 1).getCursorId() : null;
+
+        return CursorCommentCountPaginationResponse.<T, C>builder()
+                .content(content)
+                .commentNextCursor(nextCursor)
+                .commentHasNext(hasNext)
+                .totalCommentCount(totalCount)
                 .build();
     }
 

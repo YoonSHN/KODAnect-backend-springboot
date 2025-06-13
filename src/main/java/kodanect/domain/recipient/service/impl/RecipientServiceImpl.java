@@ -2,7 +2,7 @@ package kodanect.domain.recipient.service.impl;
 
 import kodanect.common.config.GlobalsProperties;
 import kodanect.common.response.CursorPaginationResponse;
-import kodanect.common.response.CursorReplyPaginationResponse;
+import kodanect.common.response.CursorCommentPaginationResponse;
 import kodanect.common.util.CursorFormatter;
 import kodanect.domain.recipient.dto.*;
 import kodanect.domain.recipient.exception.RecipientInvalidPasscodeException;
@@ -265,8 +265,8 @@ public class RecipientServiceImpl implements RecipientService {
                 .toList();
 
         // 6. CursorFormatter를 사용하여 댓글 응답 포맷 생성
-        CursorReplyPaginationResponse<RecipientCommentResponseDto, Integer> commentPaginationResponse =
-                CursorFormatter.cursorReplyFormat(initialCommentDtos, INITIAL_COMMENT_LOAD_LIMIT); // 실제 클라이언트 요청 size는 INITIAL_COMMENT_LOAD_LIMIT
+        CursorCommentPaginationResponse<RecipientCommentResponseDto, Integer> commentPaginationResponse =
+                CursorFormatter.cursorCommentFormat(initialCommentDtos, INITIAL_COMMENT_LOAD_LIMIT); // 실제 클라이언트 요청 size는 INITIAL_COMMENT_LOAD_LIMIT
 
         // 7. DTO에 댓글 관련 데이터 설정
         responseDto.setInitialCommentData(commentPaginationResponse);
@@ -277,14 +277,14 @@ public class RecipientServiceImpl implements RecipientService {
     /**
      * 게시물 목록 조회 (검색 및 커서 기반 페이징으로 변경)
      * @param searchCondition 검색 조건 (searchType, searchKeyword)
-     * @param lastId "더 보기" 기능을 위한 마지막 게시물 ID (null 또는 0이면 첫 페이지 조회)
+     * @param cusor "더 보기" 기능을 위한 마지막 게시물 ID (null 또는 0이면 첫 페이지 조회)
      * @param size 한 번에 가져올 게시물 수
      * @return 커서 기반 페이지네이션 응답 (게시물)
      */
     @Override
     public CursorPaginationResponse<RecipientListResponseDto, Integer> selectRecipientList(
             RecipientSearchCondition searchCondition,
-            Integer lastId,
+            Integer cusor,
             int size) {
 
         // 1. 쿼리할 데이터의 실제 size (클라이언트 요청 size + 1 하여 다음 커서 존재 여부 확인)
@@ -293,9 +293,9 @@ public class RecipientServiceImpl implements RecipientService {
         // 2. 기본 Specification 생성 (검색 조건 적용)
         Specification<RecipientEntity> spec = getRecipientSpecification(searchCondition);
 
-        // 3. "더 보기" 기능 (lastId) 조건 추가: letterSeq 기준 내림차순이므로 lastId보다 작은 것 조회
-        if (lastId != null && lastId > 0) {
-            spec = spec.and((root, query, cb) -> cb.lessThan(root.get(LETTER_SEQ), lastId));
+        // 3. "더 보기" 기능 (cusor) 조건 추가: letterSeq 기준 내림차순이므로 cusor보다 작은 것 조회
+        if (cusor != null && cusor > 0) {
+            spec = spec.and((root, query, cb) -> cb.lessThan(root.get(LETTER_SEQ), cusor));
         }
 
         // 4. 정렬 조건 설정 (letterSeq 기준 내림차순 - 최신 게시물부터)

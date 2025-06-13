@@ -52,7 +52,7 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
         if (keyWord != null && !keyWord.isBlank()) {
             BooleanBuilder keywordCondition = new BooleanBuilder();
 
-            String effectiveField = (type != null) ? type : "all";
+            String effectiveField = (type != null && !type.isBlank()) ? type : "all";
 
             switch (effectiveField) {
                 case "title":
@@ -67,6 +67,8 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
                     break;
                 default:
                     log.warn("잘못된 searchField 값: {}", type);
+                    keywordCondition.or(article.title.containsIgnoreCase(keyWord));
+                    keywordCondition.or(article.contents.containsIgnoreCase(keyWord));
             }
 
             where.and(keywordCondition);
@@ -75,7 +77,10 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
         List<Article> content = queryFactory
                 .selectFrom(article)
                 .where(where)
-                .orderBy(article.fixFlag.desc(), article.writeTime.desc())
+                .orderBy(
+                        article.fixFlag.desc(),
+                        article.writeTime.desc()
+                )
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();

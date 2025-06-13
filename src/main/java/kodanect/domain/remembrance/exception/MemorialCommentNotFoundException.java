@@ -3,26 +3,26 @@ package kodanect.domain.remembrance.exception;
 import kodanect.common.exception.custom.AbstractCustomException;
 import org.springframework.http.HttpStatus;
 
-import static kodanect.common.exception.config.MessageKeys.REPLY_NOT_FOUND;
+import static kodanect.common.exception.config.MessageKeys.COMMENT_NOT_FOUND;
 
 /** 기증자 추모관 댓글을 못 찾았을 경우 발생하는 예외 */
-public class MemorialReplyNotFoundException extends AbstractCustomException {
+public class MemorialCommentNotFoundException extends AbstractCustomException {
 
-    private final Integer replySeq;
+    private final Integer commentSeq;
 
-    public MemorialReplyNotFoundException(Integer replySeq) {
-        super(REPLY_NOT_FOUND);
-        this.replySeq = replySeq;
+    public MemorialCommentNotFoundException(Integer commentSeq) {
+        super(COMMENT_NOT_FOUND);
+        this.commentSeq = commentSeq;
     }
 
     @Override
     public String getMessageKey() {
-        return REPLY_NOT_FOUND;
+        return COMMENT_NOT_FOUND;
     }
 
     @Override
     public Object[] getArguments() {
-        return new Object[]{replySeq};
+        return new Object[]{commentSeq};
     }
 
     @Override

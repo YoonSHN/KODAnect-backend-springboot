@@ -14,9 +14,17 @@ import javax.validation.constraints.Size;
 @Setter
 public class SearchCondition {
 
-    @Pattern(regexp = "^(title|content|all)$", message = "검색 필드는 title, content, all 중 하나여야 합니다.")
+    @Pattern(regexp = "^(title|contents|all)$", message = "검색 필드는 title, contents, all 중 하나여야 합니다.")
     private String type = "all";
 
     @Size(max = 100, message = "검색어는 최대 100자까지 입력할 수 있습니다.")
     private String keyWord;
+
+    public String getType() {
+        return (type == null || type.isBlank()) ? "all" : type;
+    }
+
+    public String getKeyWord() {
+        return keyWord != null ? keyWord : "";
+    }
 }

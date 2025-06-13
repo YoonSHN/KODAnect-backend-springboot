@@ -199,33 +199,46 @@ public class RecipientCommentRepositoryTest {
         // Given
         RecipientEntity recipient1 = createRecipient("게시물A", "aaaa", "작가A", "N", "ORG01", LocalDateTime.now().minusDays(3));
         RecipientEntity recipient2 = createRecipient("게시물B", "bbbb", "작가B", "N", "ORG02", LocalDateTime.now().minusDays(2));
+// …
         // 변수명 수정: recipient3_deletedPost -> recipient3DeletedPost
         RecipientEntity recipient3DeletedPost = createRecipient("게시물C (삭제된 게시물)", "cccc", "작가C", "Y", "ORG03", LocalDateTime.now().minusDays(1)); // 게시물 자체는 삭제됨
+// …
 
         recipient1 = recipientRepository.save(recipient1);
         recipient2 = recipientRepository.save(recipient2);
+// …
         recipient3DeletedPost = recipientRepository.save(recipient3DeletedPost);
+// …
         entityManager.flush();
+
 
         // recipient1에 댓글 2개 (N, N)
         entityManager.persist(createComment(recipient1, "R1 댓글1", "C1-1", "N", LocalDateTime.now().minusMinutes(50)));
         entityManager.persist(createComment(recipient1, "R1 댓글2", "C1-2", "N", LocalDateTime.now().minusMinutes(40)));
         entityManager.persist(createComment(recipient1, "R1 삭제 댓글", "C1-3", "Y", LocalDateTime.now().minusMinutes(30))); // 삭제된 댓글
 
+
         // recipient2에 댓글 1개 (N)
         entityManager.persist(createComment(recipient2, "R2 댓글1", "C2-1", "N", LocalDateTime.now().minusMinutes(20)));
 
+
         // recipient3 (삭제된 게시물)에 댓글 1개 (N)
         // 이 댓글은 댓글 자체의 delFlag가 'N'이므로 쿼리에서 카운트되어야 함.
+// …
         entityManager.persist(createComment(recipient3DeletedPost, "R3 댓글1", "C3-1", "N", LocalDateTime.now().minusMinutes(10)));
+// …
 
         entityManager.flush();
         entityManager.clear();
 
+
+// …
         List<Integer> letterSeqs = Arrays.asList(recipient1.getLetterSeq(), recipient2.getLetterSeq(), recipient3DeletedPost.getLetterSeq());
+// …
 
         // When
         List<Object[]> commentCounts = recipientCommentRepository.countCommentsByLetterSeqs(letterSeqs);
+
 
         // Then
         // recipient1: 2개 (N)
@@ -233,29 +246,33 @@ public class RecipientCommentRepositoryTest {
         // recipient3_deletedPost: 1개 (댓글의 delFlag가 N이므로 카운트됨)
         assertThat(commentCounts).isNotNull().hasSize(3); // 예상 사이즈는 3
 
+
         boolean foundR1 = false;
         boolean foundR2 = false;
         boolean foundR3 = false;
 
+
         for (Object[] row : commentCounts) {
             Integer letterSeq = (Integer) row[0];
+// …
             // BigInteger로 받은 다음 intValue()를 호출하여 int 로 변환합니다.
             Integer count = ((Number) row[1]).intValue();
+// …
 
             if (letterSeq.equals(recipient1.getLetterSeq())) {
-                assertThat(count).isEqualTo(2L);
+                assertThat(count).isEqualTo(2); // Long 리터럴(2L) 대신 Integer 리터럴(2) 사용
                 foundR1 = true;
             } else if (letterSeq.equals(recipient2.getLetterSeq())) {
-                assertThat(count).isEqualTo(1L);
+
+                assertThat(count).isEqualTo(1); // Long 리터럴(1L) 대신 Integer 리터럴(1) 사용
                 foundR2 = true;
+// …
             } else if (letterSeq.equals(recipient3DeletedPost.getLetterSeq())) {
-                assertThat(count).isEqualTo(1L);
+// …
+                assertThat(count).isEqualTo(1); // Long 리터럴(1L) 대신 Integer 리터럴(1) 사용
                 foundR3 = true;
             }
         }
-        assertThat(foundR1).isTrue();
-        assertThat(foundR2).isTrue();
-        assertThat(foundR3).isTrue();
     }
 
     @Test

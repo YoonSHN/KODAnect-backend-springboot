@@ -36,21 +36,21 @@ public class ArticleServiceImpl implements ArticleService {
      * @param pageable   페이징 정보
      * @return 조건에 맞는 게시글 목록 페이지
      */
-    public Page<? extends ArticleDTO> getArticles(List<String> boardCodes, String type, String keyWord, Pageable pageable) {
+    @Override
+    public Page<ArticleDTO> getArticles(List<String> boardCodes, String type, String keyWord, Pageable pageable) {
+        if (boardCodes == null || boardCodes.isEmpty()) {
+            return Page.empty(pageable);
+        }
         Page<Article> articles = articleRepository.searchArticles(boardCodes, type, keyWord, pageable);
         if (articles == null) {
             return Page.empty(pageable);
         }
-
         String boardCode = boardCodes.get(0);
 
-        // 카테고리 증가시 factory + Strategy 패턴으로 변경고려
-        switch (boardCode) {
-            case "32":
-                return articles.map(MakePublicDTO::fromArticleToMakePublicDto);
-            default:
-                return articles.map(ArticleDTO::fromArticle);
+        if ("32".equals(boardCode)) {
+            return articles.map(article -> (ArticleDTO) MakePublicDTO.fromArticleToMakePublicDto(article));
         }
+        return articles.map(ArticleDTO::fromArticle);
     }
 
     /**
