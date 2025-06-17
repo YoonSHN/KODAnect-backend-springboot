@@ -1,5 +1,6 @@
 package kodanect.domain.article.controller;
 
+import kodanect.common.exception.config.SecureLogger;
 import kodanect.domain.article.exception.ArticleNotFoundException;
 import kodanect.common.response.ApiResponse;
 import kodanect.domain.article.dto.ArticleDTO;
@@ -10,7 +11,6 @@ import kodanect.domain.article.repository.BoardCategoryCache;
 import kodanect.domain.article.service.ArticleService;
 import kodanect.domain.article.service.FileDownloadService;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.support.MessageSourceAccessor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -23,7 +23,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
+import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
 import static kodanect.common.exception.config.MessageKeys.ARTICLE_DETAIL_SUCCESS;
@@ -43,13 +43,14 @@ import static kodanect.common.exception.config.MessageKeys.ARTICLE_LIST_SUCCESS;
  * @see FileDownloadService
  * @see BoardCategoryCache
  */
-@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("")
 public class ArticleController {
 
     public static final int DEFAULT_ARTICLE_PAGE_SIZE = 20;
+
+    private static final SecureLogger log = SecureLogger.getLogger(ArticleController.class);
 
     private final ArticleService service;
     private final MessageSourceAccessor messageSourceAccessor;
@@ -80,8 +81,9 @@ public class ArticleController {
      * @return ApiResponse
      * @throws ArticleNotFoundException 게시글이 존재하지 않는 경우
      */
-    private ResponseEntity<ApiResponse<ArticleDetailDto>> getArticleCommon(String boardCode, Integer articleSeq) {
-        ArticleDetailDto article = service.getArticle(boardCode, articleSeq);
+    private ResponseEntity<ApiResponse<ArticleDetailDto>> getArticleCommon(String boardCode, Integer articleSeq, HttpServletRequest request) {
+        String clientIp = request != null ? request.getRemoteAddr() : "UNKNOWN";
+        ArticleDetailDto article = service.getArticle(boardCode, articleSeq, clientIp);
         if (article == null) {
             log.warn("게시글 없음: boardCode={}, articleSeq={}", boardCode, articleSeq);
             throw new ArticleNotFoundException(articleSeq);
@@ -126,10 +128,11 @@ public class ArticleController {
     @GetMapping("/notices/{articleSeq}")
     public ResponseEntity<ApiResponse<ArticleDetailDto>> getArticle(
             @PathVariable Integer articleSeq,
-            @RequestParam String optionStr
+            @RequestParam String optionStr,
+            HttpServletRequest request
     ) {
         String boardCode = boardCategoryCache.getBoardCodeByUrlParam(optionStr);
-        return getArticleCommon(boardCode, articleSeq);
+        return getArticleCommon(boardCode, articleSeq, request);
     }
 
     /**
@@ -154,6 +157,8 @@ public class ArticleController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + file.getEncodedFileName())
                 .body(file.getResource());
     }
+
+
 
     /**
      * 일반 게시판 목록 조회 (공지/채용 외)
@@ -184,10 +189,11 @@ public class ArticleController {
     @GetMapping("/{boardCode}/{articleSeq}")
     public ResponseEntity<ApiResponse<ArticleDetailDto>> getOtherBoardArticle(
             @PathVariable String boardCode,
-            @PathVariable Integer articleSeq
+            @PathVariable Integer articleSeq,
+            HttpServletRequest request
     ) {
         String dbBoardCode = boardCategoryCache.getBoardCodeByUrlParam(boardCode);
-        return getArticleCommon(dbBoardCode, articleSeq);
+        return getArticleCommon(dbBoardCode, articleSeq, request);
     }
 
     /**
@@ -219,7 +225,8 @@ public class ArticleController {
                 pageable.getPageSize(),
                 Sort.by(
                         Sort.Order.desc("fixFlag"),
-                        Sort.Order.desc("writeTime")
+                        Sort.Order.desc("writeTime"),
+                        Sort.Order.desc("articleSeq")
                 )
         );
     }

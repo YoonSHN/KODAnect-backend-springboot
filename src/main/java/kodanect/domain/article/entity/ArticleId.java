@@ -4,6 +4,7 @@ import lombok.*;
 
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
+import java.io.Serial;
 import java.io.Serializable;
 
 
@@ -14,6 +15,9 @@ import java.io.Serializable;
 @Getter
 @Builder
 public class ArticleId implements Serializable {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
 
     @Column(name = "board_code", length = 20)
     private String boardCode;

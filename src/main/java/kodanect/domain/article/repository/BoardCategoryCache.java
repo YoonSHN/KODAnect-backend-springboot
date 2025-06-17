@@ -1,9 +1,9 @@
 package kodanect.domain.article.repository;
 
+import kodanect.common.exception.config.SecureLogger;
 import kodanect.domain.article.exception.InvalidBoardCodeException;
 import kodanect.domain.article.entity.BoardCategory;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -20,10 +20,12 @@ import java.util.concurrent.ConcurrentHashMap;
  * @see BoardCategoryRepository
  * @see BoardCategory
  */
-@Slf4j
+
 @Component
 @RequiredArgsConstructor
 public class BoardCategoryCache {
+
+    private static final SecureLogger log = SecureLogger.getLogger(BoardCategoryCache.class);
 
     private final Map<String, BoardCategory> boardCodeMap = new ConcurrentHashMap<>();
     private final Map<String, BoardCategory> urlParamMap = new ConcurrentHashMap<>();
@@ -74,7 +76,7 @@ public class BoardCategoryCache {
     public BoardCategory getByUrlParam(String urlParam) {
         BoardCategory category = urlParamMap.get(urlParam.toLowerCase());
         if (category == null) {
-            log.warn("잘못된 optionStr 요청: {}", urlParam);
+            log.warn("잘못된 optionStr 요청");
             throw new InvalidBoardCodeException(urlParam);
         }
         return category;

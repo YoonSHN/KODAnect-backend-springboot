@@ -52,7 +52,7 @@ public class MemorialCommentController {
     public ResponseEntity<ApiResponse<CursorCommentPaginationResponse<MemorialCommentResponse, Integer>>> getMoreReplies(
             @PathVariable @Min(value = 1, message = DONATE_INVALID) Integer donateSeq,
             @RequestParam Integer cursor, @RequestParam(defaultValue = "3") int size)
-            throws  InvalidPaginationRangeException,
+            throws InvalidPaginationException,
                     MemorialNotFoundException
     {
         /* 댓글 더보기 */
@@ -83,7 +83,7 @@ public class MemorialCommentController {
 
         String successMessage = messageSourceAccessor.getMessage("board.comment.create.success", new Object[] {});
         memorialCommentService.createComment(donateSeq, memorialCommentCreateRequest);
-        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, successMessage));
+        return ResponseEntity.ok(ApiResponse.success(HttpStatus.CREATED, successMessage));
     }
 
     /**

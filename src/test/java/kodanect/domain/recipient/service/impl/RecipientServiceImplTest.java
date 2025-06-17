@@ -5,6 +5,7 @@ import kodanect.domain.recipient.dto.RecipientDetailResponseDto;
 import kodanect.domain.recipient.dto.RecipientRequestDto;
 import kodanect.domain.recipient.entity.RecipientCommentEntity;
 import kodanect.domain.recipient.entity.RecipientEntity;
+import kodanect.domain.recipient.exception.RecipientInvalidDataException;
 import kodanect.domain.recipient.exception.RecipientNotFoundException;
 import kodanect.domain.recipient.repository.RecipientCommentRepository;
 import kodanect.domain.recipient.repository.RecipientRepository;
@@ -18,16 +19,16 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.util.FileSystemUtils;
 
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDateTime;
 import java.util.*;
 
+import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
@@ -62,9 +63,6 @@ public class RecipientServiceImplTest {
         // 테스트를 위한 임시 디렉토리 생성
         tempUploadDir = Files.createTempDirectory("test-uploads");
 
-        // GlobalsProperties Mock 설정
-        when(globalsProperties.getFileStorePath()).thenReturn(tempUploadDir.toString());
-
         // recipientService 인스턴스 수동 생성
         recipientService = new RecipientServiceImpl(
                 recipientRepository,
@@ -80,7 +78,7 @@ public class RecipientServiceImplTest {
         FileSystemUtils.deleteRecursively(tempUploadDir);
     }
 
-    // 게시물 등록 - 이미지 파일 없음 (기존 로직 유지)
+    // 게시물 등록 - 이미지 파일 없음
     @Test
     public void testInsertRecipient_withoutImageFile_shouldSaveEntity() throws IOException {
         // Given
@@ -91,8 +89,13 @@ public class RecipientServiceImplTest {
         recipientDto.setLetterWriter("파일 없음");
         recipientDto.setAnonymityFlag("Y");
         recipientDto.setLetterContents("이미지 파일이 없는 게시물");
-        recipientDto.setImageFile(null);
+        recipientDto.setLetterPasscode("testPass1234");
 
+        // 이미지 파일 관련 필드를 null로 설정 (MultipartFile 대신 String 필드)
+        recipientDto.setFileName(null);
+        recipientDto.setOrgFileName(null);
+
+        // 저장될 Entity Mocking
         RecipientEntity savedEntity = RecipientEntity.builder()
                 .letterSeq(1)
                 .organCode(recipientDto.getOrganCode())
@@ -103,6 +106,7 @@ public class RecipientServiceImplTest {
                 .letterContents(recipientDto.getLetterContents())
                 .fileName(null)
                 .orgFileName(null)
+                .writeTime(LocalDateTime.now())
                 .build();
 
         when(recipientRepository.save(any(RecipientEntity.class))).thenReturn(savedEntity);
@@ -113,10 +117,12 @@ public class RecipientServiceImplTest {
         // Then
         verify(recipientRepository, times(1)).save(any(RecipientEntity.class));
 
-        assertThat(responseDto.getLetterSeq()).isEqualTo(1L);
+        assertThat(responseDto.getLetterSeq()).isEqualTo(1);
         assertThat(responseDto.getImageUrl()).isNull();
+        assertThat(responseDto.getFileName()).isNull();
         assertThat(responseDto.getOrgFileName()).isNull();
         assertThat(responseDto.getLetterWriter()).isEqualTo(ANONYMOUS_WRITER_VALUE);
+        assertThat(responseDto.getLetterContents()).isEqualTo(recipientDto.getLetterContents());
     }
 
     @Test(expected = RecipientNotFoundException.class)
@@ -132,85 +138,48 @@ public class RecipientServiceImplTest {
         recipientService.selectRecipient(letterSeq);
     }
 
-    // 게시물 수정 - 이미지 파일 변경 포함 (GlobalsProperties 의존성 수정)
+    // 게시물 수정 - ORGAN000 선택 시 organEtc 필수 입력 예외 테스트
     @Test
-    public void testUpdateRecipient_withImageFileChange_shouldUpdateFieldsAndImage() throws IOException {
+    public void testUpdateRecipient_organ000WithoutOrganEtc_shouldThrowException() {
         // Given
         Integer letterSeq = 1;
-        String passcode = "12345678";
+        String correctPasscode = "correctPass1234";
+
+        // 기존 게시물 Entity Mocking
         RecipientEntity existingEntity = RecipientEntity.builder()
                 .letterSeq(letterSeq)
-                .letterPasscode(passcode)
+                .organCode("ORGAN000")
+                .letterTitle("기존 제목")
+                .recipientYear("2020")
+                .letterWriter("기존 작성자")
+                .anonymityFlag("N")
+                .letterContents("기존 내용")
+                .letterPasscode(correctPasscode)
+                .writeTime(LocalDateTime.now().minusDays(1))
                 .delFlag("N")
-                .fileName("old_uuid.jpg")
-                .orgFileName("old_original.jpg")
                 .build();
 
-        RecipientRequestDto requestDto = RecipientRequestDto.builder()
-                .letterWriter("새 작성자")
-                .anonymityFlag("N")
-                .letterContents("이미지 변경 포함 게시물 내용")
-                .build();
-        MockMultipartFile newMockFile = new MockMultipartFile(
-                "imageFile", "new_image.png", "image/png", "new content".getBytes(StandardCharsets.UTF_8)
+        // 수정 요청 DTO (ORGAN000 선택 시 organEtc가 null 또는 비어있음)
+        RecipientRequestDto requestDto = new RecipientRequestDto();
+        requestDto.setOrganCode("ORGAN000"); // ORGAN000 선택
+        requestDto.setLetterTitle("새로운 제목");
+        requestDto.setRecipientYear("2023");
+        requestDto.setLetterWriter("새로운 작성자");
+        requestDto.setAnonymityFlag("N");
+        requestDto.setLetterContents("새로운 내용");
+        requestDto.setLetterPasscode(correctPasscode);
+        requestDto.setOrganEtc(null); // organEtc를 null로 설정하여 에러 유발
+
+        when(recipientRepository.findById(letterSeq)).thenReturn(Optional.of(existingEntity));
+
+        // When & Then
+        RecipientInvalidDataException exception = assertThrows(RecipientInvalidDataException.class, () ->
+                recipientService.updateRecipient(letterSeq, requestDto)
         );
-        requestDto.setImageFile(newMockFile);
 
-        String newOriginalFileName = newMockFile.getOriginalFilename();
-
-        when(recipientRepository.findById(letterSeq)).thenReturn(Optional.of(existingEntity));
-        when(recipientRepository.save(any(RecipientEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-        // When
-        RecipientDetailResponseDto result = recipientService.updateRecipient(letterSeq, requestDto);
-
-        // Then
-        assertThat(result.getImageUrl()).isNotNull();
-        assertThat(result.getImageUrl()).endsWith(".png");
-        assertThat(result.getOrgFileName()).isEqualTo(newOriginalFileName);
-
-        Path savedFilePath = tempUploadDir.resolve(result.getImageUrl().substring(result.getImageUrl().lastIndexOf("/") + 1));
-        assertThat(Files.exists(savedFilePath)).isTrue();
-        assertThat(Files.readAllBytes(savedFilePath)).isEqualTo(newMockFile.getBytes());
-
-        verify(recipientRepository, times(1)).save(any(RecipientEntity.class));
+        assertThat(exception.getMessage()).isEqualTo("[잘못된 데이터] fieldName=ORGAN000 선택 시 organEtc는 필수 입력 항목입니다.");
+        verify(recipientRepository, never()).save(any(RecipientEntity.class)); // save 호출 안됨 검증
     }
-
-    // 게시물 수정 - 이미지 파일 변경 없음 (기존 로직 유지)
-    @Test
-    public void testUpdateRecipient_withoutImageFileChange_shouldUpdateFields() throws IOException {
-        // Given
-        Integer letterSeq = 1;
-        String passcode = "12345678";
-        RecipientEntity existingEntity = RecipientEntity.builder()
-                .letterSeq(letterSeq)
-                .delFlag("N")
-                .fileName("old_uuid.jpg")
-                .orgFileName("old_original.jpg")
-                .letterContents("기존 내용입니다.")
-                .build();
-
-        RecipientRequestDto requestDto = RecipientRequestDto.builder()
-                .letterWriter("새 작성자")
-                .anonymityFlag("N")
-                .letterContents("수정된 게시물 내용입니다.")
-                .imageFile(null)
-                .build();
-
-        when(recipientRepository.findById(letterSeq)).thenReturn(Optional.of(existingEntity));
-        when(recipientRepository.save(any(RecipientEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-        // When
-        RecipientDetailResponseDto result = recipientService.updateRecipient(letterSeq, requestDto);
-
-        // Then
-        assertThat(result.getImageUrl()).isNotNull(); // 기존 URL이 유지되므로 null이 아님
-        assertThat(result.getImageUrl()).contains("old_uuid.jpg"); // 기존 파일명 포함 확인
-        assertThat(result.getOrgFileName()).isEqualTo("old_original.jpg");
-
-        verify(recipientRepository, times(1)).save(any(RecipientEntity.class));
-    }
-
 
     // 삭제 테스트 (기존 로직 유지)
     @Test

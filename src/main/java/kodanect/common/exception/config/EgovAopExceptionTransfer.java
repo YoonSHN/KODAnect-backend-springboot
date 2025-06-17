@@ -1,6 +1,6 @@
 package kodanect.common.exception.config;
 
-import lombok.Setter;
+import lombok.RequiredArgsConstructor;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.AfterThrowing;
 import org.aspectj.lang.annotation.Aspect;
@@ -20,11 +20,12 @@ import org.egovframe.rte.fdl.cmmn.aspect.ExceptionTransfer;
  * - AfterThrowing 기반 예외 처리 방식 적용
  * - 트랜잭션 범위 내 예외 흐름 유지
  */
-@Setter
 @Aspect
+@RequiredArgsConstructor
 public class EgovAopExceptionTransfer {
 
-	private ExceptionTransfer exceptionTransfer;
+	@SuppressWarnings("EI_EXPOSE_REP2")
+	private final ExceptionTransfer exceptionTransfer;
 
 	/**
 	 * 예외 처리 대상 포인트컷
@@ -32,7 +33,7 @@ public class EgovAopExceptionTransfer {
 	 * kodanect.domain 하위의 모든 service.impl 패키지 내 클래스의 메서드 실행 기준으로 지정
 	 */
 	@Pointcut("execution(* kodanect.domain..service.impl..*(..))")
-	private void exceptionTransferService() {}
+	protected void exceptionTransferService() {}
 
 	/**
 	 * 예외 발생 후 처리

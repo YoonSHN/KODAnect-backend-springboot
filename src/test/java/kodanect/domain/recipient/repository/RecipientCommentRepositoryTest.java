@@ -77,7 +77,7 @@ public class RecipientCommentRepositoryTest {
     private RecipientCommentEntity createComment(RecipientEntity recipient, String contents, String writer, String delFlag, LocalDateTime writeTime) {
         return RecipientCommentEntity.builder()
                 .letterSeq(recipient) // RecipientEntity 객체 자체를 넘깁니다.
-                .commentContents(contents)
+                .contents(contents)
                 .commentWriter(writer)
                 .commentPasscode("1234")
                 .delFlag(delFlag)
@@ -113,7 +113,7 @@ public class RecipientCommentRepositoryTest {
         // Then
         assertThat(savedComment).isNotNull();
         assertThat(savedComment.getCommentSeq()).isNotNull(); // AutoIncrement 확인
-        assertThat(savedComment.getCommentContents()).isEqualTo("새로운 댓글입니다.");
+        assertThat(savedComment.getContents()).isEqualTo("새로운 댓글입니다.");
         assertThat(savedComment.getLetterSeq().getLetterSeq()).isEqualTo(recipient.getLetterSeq()); // 부모 게시물 ID 확인
         assertThat(savedComment.getDelFlag()).isEqualTo("N");
     }
@@ -153,8 +153,8 @@ public class RecipientCommentRepositoryTest {
         assertThat(foundComments).hasSize(2);
 
         // writeTime 기준으로 올바르게 정렬되었는지 확인
-        assertThat(foundComments.get(0).getCommentContents()).isEqualTo("첫 번째 댓글"); // time1
-        assertThat(foundComments.get(1).getCommentContents()).isEqualTo("두 번째 댓글"); // time2
+        assertThat(foundComments.get(0).getContents()).isEqualTo("첫 번째 댓글"); // time1
+        assertThat(foundComments.get(1).getContents()).isEqualTo("두 번째 댓글"); // time2
 
         // 각 댓글의 delFlag가 'N'인지 확인
         assertThat(foundComments.get(0).getDelFlag()).isEqualTo("N");
@@ -187,7 +187,7 @@ public class RecipientCommentRepositoryTest {
         // Then
         // comment1은 찾을 수 있어야 하며, 내용이 일치해야 합니다.
         assertThat(foundComment).isPresent();
-        assertThat(foundComment.get().getCommentContents()).isEqualTo("조회할 댓글");
+        assertThat(foundComment.get().getContents()).isEqualTo("조회할 댓글");
         assertThat(foundComment.get().getDelFlag()).isEqualTo("N");
 
         // comment2는 delFlag가 'N'이 아니므로 찾을 수 없어야 합니다.
@@ -311,7 +311,7 @@ public class RecipientCommentRepositoryTest {
         // 현재 페이지의 댓글 수가 3개인지 확인
         assertThat(firstPage.getContent()).hasSize(3);
         // 첫 번째 댓글의 내용이 "댓글 0"인지 확인 (시간 오름차순 정렬 가정)
-        assertThat(firstPage.getContent().get(0).getCommentContents()).isEqualTo("댓글 0");
+        assertThat(firstPage.getContent().get(0).getContents()).isEqualTo("댓글 0");
 
         // 두 번째 페이지 (3개)
         pageable = PageRequest.of(1, 3);
@@ -320,7 +320,7 @@ public class RecipientCommentRepositoryTest {
         assertThat(secondPage).isNotNull();
         assertThat(secondPage.getNumber()).isEqualTo(1);
         assertThat(secondPage.getContent()).hasSize(3);
-        assertThat(secondPage.getContent().get(0).getCommentContents()).isEqualTo("댓글 3");
+        assertThat(secondPage.getContent().get(0).getContents()).isEqualTo("댓글 3");
     }
 
     @Test
@@ -352,9 +352,9 @@ public class RecipientCommentRepositoryTest {
 
         // Then (첫 페이지 결과 검증: "첫 댓글", "두 번째 댓글", "세 번째 댓글")
         assertThat(firstPageComments).isNotNull().hasSize(3);
-        assertThat(firstPageComments.get(0).getCommentContents()).isEqualTo("첫 댓글");
-        assertThat(firstPageComments.get(1).getCommentContents()).isEqualTo("두 번째 댓글");
-        assertThat(firstPageComments.get(2).getCommentContents()).isEqualTo("세 번째 댓글");
+        assertThat(firstPageComments.get(0).getContents()).isEqualTo("첫 댓글");
+        assertThat(firstPageComments.get(1).getContents()).isEqualTo("두 번째 댓글");
+        assertThat(firstPageComments.get(2).getContents()).isEqualTo("세 번째 댓글");
 
         // When (두 번째 페이지 조회 - lastCommentId는 첫 페이지의 마지막 댓글 ID)
         Integer lastCommentIdOfFirstPage = firstPageComments.get(firstPageComments.size() - 1).getCommentSeq();
@@ -363,8 +363,8 @@ public class RecipientCommentRepositoryTest {
         // Then (두 번째 페이지 결과 검증: "네 번째 댓글", "마지막 댓글")
         // 삭제된 댓글은 delFlag='Y'이므로 포함되지 않음
         assertThat(secondPageComments).isNotNull().hasSize(2);
-        assertThat(secondPageComments.get(0).getCommentContents()).isEqualTo("네 번째 댓글");
-        assertThat(secondPageComments.get(1).getCommentContents()).isEqualTo("마지막 댓글");
+        assertThat(secondPageComments.get(0).getContents()).isEqualTo("네 번째 댓글");
+        assertThat(secondPageComments.get(1).getContents()).isEqualTo("마지막 댓글");
 
         // When (더 이상 댓글이 없는 경우)
         Integer lastCommentIdOfSecondPage = secondPageComments.get(secondPageComments.size() - 1).getCommentSeq();

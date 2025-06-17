@@ -1,5 +1,6 @@
 package kodanect.domain.article.service.impl;
 
+import kodanect.common.util.RequestBasedHitLimiter;
 import kodanect.domain.article.exception.ArticleNotFoundException;
 import kodanect.domain.article.dto.ArticleDTO;
 import kodanect.domain.article.dto.ArticleDetailDto;
@@ -14,7 +15,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-
 /**
  * {@inheritDoc}
  */
@@ -23,6 +23,7 @@ import java.util.List;
 public class ArticleServiceImpl implements ArticleService {
 
     private final ArticleRepository articleRepository;
+    private final RequestBasedHitLimiter hitLimiter;
 
     /**
      * 게시글 목록을 조건에 따라 조회합니다.
@@ -67,9 +68,11 @@ public class ArticleServiceImpl implements ArticleService {
      */
     @Transactional
     @Override
-    public ArticleDetailDto getArticle(String boardCode, Integer articleSeq) {
+    public ArticleDetailDto getArticle(String boardCode, Integer articleSeq, String clientIpAddress) {
 
-        articleRepository.increaseHitCount(boardCode, articleSeq);
+        if (hitLimiter.isFirstView(boardCode, articleSeq, clientIpAddress)) {
+            articleRepository.increaseHitCount(boardCode, articleSeq);
+        }
 
         Article article = articleRepository.findByIdBoardCodeAndIdArticleSeq(boardCode, articleSeq)
                 .orElseThrow(() -> new ArticleNotFoundException(articleSeq));

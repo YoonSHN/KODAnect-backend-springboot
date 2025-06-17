@@ -29,52 +29,56 @@ public interface MemorialRepository extends JpaRepository<Memorial, Integer> {
      *
      * */
     @Query(
-        value = """
+            value = """
             SELECT new kodanect.domain.remembrance.dto.MemorialResponse
                     (m.donateSeq, m.donorName, m.anonymityFlag, m.donateDate,m.genderFlag, m.donateAge,
                     (SELECT COUNT(r) FROM MemorialComment r WHERE m.donateSeq = r.donateSeq AND r.delFlag='N'))
             FROM Memorial m
             WHERE m.delFlag = 'N'
-                    AND (:cursor IS NULL OR m.donateSeq < :cursor)
-            ORDER BY m.donateDate DESC
+                    AND (:date IS NULL
+                    OR m.donateDate < :date
+                    OR (:cursor IS NOT NULL AND m.donateDate = :date AND m.donateSeq < :cursor))
+            ORDER BY m.donateDate DESC, m.donateSeq DESC
         """
     )
-    List<MemorialResponse> findByCursor(@Param("cursor") Integer cursor, Pageable pageable);
+    List<MemorialResponse> findByCursor(@Param("cursor") Integer cursor, @Param("date") String date, Pageable pageable);
 
     /**
      *
-     * 기증자 추모관 게시글 리스트 날짜 + 문자 조건 조회
+     * 기증자 추모관 게시글 리스트 날짜 + 문자 조건 순서 조회
      *
      * @param startDate 시작 일
      * @param endDate 종료 일
      * @param keyWord 검색 문자 (%검색어%)
-     * @param cursor 조회할 댓글 페이지 번호(이 ID보다 작은 번호의 댓글을 조회)
-     * @param pageable 최대 결과 개수 등 페이징 정보
-     * @return 조건에 맞는 게시글 리스트(최신순)
+     * @return 조건에 맞는 게시글 순서 리스트(최신순)
      * */
     @Query(
             value = """
-            SELECT new kodanect.domain.remembrance.dto.MemorialResponse
-                    (m.donateSeq, m.donorName, m.anonymityFlag, m.donateDate, m.genderFlag, m.donateAge,
-                    (SELECT COUNT(r) FROM MemorialComment r WHERE m.donateSeq = r.donateSeq))
+             SELECT new kodanect.domain.remembrance.dto.MemorialResponse
+                    (m.donateSeq, m.donorName, m.anonymityFlag, m.donateDate,m.genderFlag, m.donateAge,
+                    (SELECT COUNT(r) FROM MemorialComment r WHERE m.donateSeq = r.donateSeq AND r.delFlag='N'))
             FROM Memorial m
             WHERE m.delFlag = 'N'
-                    AND (:cursor IS NULL OR m.donateSeq < :cursor)
                     AND m.donateDate BETWEEN :startDate AND :endDate
-                    AND m.donorName LIKE :keyWord
-            ORDER BY m.donateDate DESC
+                    AND m.donorName LIKE %:keyWord%
+                    AND(:date IS NULL
+                            OR(m.donateDate < :date
+                            OR(m.donateDate = :date AND m.donateSeq < :cursor)))
+            ORDER BY m.donateDate DESC, m.donateSeq DESC
         """
     )
     List<MemorialResponse> findSearchByCursor(
+            @Param("date") String date,
             @Param("cursor") Integer cursor,
-            Pageable pageable,
             @Param("startDate") String startDate,
             @Param("endDate") String endDate,
-            @Param("keyWord") String keyWord);
+            @Param("keyWord") String keyWord,
+            Pageable pageable
+    );
 
     /**
      *
-     * 기증자 추모관 게시글 리스트 날짜 + 문자 조건 조회
+     * 기증자 추모관 게시글 리스트 날짜 + 문자 조건 카운팅
      *
      * @param startDate 시작 일
      * @param endDate 종료 일

@@ -1,12 +1,13 @@
 package kodanect.domain.article.service.impl;
 
 import kodanect.common.config.GlobalsProperties;
+import kodanect.common.exception.config.SecureLogger;
 import kodanect.common.exception.custom.FileAccessViolationException;
 import kodanect.common.exception.custom.FileMissingException;
+import kodanect.common.exception.custom.InvalidFileNameException;
 import kodanect.domain.article.dto.DownloadFile;
 import kodanect.domain.article.service.FileDownloadService;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.MediaType;
@@ -22,10 +23,11 @@ import java.nio.file.Paths;
 /**
  * {@inheritDoc}
  */
-@Slf4j
 @RequiredArgsConstructor
 @Service
 public class FileDownloadServiceImpl implements FileDownloadService {
+
+    private static final SecureLogger log = SecureLogger.getLogger(FileDownloadServiceImpl.class);
 
     private final GlobalsProperties globalsProperties;
 
@@ -52,6 +54,10 @@ public class FileDownloadServiceImpl implements FileDownloadService {
      * @see java.nio.file.Files
      */
     public DownloadFile loadDownloadFile(String boardCode, Integer articleSeq, String fileName) {
+
+        if (!fileName.matches("^[a-zA-Z0-9가-힣_.-]+$")) {
+            throw new InvalidFileNameException("잘못된 파일명입니다.");
+        }
 
         Path basePath = Paths.get(globalsProperties.getFileStorePath(), boardCode, articleSeq.toString())
                 .toAbsolutePath().normalize();

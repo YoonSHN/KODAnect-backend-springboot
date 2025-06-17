@@ -28,6 +28,7 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
@@ -71,7 +72,7 @@ public class RecipientCommentServiceImplTest {
         activeComment = RecipientCommentEntity.builder()
                 .commentSeq(100)
                 .letterSeq(activeRecipient) // 부모 게시물 연결
-                .commentContents("원래 댓글 내용")
+                .contents("원래 댓글 내용")
                 .commentWriter("원래 작성자")
                 .delFlag("N")
                 .writeTime(LocalDateTime.now())
@@ -81,7 +82,7 @@ public class RecipientCommentServiceImplTest {
         deletedComment = RecipientCommentEntity.builder()
                 .commentSeq(101)
                 .letterSeq(activeRecipient) // 부모 게시물 연결
-                .commentContents("삭제된 댓글 내용")
+                .contents("삭제된 댓글 내용")
                 .commentWriter("삭제된 작성자")
                 .delFlag("Y") // 삭제된 상태
                 .writeTime(LocalDateTime.now())
@@ -97,7 +98,7 @@ public class RecipientCommentServiceImplTest {
             // Given
             Integer letterSeq = activeRecipient.getLetterSeq();
             RecipientCommentRequestDto requestDto = RecipientCommentRequestDto.builder()
-                    .commentContents("<p>새로운 댓글 내용</p>")
+                    .contents("<p>새로운 댓글 내용</p>")
                     .commentWriter("새로운 작성자")
                     .commentPasscode("newpass")
                     .build();
@@ -126,7 +127,7 @@ public class RecipientCommentServiceImplTest {
             // Then
             assertThat(result).isNotNull();
             assertThat(result.getCommentSeq()).isEqualTo(activeComment.getCommentSeq()); // Mocking된 반환 값 확인 (100)
-            assertThat(result.getCommentContents()).isEqualTo("새로운 댓글 내용"); // 클린된 내용으로 저장됐는지 확인
+            assertThat(result.getContents()).isEqualTo("새로운 댓글 내용"); // 클린된 내용으로 저장됐는지 확인
 
             verify(recipientRepository, times(1)).findById(letterSeq);
             verify(recipientCommentRepository, times(1)).save(any(RecipientCommentEntity.class));
@@ -158,7 +159,7 @@ public class RecipientCommentServiceImplTest {
             // Given
             Integer letterSeq = activeRecipient.getLetterSeq();
             RecipientCommentRequestDto requestDto = RecipientCommentRequestDto.builder()
-                    .commentContents("<p></p>") // 내용이 없거나 필터링 후 비어질 내용
+                    .contents("<p></p>") // 내용이 없거나 필터링 후 비어질 내용
                     .commentWriter("test")
                     .commentPasscode("pass")
                     .build();
@@ -191,28 +192,41 @@ public class RecipientCommentServiceImplTest {
             Integer commentSeq = activeComment.getCommentSeq();
             String newContents = "업데이트된 <br>내용";
             String newWriter = "수정된 작성자";
-            String inputPasscode = "pass1234";
 
-            // Jsoup.clean() Mocking
+            // 서비스 호출 전의 시간을 기록합니다.
+            LocalDateTime beforeServiceCallTime = LocalDateTime.now();
+
+            // Jsoup.clean() Mocking: HTML 태그 제거 후 공백 정리된 내용 반환
             mockedJsoup.when(() -> Jsoup.clean(anyString(), any(Safelist.class)))
-                    .thenReturn("업데이트된 내용"); // 줄바꿈 태그 제거 후 공백 정리된 내용
+                    .thenReturn("업데이트된 내용");
 
             // recipientCommentRepository.findByCommentSeqAndDelFlag() Mocking: 활성 댓글 반환
             when(recipientCommentRepository.findByCommentSeqAndDelFlag(commentSeq, "N"))
                     .thenReturn(Optional.of(activeComment));
 
             // recipientCommentRepository.save() Mocking: 업데이트된 댓글 반환
+            // 서비스 메서드가 activeComment를 직접 수정하므로, 해당 인스턴스를 반환하도록 Mocking
             when(recipientCommentRepository.save(any(RecipientCommentEntity.class)))
-                    .thenReturn(activeComment); // activeComment 객체가 업데이트될 것이므로, 이를 반환하도록 Mocking
+                    .thenReturn(activeComment);
 
             // When
-            RecipientCommentResponseDto result = recipientCommentService.updateComment(commentSeq, newContents, newWriter, inputPasscode);
+            RecipientCommentResponseDto result = recipientCommentService.updateComment(commentSeq, newContents, newWriter);
+
+            // 서비스 호출 후의 시간을 기록합니다.
+            LocalDateTime afterServiceCallTime = LocalDateTime.now();
 
             // Then
             assertThat(result).isNotNull();
-            assertThat(result.getCommentContents()).isEqualTo("업데이트된 내용");
+            assertThat(result.getContents()).isEqualTo("업데이트된 내용");
             assertThat(result.getCommentWriter()).isEqualTo(newWriter);
 
+            // modifyTime이 서비스 호출 전후 시간 사이에 있는지 확인합니다.
+            // LocalDateTime.now()는 매우 빠르게 호출될 수 있으므로 'strictly after' 대신 'after or equal to'를 사용합니다.
+            assertThat(result.getModifyTime())
+                    .isAfterOrEqualTo(beforeServiceCallTime)
+                    .isBeforeOrEqualTo(afterServiceCallTime);
+
+            // verify 호출 횟수
             verify(recipientCommentRepository, times(1)).findByCommentSeqAndDelFlag(commentSeq, "N");
             verify(recipientCommentRepository, times(1)).save(any(RecipientCommentEntity.class));
             mockedJsoup.verify(() -> Jsoup.clean(anyString(), any(Safelist.class)), times(1));
@@ -222,22 +236,19 @@ public class RecipientCommentServiceImplTest {
     @Test
     public void updateComment_CommentNotFound() {
         // Given
-        Integer commentSeq = 999; // 존재하지 않는 댓글
+        Integer nonExistentCommentSeq = 999;
         String newContents = "내용";
         String newWriter = "작가";
-        String inputPasscode = "pass";
 
-        when(recipientCommentRepository.findByCommentSeqAndDelFlag(commentSeq, "N"))
+        when(recipientCommentRepository.findByCommentSeqAndDelFlag(nonExistentCommentSeq, "N"))
                 .thenReturn(Optional.empty());
 
-        // Then
-        thrown.expect(RecipientCommentNotFoundException.class);
-        thrown.expectMessage("[댓글 없음] commentId=" + commentSeq);
+        // When & Then
+        assertThatThrownBy(() -> recipientCommentService.updateComment(nonExistentCommentSeq, newContents, newWriter))
+                .isInstanceOf(RecipientCommentNotFoundException.class)
+                .hasMessageContaining("[댓글 없음] commentId=" + nonExistentCommentSeq); // 이 부분을 수정했습니다.
 
-        // When
-        recipientCommentService.updateComment(commentSeq, newContents, newWriter, inputPasscode);
-
-        verify(recipientCommentRepository, times(1)).findByCommentSeqAndDelFlag(commentSeq, "N");
+        verify(recipientCommentRepository, times(1)).findByCommentSeqAndDelFlag(nonExistentCommentSeq, "N");
         verify(recipientCommentRepository, never()).save(any(RecipientCommentEntity.class));
     }
 
@@ -245,22 +256,19 @@ public class RecipientCommentServiceImplTest {
     public void updateComment_InvalidPasscode() {
         // Given
         Integer commentSeq = activeComment.getCommentSeq();
-        String newContents = "내용";
-        String newWriter = "작가";
         String wrongPasscode = "wrongpass"; // 잘못된 비밀번호
 
         when(recipientCommentRepository.findByCommentSeqAndDelFlag(commentSeq, "N"))
                 .thenReturn(Optional.of(activeComment));
 
-        // Then
-        thrown.expect(RecipientInvalidPasscodeException.class);
-        thrown.expectMessage("비밀번호가 일치하지 않습니다.");
-
-        // When
-        recipientCommentService.updateComment(commentSeq, newContents, newWriter, wrongPasscode);
+        // When & Then (updateComment_InvalidPasscode는 authenticateComment를 테스트해야 합니다.)
+        // updateComment는 이제 비밀번호를 검증하지 않으므로, 이 테스트는 authenticateComment를 호출해야 합니다.
+        assertThatThrownBy(() -> recipientCommentService.authenticateComment(commentSeq, wrongPasscode))
+                .isInstanceOf(RecipientInvalidPasscodeException.class)
+                .hasMessageContaining("비밀번호가 일치하지 않습니다.");
 
         verify(recipientCommentRepository, times(1)).findByCommentSeqAndDelFlag(commentSeq, "N");
-        verify(recipientCommentRepository, never()).save(any(RecipientCommentEntity.class));
+        verify(recipientCommentRepository, never()).save(any(RecipientCommentEntity.class)); // authenticateComment는 save를 호출하지 않음
     }
 
     @Test
@@ -270,20 +278,19 @@ public class RecipientCommentServiceImplTest {
             Integer commentSeq = activeComment.getCommentSeq();
             String newContents = "<p></p>"; // 필터링 후 비어질 내용
             String newWriter = "작가";
-            String inputPasscode = "pass1234";
+            // String inputPasscode = "pass1234"; // 이 메서드에서는 더 이상 사용되지 않음
 
+            // Jsoup.clean()이 공백만 반환하도록 Mocking (trim 후 비어지도록)
             mockedJsoup.when(() -> Jsoup.clean(anyString(), any(Safelist.class)))
-                    .thenReturn("  "); // 공백만 반환하여 trim 후 비어지도록
+                    .thenReturn("  ");
 
             when(recipientCommentRepository.findByCommentSeqAndDelFlag(commentSeq, "N"))
                     .thenReturn(Optional.of(activeComment));
 
-            // Then
-            thrown.expect(RecipientInvalidDataException.class);
-            thrown.expectMessage("댓글 내용은 필수 입력 항목입니다. (HTML 태그 필터링 후)");
-
-            // When
-            recipientCommentService.updateComment(commentSeq, newContents, newWriter, inputPasscode);
+            // When & Then
+            assertThatThrownBy(() -> recipientCommentService.updateComment(commentSeq, newContents, newWriter))
+                    .isInstanceOf(RecipientInvalidDataException.class)
+                    .hasMessageContaining("댓글 내용은 필수 입력 항목입니다. (HTML 태그 필터링 후)");
 
             verify(recipientCommentRepository, times(1)).findByCommentSeqAndDelFlag(commentSeq, "N");
             verify(recipientCommentRepository, never()).save(any(RecipientCommentEntity.class));

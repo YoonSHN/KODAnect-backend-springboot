@@ -1,5 +1,6 @@
 package kodanect.domain.donation.service.impl;
 
+import kodanect.common.exception.config.SecureLogger;
 import kodanect.common.response.CursorCommentPaginationResponse;
 import kodanect.common.response.CursorPaginationResponse;
 import kodanect.common.util.CursorFormatter;
@@ -15,7 +16,6 @@ import kodanect.domain.donation.repository.DonationRepository;
 import kodanect.domain.donation.service.DonationCommentService;
 import kodanect.domain.donation.service.DonationService;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -30,10 +30,10 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class DonationServiceImpl implements DonationService {
 
     /** Cursor 기반 기본 Size */
+    private static final SecureLogger log = SecureLogger.getLogger(DonationServiceImpl.class);
     private static final int DEFAULT_SIZE = 3;
     private static final String DONATION_ERROR_NOTFOUND = "donation.error.notfound";
 

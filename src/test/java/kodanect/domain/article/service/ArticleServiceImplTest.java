@@ -1,5 +1,6 @@
 package kodanect.domain.article.service;
 
+import kodanect.common.util.RequestBasedHitLimiter;
 import kodanect.domain.article.exception.ArticleNotFoundException;
 import kodanect.domain.article.dto.ArticleDTO;
 import kodanect.domain.article.dto.ArticleDetailDto;
@@ -11,8 +12,10 @@ import kodanect.domain.article.repository.ArticleRepository;
 import kodanect.domain.article.service.impl.ArticleServiceImpl;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.data.domain.*;
 
+import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
@@ -29,7 +32,8 @@ public class ArticleServiceImplTest {
     @Before
     public void setUp() {
         articleRepository = mock(ArticleRepository.class);
-        articleService = new ArticleServiceImpl(articleRepository);
+        RequestBasedHitLimiter hitLimiter = mock(RequestBasedHitLimiter.class);
+        articleService = new ArticleServiceImpl(articleRepository, hitLimiter);
     }
 
     @Test
@@ -140,7 +144,7 @@ public class ArticleServiceImplTest {
                 .thenReturn(Optional.of(article));
 
         // when
-        ArticleDetailDto dto = articleService.getArticle("7", 1);
+        ArticleDetailDto dto = articleService.getArticle("7", 1, "127.0.0.1");
 
         // then
         assertNotNull(dto);
@@ -155,7 +159,7 @@ public class ArticleServiceImplTest {
                 .thenReturn(Optional.empty());
 
         // when
-        articleService.getArticle("7", 999);
+        articleService.getArticle("7", 999, "127.0.0.1");
     }
 
     @Test
@@ -184,7 +188,7 @@ public class ArticleServiceImplTest {
                 .thenReturn(Optional.of(article));
 
         // when
-        ArticleDetailDto dto = articleService.getArticle("7", 1);
+        ArticleDetailDto dto = articleService.getArticle("7", 1, "127.0.0.1");
 
         // then
         assertNotNull(dto.getFiles());

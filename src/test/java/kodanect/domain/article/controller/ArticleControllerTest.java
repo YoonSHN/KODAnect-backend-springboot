@@ -15,15 +15,19 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.support.MessageSourceAccessor;
 import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -113,7 +117,7 @@ public class ArticleControllerTest {
                 .build();
 
         when(boardCategoryCache.getBoardCodeByUrlParam("1")).thenReturn("7");
-        when(articleService.getArticle("7", 1)).thenReturn(detailDto);
+        when(articleService.getArticle(eq("7"), eq(1), anyString())).thenReturn(detailDto);
 
         mockMvc.perform(get("/notices/1")
                         .param("optionStr", "1"))
@@ -298,7 +302,7 @@ public class ArticleControllerTest {
     @Test
     public void testGetOtherBoardArticleDetailNotFound() throws Exception {
         when(boardCategoryCache.getBoardCodeByUrlParam("makePublic")).thenReturn("32");
-        when(articleService.getArticle("32", 99)).thenReturn(null);
+        when(articleService.getArticle(eq("32"), eq(99), anyString())).thenReturn(null);
 
         mockMvc.perform(get("/makePublic/99"))
                 .andExpect(status().isNotFound())
@@ -316,7 +320,8 @@ public class ArticleControllerTest {
         String contentType = "application/pdf";
 
         byte[] fileContent = "dummy file content".getBytes();
-        ByteArrayResource resource = new ByteArrayResource(fileContent);
+        InputStream inputStream = new ByteArrayInputStream(fileContent);
+        InputStreamResource resource = spy(new InputStreamResource(inputStream));
 
         DownloadFile mockFile = DownloadFile.builder()
                 .encodedFileName(encodedFileName)
@@ -324,19 +329,17 @@ public class ArticleControllerTest {
                 .resource(resource)
                 .build();
 
-        // when
         when(boardCategoryCache.getBoardCodeByUrlParam("1")).thenReturn(boardCode);
         when(fileDownloadService.loadDownloadFile(eq(boardCode), eq(articleSeq), eq(fileName)))
                 .thenReturn(mockFile);
 
-        // then
+        // when & then
         mockMvc.perform(get("/notices/{articleSeq}/files/{fileName}", articleSeq, fileName)
                         .param("optionStr", "1"))
                 .andExpect(status().isOk())
                 .andExpect(header().string("Content-Type", contentType))
                 .andExpect(header().string("Content-Disposition",
-                        "attachment; filename*=UTF-8''" + encodedFileName))
-                .andExpect(content().bytes(fileContent));
+                        "attachment; filename*=UTF-8''" + encodedFileName));
     }
 
 

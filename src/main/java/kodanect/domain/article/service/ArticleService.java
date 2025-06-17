@@ -35,5 +35,5 @@ public interface ArticleService {
      * @return {@link ArticleDetailDto} 게시글 상세 정보 + 이전/다음 게시글 참조 정보
      * @throws kodanect.domain.article.exception.ArticleNotFoundException 게시글이 존재하지 않을 경우
      */
-    ArticleDetailDto getArticle(String boardCode, Integer articleSeq);
+    ArticleDetailDto getArticle(String boardCode, Integer articleSeq, String clientIpAddress);
 }

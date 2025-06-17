@@ -6,7 +6,6 @@ import org.aspectj.lang.annotation.Aspect;
 import org.slf4j.MDC;
 import org.springframework.stereotype.Component;
 
-
 /**
  * 서비스 계층 메서드 실행 시 클래스명, 메서드명을 MDC에 저장하는 로깅 AOP
  *
@@ -25,8 +24,12 @@ public class LoggingAspect {
     @Around("execution(* kodanect.domain..service..*(..))")
     public Object logMethod(ProceedingJoinPoint joinPoint) throws Throwable {
         try {
-            MDC.put("class", joinPoint.getTarget().getClass().getSimpleName());
-            MDC.put("method", joinPoint.getSignature().getName());
+            String className = joinPoint.getTarget().getClass().getSimpleName();
+            String methodName = joinPoint.getSignature().getName();
+
+            MDC.put("class", className);
+            MDC.put("method", methodName);
+
             return joinPoint.proceed();
         } finally {
             MDC.clear();

@@ -70,7 +70,7 @@ public class RecipientRepositoryTest {
     private RecipientCommentEntity createComment(RecipientEntity recipient, String contents, String writer, String delFlag, LocalDateTime writeTime) {
         return RecipientCommentEntity.builder()
                 .letterSeq(recipient)
-                .commentContents(contents)
+                .contents(contents)
                 .commentWriter(writer)
                 .commentPasscode("1234")
                 .delFlag(delFlag)
@@ -137,8 +137,8 @@ public class RecipientRepositoryTest {
         // 댓글 목록 확인 (delFlag='N'인 댓글만 가져와야 함)
         assertThat(foundRecipient.getComments()).isNotNull();
         assertThat(foundRecipient.getComments()).hasSize(2); // 삭제되지 않은 댓글만 포함
-        assertThat(foundRecipient.getComments().get(0).getCommentContents()).isEqualTo("첫 번째 댓글");
-        assertThat(foundRecipient.getComments().get(1).getCommentContents()).isEqualTo("세 번째 댓글");
+        assertThat(foundRecipient.getComments().get(0).getContents()).isEqualTo("첫 번째 댓글");
+        assertThat(foundRecipient.getComments().get(1).getContents()).isEqualTo("세 번째 댓글");
         // 정렬 순서 확인 (writeTime ASC)
         assertThat(foundRecipient.getComments().get(0).getWriteTime()).isBefore(foundRecipient.getComments().get(1).getWriteTime());
     }

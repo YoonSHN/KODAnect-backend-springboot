@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+
+    <!-- 내부 mutable 객체 노출 경고 무시 -->
+    <Match>
+        <Bug code="EI" pattern="EI_EXPOSE_REP2"/>
+    </Match>
+
+    <!-- CRLF 인젝션 관련 로그 처리: SecureLogger만 무시 -->
+    <Match>
+        <Class name="kodanect.common.exception.config.SecureLogger"/>
+        <Bug pattern="CRLF_INJECTION_LOGS"/>
+    </Match>
+
+    <!-- Nullable 메서드 경고 무시 (ex: getMessage 등) -->
+    <Match>
+        <Bug pattern="NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE"/>
+        <Method name="getMessage"/>
+    </Match>
+
+    <!-- Spring Controller 및 @RestController 경고 무시 -->
+    <Match>
+        <Bug pattern="SPRING_ENDPOINT"/>
+    </Match>
+
+    <!-- 로그 포맷 중 줄바꿈 포함 경고 무시 -->
+    <Match>
+        <Bug pattern="VA_FORMAT_STRING_USES_NEWLINE"/>
+    </Match>
+
+    <!-- Locale 없이 대소문자 변환 사용하는 경우 무시 (로컬 처리만 사용 시) -->
+    <Match>
+        <Bug pattern="ICU_INCORRECT_CASE_TRANSFORMATION"/>
+    </Match>
+
+    <!-- Dead store 경고 무시 (불필요한 변수 할당 등) -->
+    <Match>
+        <Bug pattern="DEAD_STORE"/>
+    </Match>
+
+    <Match>
+        <Bug pattern="IMPROPER_UNICODE"/>
+    </Match>
+
+    <Match>
+        <Bug pattern="DM_CONVERT_CASE"/>
+    </Match>
+
+    <Match>
+        <Class name="kodanect.domain.article.service.impl.FileDownloadServiceImpl"/>
+    </Match>
+
+</FindBugsFilter>

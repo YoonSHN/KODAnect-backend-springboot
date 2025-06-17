@@ -17,43 +17,21 @@ import java.time.LocalDateTime;
 public class RecipientListResponseDto implements CursorIdentifiable<Integer> {
 
     private Integer letterSeq;
-    private String organCode;
-    private String organEtc;
     private String letterTitle;
-    private String recipientYear;
     private String letterWriter;
-    private String anonymityFlag;
     private int readCount;
-    private String fileName;
-    private String orgFileName;
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDateTime writeTime;
-    private String writerId;
-    @JsonFormat(pattern = "yyyy-MM-dd")
-    private LocalDateTime modifyTime;
-    private String modifierId;
-    private String delFlag; // char 타입으로 유지
-    private int commentCount; // 댓글 수는 조회 시 필요한 정보이므로 DTO에 포함
 
     // Entity -> DTO 변환 메서드 (정적 팩토리 메서드)
     public static RecipientListResponseDto fromEntity(RecipientEntity entity) {
         return RecipientListResponseDto.builder()
                 .letterSeq(entity.getLetterSeq())
-                .organCode(entity.getOrganCode())
-                .organEtc(entity.getOrganEtc())
                 .letterTitle(entity.getLetterTitle())
-                .recipientYear(entity.getRecipientYear())
                 .letterWriter(entity.getLetterWriter())
-                .anonymityFlag(entity.getAnonymityFlag())
                 .readCount(entity.getReadCount())
-                .fileName(entity.getFileName())
-                .orgFileName(entity.getOrgFileName())
                 .writeTime(entity.getWriteTime())
-                .writerId(entity.getWriterId())
-                .modifyTime(entity.getModifyTime())
-                .modifierId(entity.getModifierId())
-                .delFlag(entity.getDelFlag())
-                .commentCount(0)
+//                .displayLetterNum(null)
                 .build();
     }
 

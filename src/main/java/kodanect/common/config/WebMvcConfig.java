@@ -20,7 +20,6 @@ public class WebMvcConfig implements WebMvcConfigurer {
     public WebMvcConfig(GlobalsProperties globalsProperties) {
         this.globalsProperties = globalsProperties;
     }
-
     /**
      * CORS 설정
      * - 특정 도메인에서 오는 요청을 허용
@@ -45,14 +44,19 @@ public class WebMvcConfig implements WebMvcConfigurer {
      */
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        registry.addResourceHandler("/admin/kindeditor/attached/**")
-                .addResourceLocations("file:/app/uploads/admin/kindeditor/attached/");
-        registry.addResourceHandler("/upload_img/**")
-                .addResourceLocations("file:/app/uploads/upload_img/");
-        // Recipient 게시판 이미지 파일 핸들러
-        // file.base-url (예: /uploads/**) 요청을 file:uploadRootDir (예: file:/app/uploads/) 경로로 매핑
-        registry.addResourceHandler(globalsProperties.getFileBaseUrl() + "/**")
-                .addResourceLocations("file:" + globalsProperties.getFileStorePath() + "/");
+        // null 방지 및 끝에 "/" 붙이기
+        String fileStorePath = ensureEndsWithSlash(globalsProperties.getFileStorePath(), "./uploads");
+        String fileBaseUrl = ensureEndsWithSlash(globalsProperties.getFileBaseUrl(), "/image/uploads");
+
+        registry.addResourceHandler(fileBaseUrl + "**")
+                .addResourceLocations("file:" + fileStorePath);
+    }
+
+    private String ensureEndsWithSlash(String path, String defaultValue) {
+        if (path == null || path.isBlank()) {
+            return defaultValue.endsWith("/") ? defaultValue : defaultValue + "/";
+        }
+        return path.endsWith("/") ? path : path + "/";
     }
 }
 

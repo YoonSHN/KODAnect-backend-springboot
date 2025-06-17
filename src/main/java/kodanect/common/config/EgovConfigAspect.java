@@ -97,9 +97,7 @@ public class EgovConfigAspect {
 	 */
 	@Bean
 	public EgovAopExceptionTransfer aopExceptionTransfer(ExceptionTransfer exceptionTransfer) {
-		EgovAopExceptionTransfer egovAopExceptionTransfer = new EgovAopExceptionTransfer();
-		egovAopExceptionTransfer.setExceptionTransfer(exceptionTransfer);
-		return egovAopExceptionTransfer;
+        return new EgovAopExceptionTransfer(exceptionTransfer);
 	}
 
 }

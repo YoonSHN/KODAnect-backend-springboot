@@ -2,7 +2,7 @@ package kodanect.domain.article.controller;
 
 import kodanect.common.config.GlobalsProperties;
 import kodanect.common.exception.config.ArticleExceptionHandler;
-import kodanect.common.exception.custom.*;
+import kodanect.common.exception.custom.FileMissingException;
 import kodanect.domain.article.dto.ArticleDetailDto;
 import kodanect.domain.article.exception.ArticleNotFoundException;
 import kodanect.domain.article.exception.InvalidBoardCodeException;
@@ -60,7 +60,7 @@ class ArticleExceptionHandlerTest {
 
         when(boardCategoryCache.getBoardCodeByUrlParam(optionStr)).thenReturn("7");
 
-        when(articleService.getArticle(eq("7"), eq(articleSeq)))
+        when(articleService.getArticle(eq("7"), eq(articleSeq), anyString()))
                 .thenThrow(new ArticleNotFoundException(articleSeq));
         when(messageSourceAccessor.getMessage(anyString(), any(Object[].class), anyString()))
                 .thenReturn("게시글을 찾을 수 없습니다.");
@@ -96,7 +96,6 @@ class ArticleExceptionHandlerTest {
     @Test
     @DisplayName("파일 없음 예외 - 404")
     void handleFileMissingException() throws Exception {
-        // given
         String optionStr = "1";
         int articleSeq = 1;
         String fileName = "notfound.pdf";
@@ -110,7 +109,7 @@ class ArticleExceptionHandlerTest {
                         "파일이 존재하지 않거나 읽을 수 없음", filePath, boardCode, articleSeq, fileName
                 ));
 
-        when(articleService.getArticle(eq(boardCode), eq(articleSeq)))
+        when(articleService.getArticle(eq(boardCode), eq(articleSeq), anyString()))
                 .thenReturn(ArticleDetailDto.builder().title("test").build());
 
         when(globalsProperties.getFileStorePath()).thenReturn("/files");
@@ -118,7 +117,6 @@ class ArticleExceptionHandlerTest {
         when(messageSourceAccessor.getMessage(eq(FILE_NOT_FOUND), any(Object[].class), anyString()))
                 .thenReturn("파일을 찾을 수 없습니다.");
 
-        // when & then
         mockMvc.perform(get("/notices/{articleSeq}/files/{fileName}", articleSeq, fileName)
                         .param("optionStr", optionStr)
                         .accept(MediaType.APPLICATION_JSON))

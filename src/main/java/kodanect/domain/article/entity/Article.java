@@ -44,7 +44,8 @@ public class Article {
     private String replyWriterId;
 
     @Column(name = "fix_flag", length = 1)
-    private String fixFlag;
+    @Builder.Default
+    private String fixFlag = "N";
 
     @Column(name = "article_passcode", length = 60)
     private String articlePasscode;

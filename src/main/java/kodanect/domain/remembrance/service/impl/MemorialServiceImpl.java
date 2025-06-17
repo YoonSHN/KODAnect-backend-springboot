@@ -6,6 +6,7 @@ import kodanect.common.response.CursorPaginationResponse;
 import kodanect.common.response.CursorCommentPaginationResponse;
 import kodanect.common.util.CursorFormatter;
 import kodanect.domain.remembrance.dto.*;
+import kodanect.domain.remembrance.dto.common.MemorialNextCursor;
 import kodanect.domain.remembrance.entity.Memorial;
 import kodanect.domain.remembrance.exception.*;
 import kodanect.domain.remembrance.repository.MemorialRepository;
@@ -121,8 +122,8 @@ public class MemorialServiceImpl implements MemorialService {
      *
      * */
     @Override
-    public CursorPaginationResponse<MemorialResponse, Integer> getSearchMemorialList(
-            String startDate, String endDate, String keyWord, Integer cursor, int size)
+    public CursorPaginationResponse<MemorialResponse, MemorialNextCursor> getSearchMemorialList(
+            String startDate, String endDate, String keyWord, MemorialNextCursor cursor, int size)
     {
         /* 검색 문자 포매팅 */
         keyWord = formatSearchWord(keyWord);
@@ -132,9 +133,17 @@ public class MemorialServiceImpl implements MemorialService {
         String endDateStr = formatDate(endDate);
 
         /* 페이징 포매팅 */
-        Pageable pageable = PageRequest.of(0, size +1);
+        Pageable pageable = PageRequest.of(0, size+1);
 
-        List<MemorialResponse> memorialResponses = memorialRepository.findSearchByCursor(cursor, pageable, startDateStr, endDateStr, keyWord);
+        List<MemorialResponse> memorialResponses =
+                memorialRepository.findSearchByCursor(
+                        cursor.getDate(),
+                        cursor.getCursor(),
+                        startDateStr,
+                        endDateStr,
+                        keyWord,
+                        pageable
+                );
 
         long totalCount = memorialRepository.countBySearch(startDateStr, endDateStr, keyWord);
 
@@ -146,18 +155,18 @@ public class MemorialServiceImpl implements MemorialService {
      *
      * 기증자 추모관 게시글 조회 메서드
      *
-     * @param cursor 조회할 댓글 페이지 번호(이 ID보다 작은 번호의 댓글을 조회)
+     * @param nextCursor 조회할 댓글 페이지 번호(이 ID보다 작은 번호의 댓글을 조회)
      * @param size 조회할 댓글 페이지 사이즈
      * @return 조건에 맞는 게시글 리스트(최신순)
      *
      * */
     @Override
-    public CursorPaginationResponse<MemorialResponse, Integer> getMemorialList(Integer cursor, int size) {
+    public CursorPaginationResponse<MemorialResponse, MemorialNextCursor> getMemorialList(MemorialNextCursor nextCursor, int size) {
 
         /* 페이징 포매팅 */
         Pageable pageable = PageRequest.of(0, size +1);
 
-        List<MemorialResponse> memorialResponses = memorialRepository.findByCursor(cursor, pageable);
+        List<MemorialResponse> memorialResponses = memorialRepository.findByCursor(nextCursor.getCursor(), nextCursor.getDate(), pageable);
 
         long totalCount = memorialRepository.count();
 

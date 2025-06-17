@@ -1,6 +1,7 @@
 package kodanect.domain.recipient.service.impl;
 
 import kodanect.common.config.GlobalsProperties;
+import kodanect.common.exception.config.SecureLogger;
 import kodanect.common.response.CursorPaginationResponse;
 import kodanect.common.response.CursorCommentPaginationResponse;
 import kodanect.common.util.CursorFormatter;
@@ -13,9 +14,6 @@ import kodanect.domain.recipient.entity.RecipientEntity;
 import kodanect.domain.recipient.repository.RecipientCommentRepository;
 import kodanect.domain.recipient.repository.RecipientRepository;
 import kodanect.domain.recipient.service.RecipientService;
-import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
@@ -39,12 +37,11 @@ import java.util.stream.Collectors;
 
 import static kodanect.common.exception.config.MessageKeys.RECIPIENT_NOT_FOUND;
 
-@Slf4j
 @Service("recipientService")
 public class RecipientServiceImpl implements RecipientService {
 
     // 로거 선언 (가장 먼저)
-    private static final Logger logger = LoggerFactory.getLogger(RecipientServiceImpl.class);
+    private static final SecureLogger logger = SecureLogger.getLogger(RecipientServiceImpl.class);
 
     // 정적(static) 상수 정의
     private static final String RECIPIENT_NOT_FOUND_MESSAGE = "해당 게시물이 존재하지 않거나 이미 삭제되었습니다.";
@@ -76,7 +73,7 @@ public class RecipientServiceImpl implements RecipientService {
 
     // 게시물 비밀번호 확인
     @Override
-    public boolean verifyLetterPassword(Integer letterSeq, String letterPasscode) {
+    public void verifyLetterPassword(Integer letterSeq, String letterPasscode) {
 
         // 게시물 조회 (삭제되지 않은 게시물만 조회)
         RecipientEntity recipientEntityold = recipientRepository.findById(letterSeq)
@@ -87,7 +84,6 @@ public class RecipientServiceImpl implements RecipientService {
         if (!recipientEntityold.checkPasscode(letterPasscode)) {
             throw new RecipientInvalidPasscodeException("비밀번호가 일치하지 않습니다.");
         }
-        return true;
     }
 
     // 게시물 수정
@@ -99,32 +95,52 @@ public class RecipientServiceImpl implements RecipientService {
                 .filter(entity -> "N".equalsIgnoreCase(entity.getDelFlag()))
                 .orElseThrow(() -> new RecipientNotFoundException(RECIPIENT_NOT_FOUND, letterSeq));
 
-        // 엔티티 필드 업데이트
+        // 엔티티 필드 업데이트 (비밀번호 일치 시에만 진행)
         recipientEntityold.setOrganCode(requestDto.getOrganCode());
         recipientEntityold.setOrganEtc(requestDto.getOrganEtc());
         recipientEntityold.setLetterTitle(requestDto.getLetterTitle());
         recipientEntityold.setRecipientYear(requestDto.getRecipientYear());
 
-        // 작성자 익명 처리
-        String writerToSave = "Y".equalsIgnoreCase(requestDto.getAnonymityFlag()) ? anonymousWriterValue : requestDto.getLetterWriter();
-        recipientEntityold.setLetterWriter(writerToSave);
+        // 작성자 익명 처리 로직 적용
+        recipientEntityold.setLetterWriter(processAnonymityWriter(requestDto.getLetterWriter(), requestDto.getAnonymityFlag()));
         recipientEntityold.setAnonymityFlag(requestDto.getAnonymityFlag());
 
         // 내용(HTML) 필터링 및 유효성 검사
         recipientEntityold.setLetterContents(cleanAndValidateContents(requestDto.getLetterContents()));
 
-        // --- 파일 업로드 및 교체 ---
-        MultipartFile newImageFile = requestDto.getImageFile();
+        // --- 파일 업로드/교체/삭제 처리 로직 변경 (imageUrl 기준으로 판단) ---
+        String newImageUrl = requestDto.getImageUrl(); // 새로 전송된 이미지 URL
+        String newFileName = requestDto.getFileName(); // 새로 전송된 파일명
+        String newOrgFileName = requestDto.getOrgFileName(); // 새로 전송된 원본 파일명
 
-        if (newImageFile != null && !newImageFile.isEmpty()) {
+        String oldImageUrl = recipientEntityold.getImageUrl(); // 기존 엔티티의 이미지 URL
+        String oldFileName = recipientEntityold.getFileName(); // 기존 엔티티의 파일명
+
+        // Case 1: 새로운 이미지가 전송되었거나, 기존 이미지가 다른 이미지로 변경된 경우 (newImageUrl이 있고, 기존 imageUrl과 다른 경우)
+        if (newImageUrl != null && !newImageUrl.isEmpty() && !newImageUrl.equals(oldImageUrl)) {
             // 기존 파일이 있다면 삭제
-            deleteExistingFile(recipientEntityold.getFileName());
-
-            // 새 파일 저장
-            String[] fileInfo = saveImageFile(newImageFile); // saveImageFile은 fileUrl, orgFileName 반환
-            recipientEntityold.setFileName(fileInfo[0]);
-            recipientEntityold.setOrgFileName(fileInfo[1]);
+            if (oldFileName != null && !oldFileName.isEmpty()) {
+                deleteExistingFile(oldFileName); // 실제 물리 파일 삭제는 oldFileName 기준
+            }
+            // 새 파일 정보로 엔티티 업데이트 (fileName, orgFileName은 DTO에 있는 값 그대로 설정)
+            recipientEntityold.setImageUrl(newImageUrl);
+            recipientEntityold.setFileName(newFileName);
+            recipientEntityold.setOrgFileName(newOrgFileName);
+            logger.info("게시물 이미지 변경됨: oldImageUrl={}, newImageUrl={}", oldImageUrl, newImageUrl);
         }
+        // Case 2: 기존 이미지가 명시적으로 삭제된 경우 (newImageUrl이 null 또는 비어있고, 기존 oldImageUrl은 있었던 경우)
+        else if ((newImageUrl == null || newImageUrl.isEmpty()) && (oldImageUrl != null && !oldImageUrl.isEmpty())) {
+            // 기존 파일 삭제
+            if (oldFileName != null && !oldFileName.isEmpty()) {
+                deleteExistingFile(oldFileName); // 실제 물리 파일 삭제
+            }
+            recipientEntityold.setImageUrl(null);
+            recipientEntityold.setFileName(null);
+            recipientEntityold.setOrgFileName(null);
+            logger.info("게시물 이미지 삭제됨: oldImageUrl={}", oldImageUrl);
+        }
+        // Case 3: 파일 변경이 없는 경우 (newFileName == oldFileName 또는 둘 다 null/empty)
+        // 이 경우는 특별한 처리 없이 기존 값 유지
 
         // organCode : "ORGAN000" (직접입력) 일 경우 organEtc 설정, 아니면 null
         if (!organCodeDirectInput.equals(requestDto.getOrganCode())) {
@@ -139,7 +155,7 @@ public class RecipientServiceImpl implements RecipientService {
 
         RecipientEntity updatedEntity = recipientRepository.save(recipientEntityold); // 변경사항 저장
         logger.info("게시물 성공적으로 수정됨: letterSeq={}", updatedEntity.getLetterSeq());
-        return RecipientDetailResponseDto.fromEntity(updatedEntity); // DTO로 변환하여 반환
+        return RecipientDetailResponseDto.fromEntity(updatedEntity, globalsProperties.getFileBaseUrl()); // DTO로 변환하여 반환
     }
 
     // 게시물 삭제
@@ -176,42 +192,32 @@ public class RecipientServiceImpl implements RecipientService {
     }
 
     // 게시물 등록
-    // 조건 : letter_writer 한영자 10자 제한, letter_passcode 영숫자 8자 이상, 캡챠 인증
+    // 조건 : letter_writer 한영자 10자 제한, letter_passcode 영숫자 8자 이상
     @Override
     public RecipientDetailResponseDto insertRecipient(RecipientRequestDto requestDto) {
 
-        // DTO의 letterContents를 먼저 정제하고 유효성 검사합니다. (이렇게 하면 toEntity() 전에 문제가 되는 내용을 걸러낼 수 있습니다)
+        // DTO의 letterContents를 먼저 정제하고 유효성 검사 (이렇게 하면 toEntity() 전에 문제가 되는 내용을 걸러낼 수 있습니다)
         String validatedAndCleanedContents = cleanAndValidateContents(requestDto.getLetterContents());
         requestDto.setLetterContents(validatedAndCleanedContents); // 정제된 내용을 DTO에 다시 설정
 
         RecipientEntity recipientEntityRequest = requestDto.toEntity(); // DTO를 Entity로 변환
 
-        // 1. 첨부파일 등록 관련
-        String[] fileInfo = saveImageFile(requestDto.getImageFile());
-        if (fileInfo != null && fileInfo.length > 0) { // <--- fileInfo.length > 0 조건 추가
-            recipientEntityRequest.setFileName(fileInfo[0]);
-            // orgFileName은 fileInfo.length가 2 이상일 때만 접근하도록 안전 장치 추가
-            if (fileInfo.length > 1) {
-                recipientEntityRequest.setOrgFileName(fileInfo[1]);
-            } else {
-                // 원본 파일명이 없는 경우 (예: 파일명만 있는 경우)
-                recipientEntityRequest.setOrgFileName(null);
-            }
-        } else {
-            // 파일이 없거나 유효하지 않아 fileInfo가 null 또는 빈 배열일 때의 처리
-            recipientEntityRequest.setFileName(null);
-            recipientEntityRequest.setOrgFileName(null);
-            logger.info("첨부된 이미지 파일이 없거나 유효하지 않습니다.");
-        }
+        // 첨부파일 등록 관련
+        String uploadedImageUrl = requestDto.getImageUrl();
+        String uploadedFileName = requestDto.getFileName();
+        String uploadedOrgFileName = requestDto.getOrgFileName();
 
-        // 2. Jsoup을 사용하여 HTML 필터링 및 내용 유효성 검사
-        recipientEntityRequest.setLetterContents(cleanAndValidateContents(recipientEntityRequest.getLetterContents()));
+        // imageUrl이 유효하면 파일명과 원본 파일명 설정 (null 체크 없음)
+        recipientEntityRequest.setImageUrl(uploadedImageUrl);
+        recipientEntityRequest.setFileName(uploadedFileName);       // fileName은 DTO에 있으면 설정, 없으면 null
+        recipientEntityRequest.setOrgFileName(uploadedOrgFileName); // orgFileName은 DTO에 있으면 설정, 없으면 null
+        logger.info("첨부된 이미지 URL: {}, 파일명: {}, 원본 파일명: {}", uploadedImageUrl, uploadedFileName, uploadedOrgFileName);
 
-        // 3. 익명 처리 로직 및 작성자(letterWriter) 설정
-        String writerToSave = "Y".equalsIgnoreCase(requestDto.getAnonymityFlag()) ? anonymousWriterValue : requestDto.getLetterWriter();
-        recipientEntityRequest.setLetterWriter(writerToSave);
+        // 작성자 익명 처리 로직 적용
+        recipientEntityRequest.setLetterWriter(processAnonymityWriter(requestDto.getLetterWriter(), requestDto.getAnonymityFlag()));
+        recipientEntityRequest.setAnonymityFlag(requestDto.getAnonymityFlag());
 
-        // 4. organCode : "ORGAN000" (직접입력) 일 경우 organEtc 설정, 아니면 null
+        // 3. organCode : "ORGAN000" (직접입력) 일 경우 organEtc 설정, 아니면 null
         if (!organCodeDirectInput.equals(requestDto.getOrganCode())) {
             recipientEntityRequest.setOrganEtc(null);
         }
@@ -221,14 +227,13 @@ public class RecipientServiceImpl implements RecipientService {
                 logger.warn("ORGAN000 선택 시 organEtc는 필수 입력 항목입니다.");
                 throw new RecipientInvalidDataException("ORGAN000 선택 시 organEtc는 필수 입력 항목입니다.");
             }
-            recipientEntityRequest.setOrganEtc(requestDto.getOrganEtc()); // DTO에서 설정
         }
 
-        // 5. RecipientEntity 저장
+        // 4. RecipientEntity 저장
         RecipientEntity savedEntity = recipientRepository.save(recipientEntityRequest);
 
-        // 상세 DTO로 변환하여 반환
-        return RecipientDetailResponseDto.fromEntity(savedEntity);
+        // 5. 상세 DTO로 변환하여 반환
+        return RecipientDetailResponseDto.fromEntity(savedEntity, globalsProperties.getFileBaseUrl());
     }
 
     // 특정 게시물 조회
@@ -244,7 +249,7 @@ public class RecipientServiceImpl implements RecipientService {
         recipientRepository.save(recipientEntity); // 조회수 업데이트
 
         // 3. Entity를 RecipientDetailResponseDto 변환 (댓글 포함)
-        RecipientDetailResponseDto responseDto = RecipientDetailResponseDto.fromEntity(recipientEntity);
+        RecipientDetailResponseDto responseDto = RecipientDetailResponseDto.fromEntity(recipientEntity, globalsProperties.getFileBaseUrl());
 
         // 4. 상위 INITIAL_COMMENT_LOAD_LIMIT 개 댓글 조회
         // lastCommentId는 첫 조회이므로 0 (또는 null), size는 INITIAL_COMMENT_LOAD_LIMIT + 1 (다음 커서 확인용)
@@ -256,8 +261,8 @@ public class RecipientServiceImpl implements RecipientService {
                 0, // lastCommentId는 첫 조회이므로 0
                 commentPageable // Pageable을 사용하여 LIMIT 적용
         );
-        log.info("조회된 초기 댓글 수: {}", initialComments.size());
-        initialComments.forEach(c -> log.info("commentSeq={}, delFlag={}", c.getCommentSeq(), c.getDelFlag()));
+        logger.info("조회된 초기 댓글 수: {}", initialComments.size());
+        initialComments.forEach(c -> logger.info("commentSeq={}, delFlag={}", c.getCommentSeq(), c.getDelFlag()));
 
         // 5. 초기 댓글 Entity를 DTO로 변환
         List<RecipientCommentResponseDto> initialCommentDtos = initialComments.stream()
@@ -277,14 +282,14 @@ public class RecipientServiceImpl implements RecipientService {
     /**
      * 게시물 목록 조회 (검색 및 커서 기반 페이징으로 변경)
      * @param searchCondition 검색 조건 (searchType, searchKeyword)
-     * @param cusor "더 보기" 기능을 위한 마지막 게시물 ID (null 또는 0이면 첫 페이지 조회)
+     * @param cursor "더 보기" 기능을 위한 마지막 게시물 ID (null 또는 0이면 첫 페이지 조회)
      * @param size 한 번에 가져올 게시물 수
      * @return 커서 기반 페이지네이션 응답 (게시물)
      */
     @Override
     public CursorPaginationResponse<RecipientListResponseDto, Integer> selectRecipientList(
             RecipientSearchCondition searchCondition,
-            Integer cusor,
+            Integer cursor,
             int size) {
 
         // 1. 쿼리할 데이터의 실제 size (클라이언트 요청 size + 1 하여 다음 커서 존재 여부 확인)
@@ -293,9 +298,9 @@ public class RecipientServiceImpl implements RecipientService {
         // 2. 기본 Specification 생성 (검색 조건 적용)
         Specification<RecipientEntity> spec = getRecipientSpecification(searchCondition);
 
-        // 3. "더 보기" 기능 (cusor) 조건 추가: letterSeq 기준 내림차순이므로 cusor보다 작은 것 조회
-        if (cusor != null && cusor > 0) {
-            spec = spec.and((root, query, cb) -> cb.lessThan(root.get(LETTER_SEQ), cusor));
+        // 3. "더 보기" 기능 (cursor) 조건 추가: letterSeq 기준 내림차순이므로 cursor보다 작은 것 조회
+        if (cursor != null && cursor > 0) {
+            spec = spec.and((root, query, cb) -> cb.lessThan(root.get(LETTER_SEQ), cursor));
         }
 
         // 4. 정렬 조건 설정 (letterSeq 기준 내림차순 - 최신 게시물부터)
@@ -307,18 +312,15 @@ public class RecipientServiceImpl implements RecipientService {
         // 6. 게시물 조회
         List<RecipientEntity> recipientList = recipientRepository.findAll(spec, pageable).getContent(); // Page 객체에서 List 추출
 
-        // 댓글 수 매핑을 위해 getCommentCountMap 메서드 활용 **
-        Map<Integer, Integer> commentCountMap = getCommentCountMap(recipientList);
+        // 7. RecipientEntity를 RecipientListResponseDto로 변환
+        List<RecipientListResponseDto> recipientResponseDtos = new ArrayList<>();
 
-        // 7. RecipientEntity를 RecipientResponseDto로 변환하고 commentCount 필드를 채우기
-        List<RecipientListResponseDto> recipientResponseDtos = recipientList.stream()
-                .map(entity -> {
-                    RecipientListResponseDto dto = RecipientListResponseDto.fromEntity(entity);
-                    // getCommentCountMap에서 가져온 댓글 수를 사용
-                    dto.setCommentCount(commentCountMap.getOrDefault(entity.getLetterSeq(), 0));
-                    return dto;
-                })
-                .toList();
+        for (int i = 0; i < recipientList.size(); i++) {
+            RecipientEntity entity = recipientList.get(i);
+            RecipientListResponseDto dto = RecipientListResponseDto.fromEntity(entity);
+
+            recipientResponseDtos.add(dto);
+        }
 
         // 8. 검색 조건에 맞는 전체 게시물 총 개수 조회
         Integer totalCount = (int) recipientRepository.count(getRecipientSpecification(searchCondition)
@@ -326,7 +328,7 @@ public class RecipientServiceImpl implements RecipientService {
         );
 
         // 9. CursorFormatter 사용하여 응답 포맷팅
-        return CursorFormatter.<RecipientListResponseDto, Integer>cursorFormat(recipientResponseDtos, size, totalCount);
+        return CursorFormatter.<RecipientListResponseDto, Integer> cursorFormat(recipientResponseDtos, size, totalCount);
     }
 
     /**
@@ -451,6 +453,21 @@ public class RecipientServiceImpl implements RecipientService {
             logger.error("이미지 파일 저장 실패: {}", ex.getMessage());
             throw new RecipientInvalidDataException("이미지 파일 저장 중 오류가 발생했습니다.");
         }
+    }
+
+    /**
+     * 익명 여부(anonymityFlag)에 따라 작성자 이름(letterWriter)을 처리합니다.
+     * 'Y'인 경우 첫 글자만 남기고 나머지는 '*'로 처리합니다.
+     *
+     * @param letterWriter 원본 작성자 이름
+     * @param anonymityFlag 익명 여부 ('Y' 또는 'N')
+     * @return 처리된 작성자 이름
+     */
+    private String processAnonymityWriter(String letterWriter, String anonymityFlag) {
+        if ("Y".equalsIgnoreCase(anonymityFlag) && StringUtils.hasText(letterWriter) && letterWriter.length() > 1) {
+            return letterWriter.charAt(0) + "*".repeat(letterWriter.length() - 1);
+        }
+        return letterWriter; // 익명이 아니거나, 길이가 1 이하거나, 내용이 없으면 원본 그대로 반환
     }
 
     /**

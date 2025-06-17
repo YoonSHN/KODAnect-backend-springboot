@@ -5,6 +5,7 @@ import kodanect.common.util.MemorialFinder;
 import kodanect.domain.remembrance.dto.MemorialDetailResponse;
 import kodanect.domain.remembrance.dto.MemorialResponse;
 import kodanect.domain.remembrance.dto.MemorialCommentResponse;
+import kodanect.domain.remembrance.dto.common.MemorialNextCursor;
 import kodanect.domain.remembrance.entity.Memorial;
 import kodanect.domain.remembrance.repository.MemorialRepository;
 import kodanect.domain.remembrance.service.impl.MemorialServiceImpl;
@@ -111,40 +112,52 @@ public class MemorialServiceImplTest {
     @DisplayName("추모관 게시글 검색 조회")
     public void 추모관_게시글_검색_조회() throws Exception {
         /* getSearchMemorialList */
-        Integer cursor = 1;
+        MemorialNextCursor nextCursor = new MemorialNextCursor(null, null);
         int size = 20;
         String startDate = "2023-01-01";
         String endDate = "2024-01-01";
         String searchWord = "홍길동";
 
         List<MemorialResponse> content = List.of(
-                new MemorialResponse(1, "홍길동", "N", "20230101", "M", 40, 5)
+                new MemorialResponse(2, "홍길동", "N", "2023-01-02", "M", 40, 5),
+                new MemorialResponse(3, "홍길동", "N", "2023-01-03", "M", 42, 3)
         );
 
         when(memorialRepository.findSearchByCursor(
-                eq(cursor), any(Pageable.class), eq("20230101"), eq("20240101"), eq("%홍길동%"))
-        ).thenReturn(content);
+                eq(null),             // cursor.getDate()
+                eq(null),             // cursor.getCursor()
+                eq("20230101"),       // startDateStr
+                eq("20240101"),       // endDateStr
+                eq("%홍길동%"),        // keyWord
+                any(Pageable.class)   // Pageable
+        )).thenReturn(content);
 
-        CursorPaginationResponse<MemorialResponse, Integer> result
-                = memorialService.getSearchMemorialList(startDate, endDate, searchWord, cursor, size);
+        when(memorialRepository.countBySearch(
+                "20230101", "20240101", "%홍길동%")
+        ).thenReturn(2L);
+
+        CursorPaginationResponse<MemorialResponse, MemorialNextCursor> result
+                = memorialService.getSearchMemorialList(startDate, endDate, searchWord, nextCursor, size);
 
         assertNotNull(result);
-        assertEquals(1, result.getContent().size());
-        assertEquals(Integer.valueOf(1), result.getContent().get(0).getDonateSeq());
-        assertEquals("홍길동", result.getContent().get(0).getDonorName());
-        assertEquals("N", result.getContent().get(0).getAnonymityFlag());
-        assertEquals("2023-01-01", result.getContent().get(0).getDonateDate());
-        assertEquals("M", result.getContent().get(0).getGenderFlag());
-        assertEquals(Integer.valueOf(40), result.getContent().get(0).getDonateAge());
-        assertEquals(5, result.getContent().get(0).getCommentCount());
+        assertEquals(2, result.getContent().size());
+
+        MemorialResponse item = result.getContent().get(0);
+        assertEquals("홍길동", item.getDonorName());
+        assertEquals("N", item.getAnonymityFlag());
+        assertEquals("2023-01-02", item.getDonateDate());
+        assertEquals("M", item.getGenderFlag());
+        assertEquals(Integer.valueOf(40), item.getDonateAge());
+        assertEquals(5, item.getCommentCount());
     }
+
 
     @Test
     @DisplayName("추모관 게시글 리스트 조회")
     public void 추모관_게시글_리스트_조회() throws Exception {
         /* getMemorialList */
 
-        Integer cursor = 1;
+        MemorialNextCursor nextCursor = new MemorialNextCursor(null, null);
         int size = 20;
 
         List<MemorialResponse> content = List.of(
@@ -152,9 +165,9 @@ public class MemorialServiceImplTest {
                 new MemorialResponse(2, "김길동", "Y", "20230102", "F", 20, 2)
         );
 
-        when(memorialRepository.findByCursor(eq(cursor), any(Pageable.class))).thenReturn(content);
+        when(memorialRepository.findByCursor(eq(nextCursor.getCursor()), eq(nextCursor.getDate()), any(Pageable.class))).thenReturn(content);
 
-        CursorPaginationResponse<MemorialResponse, Integer> page = memorialService.getMemorialList(cursor, size);
+        CursorPaginationResponse<MemorialResponse, MemorialNextCursor> page = memorialService.getMemorialList(nextCursor, size);
 
         assertNotNull(page);
         assertEquals(2, page.getContent().size());

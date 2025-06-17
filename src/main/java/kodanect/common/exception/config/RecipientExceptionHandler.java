@@ -1,12 +1,13 @@
-package kodanect.common.exception.custom;
+package kodanect.common.exception.config;
 
+import kodanect.common.exception.custom.AbstractCustomException;
+import kodanect.common.exception.custom.InvalidIntegerConversionException;
 import kodanect.common.response.ApiResponse;
 import kodanect.domain.recipient.exception.RecipientCommentNotFoundException;
 import kodanect.domain.recipient.exception.RecipientInvalidPasscodeException;
 import kodanect.domain.recipient.exception.RecipientInvalidDataException;
 import kodanect.domain.recipient.exception.RecipientNotFoundException;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.support.MessageSourceAccessor;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -19,12 +20,12 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
-@Slf4j
 @RestControllerAdvice(basePackages = "kodanect.domain.recipient")
 @Order(Ordered.HIGHEST_PRECEDENCE)
 @RequiredArgsConstructor
 public class RecipientExceptionHandler {
 
+    private static final SecureLogger log = SecureLogger.getLogger(RecipientExceptionHandler.class);
     private final MessageSourceAccessor messageSourceAccessor;  // MessageSourceAccessor 주입
 
     /**
@@ -135,12 +136,28 @@ public class RecipientExceptionHandler {
      */
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ApiResponse<String>> handleTypeMismatchException(MethodArgumentTypeMismatchException ex) {
-        String errorMsg = String.format("요청 파라미터 [%s]에 잘못된 값이 들어왔습니다. '%s'는 [%s] 타입이어야 합니다.",
-                ex.getName(), ex.getValue(), ex.getRequiredType().getSimpleName());
+        String paramName = ex.getName();
+
+        String value = (ex.getValue() != null) ? ex.getValue().toString() : "null";
+
+        String requiredType;
+        if (ex.getRequiredType() != null) {
+            Class<?> type = ex.getRequiredType();
+            requiredType = (type != null) ? type.getSimpleName() : "알 수 없음";
+        } else {
+            requiredType = "알 수 없음";
+        }
+
+        String errorMsg = String.format(
+                "요청 파라미터 [%s]에 잘못된 값이 들어왔습니다. '%s'는 [%s] 타입이어야 합니다.",
+                paramName, value, requiredType
+        );
 
         log.warn("타입 불일치 (400): {}", errorMsg);
+
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(ApiResponse.fail(HttpStatus.BAD_REQUEST, errorMsg));
     }
+
 }

@@ -123,7 +123,7 @@ class MemorialCommentControllerTest {
                         .content(objectMapper.writeValueAsString(commentCreateDto)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.code").value(201))
                 .andExpect(jsonPath("$.message").value("댓글 등록 성공"));
     }
 

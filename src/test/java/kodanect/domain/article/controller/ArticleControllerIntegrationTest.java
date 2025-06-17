@@ -1,6 +1,7 @@
 package kodanect.domain.article.controller;
 
 import kodanect.common.config.GlobalsProperties;
+import kodanect.common.util.RequestBasedHitLimiter;
 import kodanect.domain.article.entity.*;
 import kodanect.domain.article.repository.ArticleFileRepository;
 import kodanect.domain.article.repository.ArticleRepository;
@@ -11,20 +12,28 @@ import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
+import javax.servlet.http.HttpServletRequest;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -53,11 +62,21 @@ class ArticleControllerIntegrationTest {
     @Autowired
     BoardCategoryCache boardCategoryCache;
 
+    @MockBean
+    private HttpServletRequest req;
+
+    @MockBean
+    private RequestBasedHitLimiter reqBasedHitLimiter;
+
     @TempDir
     Path tempDir;
 
     @BeforeEach
     void setUp() {
+        given(reqBasedHitLimiter.isFirstView(anyString(), anyInt(), anyString())).willReturn(true);
+        MockHttpServletRequest mockRequest = new MockHttpServletRequest();
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(mockRequest));
+
         ReflectionTestUtils.setField(globalsProperties, "fileStorePath", tempDir.toString());
 
         BoardCategory category1 = BoardCategory.builder()
@@ -90,10 +109,7 @@ class ArticleControllerIntegrationTest {
 
         boardCategoryRepository.save(category1);
         boardCategoryRepository.save(category2);
-
         boardCategoryCache.reload();
-
-
 
         ArticleId articleId = new ArticleId("7", 1);
         Article article = Article.builder()
@@ -135,6 +151,10 @@ class ArticleControllerIntegrationTest {
                         .param("optionStr", "1")
                         .param("type", "title")
                         .param("keyword", "트랜잭션")
+                        .with(request -> {
+                            request.setRemoteAddr("127.0.0.1");
+                            return request;
+                        })
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.content[0].title").value("트랜잭션 테스트"))
@@ -147,6 +167,10 @@ class ArticleControllerIntegrationTest {
         mockMvc.perform(get("/makePublic")
                         .param("type", "title")
                         .param("keyword", "사전정보공개")
+                        .with(request -> {
+                            request.setRemoteAddr("127.0.0.1");
+                            return request;
+                        })
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.content[0].title").value("사전정보공개 제목"))
@@ -157,9 +181,28 @@ class ArticleControllerIntegrationTest {
     @DisplayName("사전 정보 게시판 상세 조회")
     void getOtherBoardArticleDetail() throws Exception {
         mockMvc.perform(get("/makePublic/2")
+                        .with(request -> {
+                            request.setRemoteAddr("127.0.0.1");
+                            return request;
+                        })
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.title").value("사전정보공개 제목"))
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("게시글 상세 조회")
+    void getArticleDetail() throws Exception {
+        mockMvc.perform(get("/notices/1")
+                        .param("optionStr", "1")
+                        .with(request -> {
+                            request.setRemoteAddr("127.0.0.1");
+                            return request;
+                        })
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.title").value("트랜잭션 테스트"))
                 .andDo(print());
     }
 
@@ -187,7 +230,11 @@ class ArticleControllerIntegrationTest {
 
         articleFileRepository.save(file);
 
-        mockMvc.perform(get("/makePublic/2/files/sample.txt"))
+        mockMvc.perform(get("/makePublic/2/files/sample.txt")
+                        .with(request -> {
+                            request.setRemoteAddr("127.0.0.1");
+                            return request;
+                        }))
                 .andExpect(status().isOk())
                 .andExpect(header().string(HttpHeaders.CONTENT_DISPOSITION,
                         containsString("filename*=UTF-8''sample.txt")))
@@ -201,20 +248,13 @@ class ArticleControllerIntegrationTest {
     @DisplayName("사전정보 게시판 첨부파일 다운로드 - 파일 없음")
     void downloadOtherBoardFileNotFound() throws Exception {
         mockMvc.perform(get("/makePublic/2/files/notfound.txt")
+                        .with(request -> {
+                            request.setRemoteAddr("127.0.0.1");
+                            return request;
+                        })
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").exists())
-                .andDo(print());
-    }
-
-    @Test
-    @DisplayName("게시글 상세 조회")
-    void getArticleDetail() throws Exception {
-        mockMvc.perform(get("/notices/1")
-                        .param("optionStr", "1")
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.title").value("트랜잭션 테스트"))
                 .andDo(print());
     }
 
@@ -223,9 +263,14 @@ class ArticleControllerIntegrationTest {
     void downloadFileNotFound() throws Exception {
         mockMvc.perform(get("/notices/1/files/nonexistent.txt")
                         .param("optionStr", "1")
+                        .with(request -> {
+                            request.setRemoteAddr("127.0.0.1");
+                            return request;
+                        })
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").exists())
                 .andDo(print());
     }
+
 }

@@ -79,6 +79,10 @@ public class RecipientEntity {
     @Column(name = "org_file_name", length = 600)
     private String orgFileName;
 
+    // 게시물 이미지 URL
+    @Column(name = "image_path", length = 600)
+    private String imageUrl;
+
     // 생성 일시
     @CreatedDate
     @Column(name = "write_time", nullable = false, updatable = false)

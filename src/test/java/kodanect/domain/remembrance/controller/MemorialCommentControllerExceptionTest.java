@@ -82,7 +82,7 @@ class MemorialCommentControllerExceptionTest {
     private static final int FORBIDDEN = 403;
 
     private static final String INVALID_PAGINATION_MESSAGE =
-            "요청한 페이지 범위가 잘못되었습니다. (cursor: -1, size: -1)";
+            "요청한 페이지 범위가 잘못되었습니다. (cursor: -1, size: -1, date: null)";
     private static final String MEMORIAL_NOT_FOUND_MESSAGE =
             "해당 추모글을 찾을 수 없습니다. (donateSeq: 2,147,483,647)";
     private static final String DONATE_INVALID_MESSAGE =

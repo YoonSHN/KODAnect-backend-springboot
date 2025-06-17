@@ -2,6 +2,7 @@ package kodanect.domain.remembrance.dto;
 
 import kodanect.common.util.CursorIdentifiable;
 import kodanect.common.util.FormatUtils;
+import kodanect.domain.remembrance.dto.common.MemorialNextCursor;
 import lombok.*;
 
 /**
@@ -21,7 +22,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter @ToString
-public class MemorialResponse implements CursorIdentifiable<Integer> {
+public class MemorialResponse implements CursorIdentifiable<MemorialNextCursor> {
 
     /* 기증자 일련번호 */
     private Integer donateSeq;
@@ -50,8 +51,8 @@ public class MemorialResponse implements CursorIdentifiable<Integer> {
     }
 
     @Override
-    public Integer getCursorId() {
-        return donateSeq;
+    public MemorialNextCursor getCursorId() {
+        return new MemorialNextCursor(donateSeq, donateDate);
     }
 
 }

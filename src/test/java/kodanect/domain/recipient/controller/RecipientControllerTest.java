@@ -6,6 +6,7 @@ import kodanect.domain.recipient.service.RecipientCommentService;
 import kodanect.domain.recipient.service.RecipientService;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.jupiter.api.DisplayName;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -145,54 +146,81 @@ public class RecipientControllerTest {
 
     //    POST /recipientLetters/{letterSeq}/verifyPwd - 비밀번호 인증
     @Test
+    @DisplayName("게시물 비밀번호 확인 성공 테스트")
     public void testVerifyPassword_Success() throws Exception {
         Integer letterSeq = 1;
-        String passcode = "1234";
+        String passcode = "abc12345";
 
-        when(recipientService.verifyLetterPassword(letterSeq, passcode)).thenReturn(true);
-
-        String requestBody = "{\"letterPasscode\":\"1234\"}";
+        // verifyLetterPassword가 void를 반환하므로 doNothing()을 사용
+        doNothing().when(recipientService).verifyLetterPassword(letterSeq, passcode);
+        String requestBody = "{\"letterPasscode\":\"" + passcode + "\"}";
 
         mockMvc.perform(post("/recipientLetters/{letterSeq}/verifyPwd", letterSeq)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
-                .andExpect(jsonPath("$.message").value("비밀번호 확인 결과"))
-                .andExpect(jsonPath("$.data").value(true));
+                .andExpect(jsonPath("$.message").value("비밀번호 확인"))
+                .andExpect(jsonPath("$.data").doesNotExist());
 
         verify(recipientService, times(1)).verifyLetterPassword(letterSeq, passcode);
     }
 
-    //    PATCH /recipientLetters/{letterSeq} - 게시물 수정 (multipart/form-data)
+
+    // PATCH /recipientLetters/{letterSeq} - 게시물 수정 (multipart/form-data)
     @Test
+    @DisplayName("게시물 수정 성공 테스트") // DisplayName 추가
     public void testEdit_Success() throws Exception {
         Integer letterSeq = 1;
+
+        // Mock Service 응답 DTO 생성
         RecipientDetailResponseDto updatedDto = new RecipientDetailResponseDto();
         updatedDto.setLetterSeq(letterSeq);
-        updatedDto.setLetterTitle("테스트 게시물 제목");
-        updatedDto.setLetterContents("테스트 게시물 내용입니다.");
-        updatedDto.setWriteTime(LocalDateTime.now());
+        updatedDto.setOrganCode("ORGAN001");
+        updatedDto.setLetterTitle("수정 제목");
+        updatedDto.setRecipientYear("2023");
+        updatedDto.setLetterWriter("수정 작성자");
+        updatedDto.setAnonymityFlag("N");
+        updatedDto.setReadCount(1);
+        updatedDto.setLetterContents("수정 내용");
+        updatedDto.setFileName("updated_file.jpg"); // 이미지 파일명도 설정
+        updatedDto.setOrgFileName("updated_original.jpg");
+        updatedDto.setWriteTime(LocalDateTime.now().minusDays(1));
+        updatedDto.setModifierId("modifier");
         updatedDto.setModifyTime(LocalDateTime.now());
-        // updatedDto 세팅
+        updatedDto.setDelFlag("N");
+        updatedDto.setCommentCount(0);
+        updatedDto.setHasMoreComments(false);
+        updatedDto.setImageUrl("/uploads/updated_file.jpg");
 
+
+        // recipientService.updateRecipient 호출 시 updatedDto 반환하도록 스터빙
         when(recipientService.updateRecipient(anyInt(), any(RecipientRequestDto.class)))
                 .thenReturn(updatedDto);
 
-        MockMultipartFile imageFile = new MockMultipartFile("imageFile", "update.jpg",
-                MediaType.IMAGE_JPEG_VALUE, "update content".getBytes());
-
         mockMvc.perform(multipart("/recipientLetters/{letterSeq}", letterSeq)
-                        .file(imageFile)
-                        .param("letterWriter", "테스트작성자")    // 필수값 추가
+                        // .file(imageFile) // 이제 imageFile 직접 전송하지 않음
+                        .param("organCode", "ORGAN001") // 필수값 추가
                         .param("letterTitle", "수정 제목")
+                        .param("recipientYear", "2023") // 필수값 추가
+                        .param("letterWriter", "테스트작성자")
+                        .param("anonymityFlag", "N") // 필수값 추가
                         .param("letterContents", "수정 내용")
-                        .param("_method", "PATCH")
+                        .param("letterPasscode", "newPass1234") // ⭐ 누락된 비밀번호 필드 추가 (영숫자 8자 이상)
+                        .param("fileName", "new_image_file.jpg") // CKEditor API로 업로드된 파일명
+                        .param("orgFileName", "original_image_name.jpg") // CKEditor API로 업로드된 원본 파일명
+                        .param("_method", "PATCH") // HTTP PATCH 요청을 시뮬레이션하기 위한 HiddenHttpMethodFilter 설정
                         .contentType(MediaType.MULTIPART_FORM_DATA_VALUE))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value(200))
-                .andExpect(jsonPath("$.message").value("게시물이 성공적으로 수정되었습니다."));
+                .andExpect(status().isOk()) // 200 OK 상태 검증
+                .andExpect(jsonPath("$.success").value(true)) // success 필드 검증
+                .andExpect(jsonPath("$.message").value("게시물이 성공적으로 수정되었습니다.")) // 메시지 검증
+                .andExpect(jsonPath("$.data.letterSeq").value(letterSeq)) // 반환된 DTO 데이터 검증
+                .andExpect(jsonPath("$.data.letterTitle").value("수정 제목"))
+                .andExpect(jsonPath("$.data.letterContents").value("수정 내용"))
+                .andExpect(jsonPath("$.data.fileName").value("updated_file.jpg")) // 업데이트된 파일명 검증
+                .andExpect(jsonPath("$.data.imageUrl").value("/uploads/updated_file.jpg")); // 이미지 URL 검증
 
+        // recipientService.updateRecipient가 올바른 인자로 1번 호출되었는지 검증
         verify(recipientService, times(1))
                 .updateRecipient(eq(letterSeq), any(RecipientRequestDto.class));
     }

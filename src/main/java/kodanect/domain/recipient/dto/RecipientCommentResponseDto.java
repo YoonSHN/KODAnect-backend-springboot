@@ -19,7 +19,7 @@ public class RecipientCommentResponseDto implements CursorIdentifiable<Integer> 
     private Integer commentSeq;
     private Integer letterSeq;
     private String commentWriter;
-    private String commentContents;
+    private String contents;
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDateTime writeTime;
     @JsonFormat(pattern = "yyyy-MM-dd")
@@ -32,7 +32,7 @@ public class RecipientCommentResponseDto implements CursorIdentifiable<Integer> 
                 .commentSeq(entity.getCommentSeq())
                 .letterSeq(entity.getLetterSeq().getLetterSeq())
                 .commentWriter(entity.getCommentWriter())
-                .commentContents(entity.getCommentContents())
+                .contents(entity.getContents())
                 .writeTime(entity.getWriteTime())
                 .modifyTime(entity.getModifyTime())
                 .delFlag(entity.getDelFlag())

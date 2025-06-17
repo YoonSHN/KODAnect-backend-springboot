@@ -7,10 +7,14 @@ import kodanect.domain.article.exception.InvalidBoardCodeException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.support.MessageSourceAccessor;
 import org.springframework.core.annotation.Order;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import static kodanect.common.exception.config.MessageKeys.ARTICLE_NOT_FOUND;
+import static kodanect.common.exception.config.MessageKeys.INVALID_BOARD_CODE;
+import static kodanect.common.exception.config.MessageKeys.FILE_ACCESS_VIOLATION;
+import static kodanect.common.exception.config.MessageKeys.FILE_NOT_FOUND;
 
 /**
  * 게시판 관련 예외를 처리하는 핸들러 클래스.
@@ -20,6 +24,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RequiredArgsConstructor
 public class ArticleExceptionHandler {
 
+    private static final SecureLogger log = SecureLogger.getLogger(ArticleExceptionHandler.class);
+
     private final MessageSourceAccessor messageSourceAccessor;
 
     /**
@@ -27,13 +33,7 @@ public class ArticleExceptionHandler {
      */
     @ExceptionHandler(ArticleNotFoundException.class)
     public ResponseEntity<ApiResponse<Void>> handleArticleNotFound(ArticleNotFoundException ex) {
-        String message = messageSourceAccessor.getMessage(
-                ex.getMessageKey(),
-                ex.getArguments(),
-                "게시글을 찾을 수 없습니다."
-        );
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(ApiResponse.fail(HttpStatus.NOT_FOUND, message));
+        return handle(ex, ARTICLE_NOT_FOUND, "게시글을 찾을 수 없습니다.");
     }
 
     /**
@@ -41,13 +41,7 @@ public class ArticleExceptionHandler {
      */
     @ExceptionHandler(InvalidBoardCodeException.class)
     public ResponseEntity<ApiResponse<Void>> handleInvalidBoardCode(InvalidBoardCodeException ex) {
-        String message = messageSourceAccessor.getMessage(
-                ex.getMessageKey(),
-                ex.getArguments(),
-                "잘못된 게시판 코드입니다."
-        );
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.fail(HttpStatus.BAD_REQUEST, message));
+        return handle(ex, INVALID_BOARD_CODE, "잘못된 게시판 코드입니다.");
     }
 
     /**
@@ -55,13 +49,7 @@ public class ArticleExceptionHandler {
      */
     @ExceptionHandler(FileAccessViolationException.class)
     public ResponseEntity<ApiResponse<Void>> handleFileAccessViolation(FileAccessViolationException ex) {
-        String message = messageSourceAccessor.getMessage(
-                ex.getMessageKey(),
-                ex.getArguments(),
-                "파일 경로 접근이 거부되었습니다."
-        );
-        return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(ApiResponse.fail(HttpStatus.FORBIDDEN, message));
+        return handle(ex, FILE_ACCESS_VIOLATION, "파일 경로 접근이 거부되었습니다.");
     }
 
     /**
@@ -69,15 +57,23 @@ public class ArticleExceptionHandler {
      */
     @ExceptionHandler(FileMissingException.class)
     public ResponseEntity<ApiResponse<Void>> handleFileMissing(FileMissingException ex) {
-        String message = messageSourceAccessor.getMessage(
-                ex.getMessageKey(),
-                ex.getArguments(),
-                "파일을 찾을 수 없습니다."
-        );
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(ApiResponse.fail(HttpStatus.NOT_FOUND, message));
+        return handle(ex, FILE_NOT_FOUND, "파일을 찾을 수 없습니다.");
     }
 
+    /**
+     * 공통 처리 메서드
+     */
+    private ResponseEntity<ApiResponse<Void>> handle(AbstractCustomException ex, String messageKey, String defaultMessage) {
+        String resolvedMessage = messageSourceAccessor.getMessage(
+                messageKey,
+                ex.getArguments(),
+                defaultMessage
+        );
 
+        log.warn("[게시판 예외] {} - {}: {}", ex.getClass().getSimpleName(), messageKey, resolvedMessage, ex);
 
+        return ResponseEntity
+                .status(ex.getStatus())
+                .body(ApiResponse.fail(ex.getStatus(), resolvedMessage));
+    }
 }

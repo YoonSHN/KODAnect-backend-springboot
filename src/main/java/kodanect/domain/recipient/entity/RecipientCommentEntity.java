@@ -44,7 +44,7 @@ public class RecipientCommentEntity {
 
     @Lob // TEXT 타입 매핑
     @Column(name = "contents", columnDefinition = "TEXT", nullable = false) // DB 컬럼명 'contents' 명시
-    private String commentContents;
+    private String contents;
 
     @CreatedDate
     @Column(name = "write_time", nullable = false, updatable = false)
