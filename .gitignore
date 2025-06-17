@@ -61,6 +61,7 @@ test_uploads/
 *.cache
 *.sql~
 *.db
+uploads/
 
 KODAnect-backend-springboot.git/
 KODAnect-backend-springboot.git.bfg-report/

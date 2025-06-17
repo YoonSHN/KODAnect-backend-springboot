@@ -14,6 +14,6 @@ import javax.validation.constraints.NotBlank;
 @NoArgsConstructor
 public class VerifyStoryPasscodeDto {
 
-    @NotBlank(message="donation.story.passcode.blank")
+    @NotBlank(message="{donation.story.passcode.blank}")
     private String storyPasscode;
 }

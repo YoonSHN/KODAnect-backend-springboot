@@ -22,6 +22,9 @@ public class FormatUtils {
 
     public static String formatDate(String startDate) {
         /* 날짜 포매팅 */
+        if(startDate == null || startDate.isEmpty()) {
+            return startDate;
+        }
         return startDate.replace("-", "");
     }
 

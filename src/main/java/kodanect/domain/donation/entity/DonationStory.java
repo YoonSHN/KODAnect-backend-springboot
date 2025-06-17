@@ -101,7 +101,4 @@ public class DonationStory {
         this.fileName = fileName;
         this.orgFileName = orgFileName;
     }
-
-
-
 }

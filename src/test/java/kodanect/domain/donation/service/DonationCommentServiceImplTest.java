@@ -274,7 +274,7 @@ public class DonationCommentServiceImplTest {
 
         DonationStoryCommentModifyRequestDto dto = DonationStoryCommentModifyRequestDto.builder()
                 .commentWriter("new")
-                .commentContents("new content")
+                .contents("new content")
                 .build();
 
         service.updateDonationComment(storySeq, commentSeq, dto);
@@ -308,7 +308,7 @@ public class DonationCommentServiceImplTest {
         service.updateDonationComment(storySeq, commentSeq,
                 DonationStoryCommentModifyRequestDto.builder()
                         .commentWriter("")
-                        .commentContents("c")
+                        .contents("c")
                         .build());
     }
 

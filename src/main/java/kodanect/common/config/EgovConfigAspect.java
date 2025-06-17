@@ -54,7 +54,9 @@ public class EgovConfigAspect {
 	 * - organ.service.impl
 	 * - recipient.service.impl
 	 * - remembrance.service.impl
+	 * - logging.service.impl
 	 */
+
 	@Bean
 	public DefaultExceptionHandleManager defaultExceptionHandleManager(
 			AntPathMatcher antPathMatcher, EgovExcepHndlr egovExcepHndlr) {
@@ -67,7 +69,8 @@ public class EgovConfigAspect {
 			"**article.service.impl.*",
 			"**organ.service.impl.*",
 			"**recipient.service.impl.*",
-			"**remembrance.service.impl.*"
+			"**remembrance.service.impl.*",
+			"**logging.service.impl.*"
 		});
 		defaultExceptionHandleManager.setHandlers(new ExceptionHandler[]{
 			egovExcepHndlr

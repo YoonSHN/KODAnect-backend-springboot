@@ -22,8 +22,6 @@ import java.util.Map;
 @RequestMapping("/donationLetters")
 public class  DonationController {
 
-    private static final String DEFAULT_STRING = "result";
-
     private final DonationService donationService;
     private final DonationCommentService donationCommentService;
     private final MessageSourceAccessor messageSourceAccessor;
@@ -93,14 +91,18 @@ public class  DonationController {
      * 기증 스토리 수정 인증
      */
     @PostMapping("/{storySeq}/verifyPwd")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> verifyStoryPassword(
+    public ResponseEntity<ApiResponse<DonationStoryModifyDto>> verifyStoryPassword(
             @PathVariable Long storySeq,
             @RequestBody @Valid VerifyStoryPasscodeDto passCodeDto) {
 
         donationService.verifyPasswordWithPassword(storySeq, passCodeDto);
 
+        //입력된 값 가져오기
+        DonationStoryDetailDto detailDto = donationService.findDonationStoryWithStoryId(storySeq);
+        DonationStoryModifyDto modifyDto = DonationStoryModifyDto.fromEntity(detailDto);
+
         String message = messageSourceAccessor.getMessage("donation.password.match");
-        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, message, Map.of(DEFAULT_STRING, 1)));
+        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, message, modifyDto));
     }
 
 
@@ -127,7 +129,7 @@ public class  DonationController {
 
         donationService.deleteDonationStory(storySeq, storyPasscodeDto);
         String message = messageSourceAccessor.getMessage("donation.delete.success");
-        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, message, Map.of(DEFAULT_STRING, 1)));
+        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, message));
     }
 
     /**
@@ -173,7 +175,7 @@ public class  DonationController {
         donationCommentService.verifyPasswordWithPassword(storySeq, commentSeq, passCodeDto);
         String message = messageSourceAccessor.getMessage("donation.password.match");
 
-        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, message, Map.of(DEFAULT_STRING, 1)));
+        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, message));
     }
 
 

@@ -5,6 +5,8 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import kodanect.common.response.CursorPaginationResponse;
 import kodanect.common.response.CursorCommentPaginationResponse;
 import kodanect.common.util.CursorFormatter;
+import kodanect.domain.heaven.dto.response.MemorialHeavenResponse;
+import kodanect.domain.heaven.service.HeavenService;
 import kodanect.domain.remembrance.dto.*;
 import kodanect.domain.remembrance.dto.common.MemorialNextCursor;
 import kodanect.domain.remembrance.entity.Memorial;
@@ -47,6 +49,7 @@ public class MemorialServiceImpl implements MemorialService {
     private final MemorialRepository memorialRepository;
     private final MemorialCommentService memorialCommentService;
     private final MemorialFinder memorialFinder;
+    private final HeavenService heavenService;
 
     /**
      *
@@ -59,10 +62,11 @@ public class MemorialServiceImpl implements MemorialService {
     private final Cache<Integer, ReentrantReadWriteLock> lockCache =
             Caffeine.newBuilder().expireAfterAccess(CACHE_EXPIRE_MINUTES, TimeUnit.MINUTES).maximumSize(CACHE_MAX_SIZE).build();
 
-    public MemorialServiceImpl(MemorialRepository memorialRepository, MemorialCommentService memorialCommentService, MemorialFinder memorialFinder){
+    public MemorialServiceImpl(MemorialRepository memorialRepository, MemorialCommentService memorialCommentService, MemorialFinder memorialFinder, HeavenService heavenService){
         this.memorialRepository = memorialRepository;
         this.memorialCommentService = memorialCommentService;
         this.memorialFinder = memorialFinder;
+        this.heavenService = heavenService;
     }
 
     /**
@@ -131,6 +135,7 @@ public class MemorialServiceImpl implements MemorialService {
         /* 날짜 포매팅 */
         String startDateStr = formatDate(startDate);
         String endDateStr = formatDate(endDate);
+        cursor.setDate(formatDate(cursor.getDate()));
 
         /* 페이징 포매팅 */
         Pageable pageable = PageRequest.of(0, size+1);
@@ -165,6 +170,7 @@ public class MemorialServiceImpl implements MemorialService {
 
         /* 페이징 포매팅 */
         Pageable pageable = PageRequest.of(0, size +1);
+        nextCursor.setDate(formatDate(nextCursor.getDate()));
 
         List<MemorialResponse> memorialResponses = memorialRepository.findByCursor(nextCursor.getCursor(), nextCursor.getDate(), pageable);
 
@@ -199,14 +205,15 @@ public class MemorialServiceImpl implements MemorialService {
         CursorCommentPaginationResponse<MemorialCommentResponse, Integer> cursoredReplies =
                 CursorFormatter.cursorCommentCountFormat(memorialCommentResponses, DEFAULT_SIZE, totalCount);
 
-
-
-        /* 하늘나라 편지 리스트 조회 예정 */
+        /* 하늘나라 편지 리스트 조회 */
+        CursorPaginationResponse<MemorialHeavenResponse, Integer> cursoredLetters =
+                heavenService.getMemorialHeavenList(donateSeq, null, DEFAULT_SIZE);
 
         /* 기증자 상세 조회 */
         return MemorialDetailResponse.of(
                 memorial,
-                cursoredReplies
+                cursoredReplies,
+                cursoredLetters
         );
     }
 }

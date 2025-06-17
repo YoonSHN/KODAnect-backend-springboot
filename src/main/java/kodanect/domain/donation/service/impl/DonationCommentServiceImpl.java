@@ -60,7 +60,7 @@ public class DonationCommentServiceImpl implements DonationCommentService {
             throws NotFoundException, BadRequestException, DonationCommentNotFoundException {
 
         DonationStory story = storyRepository.findById(storySeq)
-                .orElseThrow(() -> new DonationNotFoundException(messageResolver.get(DONATION_NOT_FOUND_MESSAGE)));;
+                .orElseThrow(() -> new DonationNotFoundException(messageResolver.get(DONATION_NOT_FOUND_MESSAGE)));
 
         // 작성자 필수 검증
         if (requestDto.getCommentWriter() == null || requestDto.getCommentWriter().isBlank()) {
@@ -74,6 +74,7 @@ public class DonationCommentServiceImpl implements DonationCommentService {
         if (!validatePassword(requestDto.getCommentPasscode())) {
             throw new BadRequestException(messageResolver.get("donation.error.invalid.passcode.format"));
         }
+
         // 댓글 생성 및 연관 관계 설정
         DonationStoryComment comment = DonationStoryComment.builder()
                 .commentWriter(requestDto.getCommentWriter())

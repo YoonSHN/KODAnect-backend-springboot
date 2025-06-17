@@ -64,7 +64,7 @@ public class EgovConfigTransaction {
 
 		RuleBasedTransactionAttribute readOnlyTx = new RuleBasedTransactionAttribute();
 		readOnlyTx.setReadOnly(true);
-		readOnlyTx.setPropagationBehavior(TransactionDefinition.PROPAGATION_SUPPORTS);
+		readOnlyTx.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRED);
 		readOnlyTx.setIsolationLevel(TransactionDefinition.ISOLATION_READ_COMMITTED);
 		readOnlyTx.setTimeout(TIMEOUT_SECONDS);
 

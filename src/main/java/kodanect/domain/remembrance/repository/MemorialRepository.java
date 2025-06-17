@@ -30,16 +30,24 @@ public interface MemorialRepository extends JpaRepository<Memorial, Integer> {
      * */
     @Query(
             value = """
-            SELECT new kodanect.domain.remembrance.dto.MemorialResponse
-                    (m.donateSeq, m.donorName, m.anonymityFlag, m.donateDate,m.genderFlag, m.donateAge,
-                    (SELECT COUNT(r) FROM MemorialComment r WHERE m.donateSeq = r.donateSeq AND r.delFlag='N'))
-            FROM Memorial m
-            WHERE m.delFlag = 'N'
+            SELECT  m.donate_seq AS donateSeq,
+                    CASE
+                        WHEN m.anonymity_flag = 'Y'
+                        THEN CONCAT(LEFT(m.donor_name, 1), REPEAT('*', CHAR_LENGTH(m.donor_name) - 1))
+                        ELSE m.donor_name
+                    END AS donorName,
+                    DATE_FORMAT(m.donate_date, '%Y-%m-%d') AS donateDate,
+                    m.gender_flag AS genderFlag,
+                    m.donate_age AS donateAge,
+                    (SELECT COUNT(*) FROM tb25_401_memorial_reply AS r WHERE m.donate_seq = r.donate_seq AND r.del_flag='N') AS commentCount,
+                    (SELECT COUNT(*) FROM tb25_410_heaven_letter AS h WHERE m.donate_seq = h.donate_seq AND h.del_flag='N') AS letterCount
+            FROM tb25_400_memorial m
+            WHERE m.del_flag = 'N'
                     AND (:date IS NULL
-                    OR m.donateDate < :date
-                    OR (:cursor IS NOT NULL AND m.donateDate = :date AND m.donateSeq < :cursor))
-            ORDER BY m.donateDate DESC, m.donateSeq DESC
-        """
+                    OR m.donate_date < :date
+                    OR (:cursor IS NOT NULL AND m.donate_date = :date AND m.donate_seq < :cursor))
+            ORDER BY m.donate_date DESC, m.donate_seq DESC
+        """, nativeQuery = true
     )
     List<MemorialResponse> findByCursor(@Param("cursor") Integer cursor, @Param("date") String date, Pageable pageable);
 
@@ -54,18 +62,26 @@ public interface MemorialRepository extends JpaRepository<Memorial, Integer> {
      * */
     @Query(
             value = """
-             SELECT new kodanect.domain.remembrance.dto.MemorialResponse
-                    (m.donateSeq, m.donorName, m.anonymityFlag, m.donateDate,m.genderFlag, m.donateAge,
-                    (SELECT COUNT(r) FROM MemorialComment r WHERE m.donateSeq = r.donateSeq AND r.delFlag='N'))
-            FROM Memorial m
-            WHERE m.delFlag = 'N'
-                    AND m.donateDate BETWEEN :startDate AND :endDate
-                    AND m.donorName LIKE %:keyWord%
+             SELECT  m.donate_seq AS donateSeq,
+                    CASE
+                        WHEN m.anonymity_flag = 'Y'
+                        THEN CONCAT(LEFT(m.donor_name, 1), REPEAT('*', CHAR_LENGTH(m.donor_name) - 1))
+                        ELSE m.donor_name
+                    END AS donorName,
+                    DATE_FORMAT(m.donate_date, '%Y-%m-%d') AS donateDate,
+                    m.gender_flag AS genderFlag,
+                    m.donate_age AS donateAge,
+                    (SELECT COUNT(*) FROM tb25_401_memorial_reply AS r WHERE m.donate_seq = r.donate_seq AND r.del_flag='N') AS commentCount,
+                    (SELECT COUNT(*) FROM tb25_410_heaven_letter AS h WHERE m.donate_seq = h.donate_seq AND h.del_flag='N') AS letterCount
+            FROM tb25_400_memorial m
+            WHERE m.del_flag = 'N'
+                    AND m.donate_date BETWEEN :startDate AND :endDate
+                    AND m.donor_name LIKE CONCAT('%', :keyWord, '%')
                     AND(:date IS NULL
-                            OR(m.donateDate < :date
-                            OR(m.donateDate = :date AND m.donateSeq < :cursor)))
-            ORDER BY m.donateDate DESC, m.donateSeq DESC
-        """
+                            OR(m.donate_date < :date
+                            OR(m.donate_date = :date AND m.donate_seq < :cursor)))
+            ORDER BY m.donate_date DESC, m.donate_seq DESC
+        """, nativeQuery = true
     )
     List<MemorialResponse> findSearchByCursor(
             @Param("date") String date,

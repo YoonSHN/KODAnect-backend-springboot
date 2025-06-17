@@ -11,6 +11,7 @@ import kodanect.domain.donation.exception.DonationNotFoundException;
 import kodanect.domain.donation.exception.PasscodeMismatchException;
 import kodanect.domain.donation.service.DonationCommentService;
 import kodanect.domain.donation.service.DonationService;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +26,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Locale;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
@@ -34,7 +36,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(DonationController.class)
-@ContextConfiguration(classes = KodanectBootApplication.class)
 @Import(GlobalExcepHndlr.class)
 class DonationControllerTest {
 
@@ -52,6 +53,11 @@ class DonationControllerTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @BeforeAll
+    static void setUpLocale() {
+        Locale.setDefault(Locale.KOREA); // 또는 new Locale("ko", "KR")
+    }
 
     // 1) GET /donationLetters – 전체 목록
     @Test
@@ -233,8 +239,14 @@ class DonationControllerTest {
     @DisplayName("POST /donationLetters/{storySeq}/verifyPwd - 성공")
     void verifyStoryPassword_success() throws Exception {
         VerifyStoryPasscodeDto req = new VerifyStoryPasscodeDto("abcd1234");
+        DonationStoryDetailDto detailDto = DonationStoryDetailDto.builder()
+                .storySeq(1L).title("제목").storyWriter("글쓴이").storyContent("내용1").build();
+
         given(messageSourceAccessor.getMessage("donation.password.match"))
                 .willReturn("비밀번호 일치");
+        given(donationService.findDonationStoryWithStoryId(1L)).willReturn(detailDto);
+
+
         doNothing().when(donationService).verifyPasswordWithPassword(eq(1L), any(VerifyStoryPasscodeDto.class));
 
         mockMvc.perform(post("/donationLetters/1/verifyPwd")
@@ -242,7 +254,7 @@ class DonationControllerTest {
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
-                .andExpect(jsonPath("$.data.result").value(1));
+                .andExpect(jsonPath("$.data").isNotEmpty());
     }
 
     @Test
@@ -411,7 +423,7 @@ class DonationControllerTest {
     void modifyComment_success() throws Exception {
         DonationStoryCommentModifyRequestDto req = DonationStoryCommentModifyRequestDto.builder()
                 .commentWriter("X")
-                .commentContents("수정댓글")
+                .contents("수정댓글")
                 .build();
         given(messageSourceAccessor.getMessage("donation.comment.update.success"))
                 .willReturn("댓글 수정 성공");
@@ -478,7 +490,6 @@ class DonationControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.result").value(1))
                 .andExpect(jsonPath("$.message").value("비밀번호 일치"));
     }
 

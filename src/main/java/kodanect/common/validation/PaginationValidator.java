@@ -7,6 +7,7 @@ import kodanect.domain.remembrance.exception.InvalidPaginationException;
 public class PaginationValidator {
 
     private static final int DATE_LENGTH = 8;
+    private static final int DEFAULT_DATE_LENGTH = 10;
 
     private PaginationValidator() {
         throw new UnsupportedOperationException("Utility class");
@@ -37,7 +38,7 @@ public class PaginationValidator {
             throw new InvalidPaginationException(cursor, size, date);
         }
 
-        if(cursor <= 0 || date.length() != DATE_LENGTH) {
+        if(cursor <= 0 && date.length() != DATE_LENGTH && date.length() != DEFAULT_DATE_LENGTH) {
             /* 페이지 범위가 잘못 됐을 경우 */
             throw new InvalidPaginationException(cursor, size, date);
         }

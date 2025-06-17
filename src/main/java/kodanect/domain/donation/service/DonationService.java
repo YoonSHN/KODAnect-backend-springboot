@@ -23,8 +23,6 @@ public interface DonationService {
     // 기증 스토리 등록
     void createDonationStory(DonationStoryCreateRequestDto requestDto);
 
-
-
     // 비밀번호 검증
     void verifyPasswordWithPassword(Long storySeq, VerifyStoryPasscodeDto verifyPassword);
 

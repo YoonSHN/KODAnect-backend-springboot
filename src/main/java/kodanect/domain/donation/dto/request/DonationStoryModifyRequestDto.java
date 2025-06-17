@@ -14,13 +14,14 @@ import javax.validation.constraints.NotNull;
 @Setter
 public class DonationStoryModifyRequestDto {
 
-    @NotNull(message="donation.story.areaCode.null")
+    @NotNull(message="{donation.story.areaCode.null}")
     private AreaCode areaCode;
     @NotBlank(message = "{donation.error.required.title}")
     private String storyTitle;
 
     @NotBlank(message = "{donation.story.writer.blank}")
     private String storyWriter;
+
     private String storyContents;
 
 }

@@ -1,7 +1,9 @@
 package kodanect.domain.remembrance.dto;
 
 import kodanect.common.response.CursorCommentPaginationResponse;
+import kodanect.common.response.CursorPaginationResponse;
 import kodanect.common.util.FormatUtils;
+import kodanect.domain.heaven.dto.response.MemorialHeavenResponse;
 import kodanect.domain.remembrance.entity.Memorial;
 import lombok.*;
 
@@ -48,9 +50,6 @@ public class MemorialDetailResponse {
 
     /* 기증자 명 */
     private String donorName;
-
-    /* 익명 여부 Y, N */
-    private String anonymityFlag;
 
     /* 추모합니다. */
     private String donateTitle;
@@ -104,6 +103,7 @@ public class MemorialDetailResponse {
     private CursorCommentPaginationResponse<MemorialCommentResponse, Integer> memorialCommentResponses;
 
     /* 편지 리스트 */
+    private CursorPaginationResponse<MemorialHeavenResponse, Integer> heavenLetterResponses;
 
     /** 20101212 -> 2010-12-12 형식 변경 */
     public String getDonateDate() {
@@ -117,12 +117,14 @@ public class MemorialDetailResponse {
 
     /** 기증자 상세 조회 객체 생성 메서드 */
     public static MemorialDetailResponse of(
-            Memorial memorial, CursorCommentPaginationResponse<MemorialCommentResponse, Integer> replies)
+            Memorial memorial,
+            CursorCommentPaginationResponse<MemorialCommentResponse, Integer> replies,
+            CursorPaginationResponse<MemorialHeavenResponse, Integer> letters
+    )
     {
         return MemorialDetailResponse.builder()
                 .donateSeq(memorial.getDonateSeq())
                 .donorName(memorial.getDonorName())
-                .anonymityFlag(memorial.getAnonymityFlag())
                 .donateTitle(memorial.getDonateTitle())
                 .contents(memorial.getContents())
                 .fileName(memorial.getFileName())
@@ -140,6 +142,7 @@ public class MemorialDetailResponse {
                 .sadCount(memorial.getSadCount())
                 .writeTime(memorial.getWriteTime())
                 .memorialCommentResponses(replies)
+                .heavenLetterResponses(letters)
                 .build();
     }
 }

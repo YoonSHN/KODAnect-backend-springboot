@@ -15,15 +15,15 @@ import javax.validation.constraints.Size;
 @Setter
 public class DonationStoryCreateRequestDto {
 
-    @NotNull(message="donation.story.areaCode.null")
+    @NotNull(message="{donation.story.areaCode.null}")
     private AreaCode areaCode;
-    @NotBlank(message="donation.story.title.blank")
+    @NotBlank(message="{donation.story.title.blank}")
     private String storyTitle;
 
-    @NotBlank(message="donation.story.passcode.blank")
+    @NotBlank(message="{donation.story.passcode.blank}")
     @Size(min = 8, message = "{Size.donationStoryCreateRequestDto.storyPasscode}")
     private String storyPasscode;
-    @NotBlank(message="donation.story.passcode.blank")
+    @NotBlank(message="{donation.story.passcode.blank}")
     private String storyWriter;
     private String storyContents;
 

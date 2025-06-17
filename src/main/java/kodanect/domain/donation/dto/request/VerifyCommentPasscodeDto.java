@@ -14,6 +14,6 @@ import javax.validation.constraints.NotBlank;
 @NoArgsConstructor
 public class VerifyCommentPasscodeDto {
 
-    @NotBlank(message="donation.comment.verify.passcode.blank")
+    @NotBlank(message="{donation.comment.verify.passcode.blank}")
     private String commentPasscode;
 }

@@ -4,6 +4,7 @@ import kodanect.common.config.EgovConfigCommon;
 import kodanect.common.response.CursorCommentPaginationResponse;
 import kodanect.common.response.CursorPaginationResponse;
 import kodanect.common.util.CursorFormatter;
+import kodanect.domain.remembrance.TestMemorialResponse;
 import kodanect.domain.remembrance.dto.MemorialDetailResponse;
 import kodanect.domain.remembrance.dto.MemorialResponse;
 import kodanect.domain.remembrance.dto.MemorialCommentResponse;
@@ -57,9 +58,9 @@ class MemorialControllerTest {
         /* 기증자 추모관 게시글 리스트 조회 테스트 */
 
         List<MemorialResponse> content = List.of(
-                new MemorialResponse(1, "홍길동", "N", "20200101", "M", 10, 12),
-                new MemorialResponse(2, "김길동", "Y", "20211231", "F", 20, 22),
-                new MemorialResponse(3, "나길동", "N", "20220101", "M", 30, 32)
+                new TestMemorialResponse(1, "홍길동",  "20200101", "M", 10, 12, 3),
+                new TestMemorialResponse(2, "김길동",  "20211231", "F", 20, 22, 3),
+                new TestMemorialResponse(3, "나길동",  "20220101", "M", 30, 32, 3)
         );
 
         MemorialNextCursor nextCursor = new MemorialNextCursor(1, "20200101");
@@ -84,9 +85,6 @@ class MemorialControllerTest {
                 .andExpect(jsonPath("$.data.content[0].donorName").value("홍길동"))
                 .andExpect(jsonPath("$.data.content[1].donorName").value("김길동"))
                 .andExpect(jsonPath("$.data.content[2].donorName").value("나길동"))
-                .andExpect(jsonPath("$.data.content[0].anonymityFlag").value("N"))
-                .andExpect(jsonPath("$.data.content[1].anonymityFlag").value("Y"))
-                .andExpect(jsonPath("$.data.content[2].anonymityFlag").value("N"))
                 .andExpect(jsonPath("$.data.content[0].donateDate").value("2020-01-01"))
                 .andExpect(jsonPath("$.data.content[1].donateDate").value("2021-12-31"))
                 .andExpect(jsonPath("$.data.content[2].donateDate").value("2022-01-01"))
@@ -137,7 +135,6 @@ class MemorialControllerTest {
         MemorialDetailResponse memorial = MemorialDetailResponse.builder()
                 .donateSeq(1)
                 .donorName("홍길동")
-                .anonymityFlag("N")
                 .donateTitle("당신을 기억합니다.")
                 .contents("감사한 마음을 전합니다.")
                 .fileName("image.jpg")
@@ -166,7 +163,6 @@ class MemorialControllerTest {
                 .andExpect(jsonPath("$.message").value("게시글 조회 성공"))
                 .andExpect(jsonPath("$.data.donateSeq").value(1))
                 .andExpect(jsonPath("$.data.donorName").value("홍길동"))
-                .andExpect(jsonPath("$.data.anonymityFlag").value("N"))
                 .andExpect(jsonPath("$.data.donateTitle").value("당신을 기억합니다."))
                 .andExpect(jsonPath("$.data.contents").value("감사한 마음을 전합니다."))
                 .andExpect(jsonPath("$.data.fileName").value("image.jpg"))
@@ -204,9 +200,9 @@ class MemorialControllerTest {
         /* 컨트롤러 테스트는 필터링 로직이 반영되지 않음 */
 
         List<MemorialResponse> content = List.of(
-                new MemorialResponse(1, "홍길동", "N", "20200101", "M", 10 ,12),
-                new MemorialResponse(2, "김길동", "Y", "20200102", "F", 20, 22),
-                new MemorialResponse(3, "나길동", "N", "20220103", "M", 30, 32)
+                new TestMemorialResponse(1, "홍길동", "20200101", "M", 10 ,12, 3),
+                new TestMemorialResponse(2, "김길동",  "20200102", "F", 20, 22, 3),
+                new TestMemorialResponse(3, "나길동",  "20220103", "M", 30, 32, 3)
         );
 
         MemorialNextCursor nextCursor = new MemorialNextCursor(1, "20200101");

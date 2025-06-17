@@ -55,7 +55,7 @@ public class DonationStoryComment {
 
     public void modifyDonationStoryComment(DonationStoryCommentModifyRequestDto requestDto) {
         this.commentWriter = requestDto.getCommentWriter();
-        this.contents = requestDto.getCommentContents();
+        this.contents = requestDto.getContents();
     }
     @PrePersist
     protected void onCreate() {

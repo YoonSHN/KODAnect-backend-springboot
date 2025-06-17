@@ -15,10 +15,10 @@ import javax.validation.constraints.NotBlank;
 @Builder
 public class DonationCommentCreateRequestDto {
 
-    @NotBlank(message="donation.error.required.writer")
+    @NotBlank(message="{donation.error.required.writer}")
     private String commentWriter;
-    @NotBlank(message="donation.comment.verify.passcode.blank")
+    @NotBlank(message="{donation.error.required.passcode}")
     private String commentPasscode;
-    @NotBlank(message="donation.comment.contents.blank")
+    @NotBlank(message="{donation.comment.contents.blank}")
     private String contents;
 }
