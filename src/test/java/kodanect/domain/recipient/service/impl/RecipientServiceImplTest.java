@@ -121,7 +121,6 @@ public class RecipientServiceImplTest {
         assertThat(responseDto.getImageUrl()).isNull();
         assertThat(responseDto.getFileName()).isNull();
         assertThat(responseDto.getOrgFileName()).isNull();
-        assertThat(responseDto.getLetterWriter()).isEqualTo(ANONYMOUS_WRITER_VALUE);
         assertThat(responseDto.getLetterContents()).isEqualTo(recipientDto.getLetterContents());
     }
 

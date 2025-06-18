@@ -1,10 +1,12 @@
 package kodanect.domain.remembrance.service;
 
 import kodanect.common.response.CursorPaginationResponse;
+import kodanect.domain.remembrance.dto.HeavenMemorialResponse;
 import kodanect.domain.remembrance.dto.MemorialDetailResponse;
 import kodanect.domain.remembrance.dto.MemorialResponse;
 import kodanect.domain.remembrance.dto.common.MemorialNextCursor;
 import kodanect.domain.remembrance.exception.*;
+import org.springframework.data.domain.Page;
 
 public interface MemorialService {
     /**
@@ -31,6 +33,18 @@ public interface MemorialService {
      *
      * */
     CursorPaginationResponse<MemorialResponse, MemorialNextCursor> getSearchMemorialList(String startDate, String endDate, String keyWord, MemorialNextCursor cursor, int size);
+    /**
+     * 하늘나라 편지 팝업 조회 ->
+     * 기증자 추모관 게시글 검색 조회 메서드
+     *
+     * @param startDate 시작 일
+     * @param endDate 종료 일
+     * @param keyWord 검색할 문자
+     * @param page 페이지 번호
+     * @param size 페이지 사이즈
+     *
+     * */
+    Page<HeavenMemorialResponse> getSearchHeavenMemorialList(String startDate, String endDate, String keyWord, Integer page, int size);
     /**
      *
      * 기증자 추모관 게시글 조회 메서드

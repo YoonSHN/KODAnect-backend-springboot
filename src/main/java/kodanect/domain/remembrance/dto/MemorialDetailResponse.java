@@ -3,6 +3,7 @@ package kodanect.domain.remembrance.dto;
 import kodanect.common.response.CursorCommentPaginationResponse;
 import kodanect.common.response.CursorPaginationResponse;
 import kodanect.common.util.FormatUtils;
+import kodanect.common.util.MemorialHtmlNormalizer;
 import kodanect.domain.heaven.dto.response.MemorialHeavenResponse;
 import kodanect.domain.remembrance.entity.Memorial;
 import lombok.*;
@@ -105,6 +106,16 @@ public class MemorialDetailResponse {
     /* 편지 리스트 */
     private CursorPaginationResponse<MemorialHeavenResponse, Integer> heavenLetterResponses;
 
+    public String getContents() {
+        return MemorialHtmlNormalizer.contentsFormat(
+                this.donateSeq,
+                this.donorName,
+                this.genderFlag,
+                this.donateAge,
+                this.donateDate
+        );
+    }
+
     /** 20101212 -> 2010-12-12 형식 변경 */
     public String getDonateDate() {
         return FormatUtils.formatDonateDate(this.donateDate);
@@ -113,6 +124,13 @@ public class MemorialDetailResponse {
     /** 2020-12-13T02:11:12 -> 2020-12-13 형식 변경 */
     public String getWriteTime() {
         return writeTime.toLocalDate().toString();
+    }
+
+    public static String maskIfNeeded(String donorName, String anonymityFlag) {
+        if("Y".equals(anonymityFlag) && donorName != null && donorName.length() >= 2) {
+            return donorName.charAt(0) + "*".repeat(donorName.length() - 1);
+        }
+        return donorName;
     }
 
     /** 기증자 상세 조회 객체 생성 메서드 */
@@ -124,7 +142,7 @@ public class MemorialDetailResponse {
     {
         return MemorialDetailResponse.builder()
                 .donateSeq(memorial.getDonateSeq())
-                .donorName(memorial.getDonorName())
+                .donorName(maskIfNeeded(memorial.getDonorName(), memorial.getAnonymityFlag()))
                 .donateTitle(memorial.getDonateTitle())
                 .contents(memorial.getContents())
                 .fileName(memorial.getFileName())

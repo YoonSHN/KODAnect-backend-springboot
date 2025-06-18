@@ -16,6 +16,7 @@ import kodanect.domain.remembrance.service.MemorialCommentService;
 import kodanect.domain.remembrance.service.MemorialService;
 import kodanect.common.util.EmotionType;
 import kodanect.common.util.MemorialFinder;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -156,6 +157,24 @@ public class MemorialServiceImpl implements MemorialService {
 
     }
 
+    @Override
+    public Page<HeavenMemorialResponse> getSearchHeavenMemorialList(
+            String startDate, String endDate, String keyWord, Integer page, int size)
+    {
+
+        /* 검색 문자 포매팅 */
+        keyWord = formatSearchWord(keyWord);
+
+        /* 날짜 포매팅 */
+        String startDateStr = formatDate(startDate);
+        String endDateStr = formatDate(endDate);
+
+        /* 페이지 포매팅 */
+        Pageable pageable = Pageable.ofSize(size).withPage(page - 1);
+
+        return memorialRepository.findSearchByPage(pageable, startDateStr, endDateStr, keyWord);
+    }
+
     /**
      *
      * 기증자 추모관 게시글 조회 메서드
@@ -189,7 +208,8 @@ public class MemorialServiceImpl implements MemorialService {
      * */
     @Override
     public MemorialDetailResponse getMemorialByDonateSeq(Integer donateSeq)
-            throws  MemorialNotFoundException
+            throws  MemorialNotFoundException,
+                    InvalidContentsException
     {
         /* 게시글 조회 */
         Memorial memorial = memorialFinder.findByIdOrThrow(donateSeq);

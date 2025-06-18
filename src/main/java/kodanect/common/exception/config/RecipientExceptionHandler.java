@@ -137,15 +137,12 @@ public class RecipientExceptionHandler {
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ApiResponse<String>> handleTypeMismatchException(MethodArgumentTypeMismatchException ex) {
         String paramName = ex.getName();
-
         String value = (ex.getValue() != null) ? ex.getValue().toString() : "null";
 
-        String requiredType;
+        // RequiredType이 null일 가능성을 더 안전하게 처리
+        String requiredType = "알 수 없음";
         if (ex.getRequiredType() != null) {
-            Class<?> type = ex.getRequiredType();
-            requiredType = (type != null) ? type.getSimpleName() : "알 수 없음";
-        } else {
-            requiredType = "알 수 없음";
+            requiredType = ex.getRequiredType().getSimpleName();
         }
 
         String errorMsg = String.format(

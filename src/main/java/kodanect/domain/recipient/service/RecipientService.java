@@ -18,7 +18,7 @@ public interface RecipientService {
     void deleteRecipient(Integer letterSeq, String letterPasscode);
 
     // 게시물 등록
-    // 조건 : letter_writer 한영자 10자 제한, letter_passcode 영숫자 8자 이상, 캡챠 인증
+    // 조건 : letter_writer 한영자 10자 제한, letter_passcode 영숫자 8자 이상
     RecipientDetailResponseDto insertRecipient(RecipientRequestDto requestDto);
 
     // 특정 게시물 조회

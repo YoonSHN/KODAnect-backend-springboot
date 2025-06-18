@@ -66,6 +66,8 @@ class MemorialControllerExceptionTest {
 
     private static final String INVALID_PAGINATION_MESSAGE =
             "요청한 페이지 범위가 잘못되었습니다. (cursor: -1, size: -1, date: null)";
+    private static final String INVALID_PAGINATION_PAGE_MESSAGE =
+            "요청한 페이지 범위가 잘못되었습니다. (cursor: null, size: -1, date: null)";
     private static final String MEMORIAL_NOT_FOUND_MESSAGE =
             "해당 추모글을 찾을 수 없습니다. (donateSeq: 2,147,483,647)";
     private static final String DONATE_INVALID_MESSAGE =
@@ -141,10 +143,10 @@ class MemorialControllerExceptionTest {
     }
 
     /*
-    *
-    * 추모관 게시글 검색 조회
-    *
-    * */
+     *
+     * 추모관 게시글 검색 조회
+     *
+     * */
 
     @Test
     @DisplayName("추모관 게시글 리스트 검색 조회 : 유효하지 않은 페이징 범위를 요청한 경우 - 400")
@@ -189,6 +191,63 @@ class MemorialControllerExceptionTest {
                         .param("endDate", START_DATE)
                         .param("searchWord", EMPTY)
                         .param("cursor", String.valueOf(CURSOR))
+                        .param("size", String.valueOf(SIZE)))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value(BAD_REQUEST))
+                .andExpect(jsonPath("$.message").value(SEARCH_DATE_RANGE_INVALID_MESSAGE));
+    }
+
+    /*
+     *
+     * 추모관 게시글 하늘나라 팝업 검색 조회
+     *
+     * */
+
+    @Test
+    @DisplayName("추모관 게시글 하늘나라 팝업 리스트 검색 조회 : 유효하지 않은 페이징 범위를 요청한 경우 - 400")
+    void getSearchHeavenMemorialListInvalidPaginationRangeException() throws Exception {
+
+        mockMvc.perform(get("/remembrance/search")
+                        .param("startDate", START_DATE)
+                        .param("endDate", END_DATE)
+                        .param("searchWord", EMPTY)
+                        .param("page", String.valueOf(INVALID_CURSOR))
+                        .param("size", String.valueOf(INVALID_SIZE)))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value(BAD_REQUEST))
+                .andExpect(jsonPath("$.message").value(INVALID_PAGINATION_PAGE_MESSAGE));
+    }
+
+    @Test
+    @DisplayName("추모관 게시글 하늘나라 팝업 리스트 검색 조회 : 날짜 검색 파라미터가 누락된 경우 - 400")
+    void getSearchHeavenMemorialListInvalidSearchDateException() throws Exception {
+
+        mockMvc.perform(get("/remembrance/search")
+                        .param("startDate", "invalid")
+                        .param("endDate", "invalid")
+                        .param("searchWord", EMPTY)
+                        .param("page", String.valueOf(CURSOR))
+                        .param("size", String.valueOf(SIZE)))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value(BAD_REQUEST))
+                .andExpect(jsonPath("$.message").value(SEARCH_DATE_INVALID_MESSAGE));
+    }
+
+    @Test
+    @DisplayName("추모관 게시글 하늘나라 팝업 리스트 검색 조회 : 유효하지 않은 날짜 범위를 요청한 경우 - 400")
+    void getSearchHeavenMemorialListInvalidSearchDateRangeException() throws Exception {
+
+        mockMvc.perform(get("/remembrance/search")
+                        .param("startDate", END_DATE)
+                        .param("endDate", START_DATE)
+                        .param("searchWord", EMPTY)
+                        .param("page", String.valueOf(CURSOR))
                         .param("size", String.valueOf(SIZE)))
                 .andDo(print())
                 .andExpect(status().isBadRequest())

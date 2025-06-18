@@ -1,7 +1,9 @@
 package kodanect.domain.remembrance.repository;
 
+import kodanect.domain.remembrance.dto.HeavenMemorialResponse;
 import kodanect.domain.remembrance.entity.Memorial;
 import kodanect.domain.remembrance.dto.MemorialResponse;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -18,6 +20,46 @@ import java.util.List;
  *
  * */
 public interface MemorialRepository extends JpaRepository<Memorial, Integer> {
+
+
+    /**
+     *
+     * 기증자 추모관 게시글 리스트 날짜 + 문자 조건 페이징 조회
+     *
+     * @param startDate 시작 일
+     * @param endDate 종료 일
+     * @param keyWord 검색 문자 (%검색어%)
+     * @return 조건에 맞는 게시글 순서 리스트(최신순)
+     * */
+    @Query(
+            value = """
+                SELECT m.donate_seq AS donateSeq,
+                       CASE
+                           WHEN m.anonymity_flag = 'Y'
+                           THEN CONCAT(LEFT(m.donor_name, 1), REPEAT('*', CHAR_LENGTH(m.donor_name) - 1))
+                           ELSE m.donor_name
+                       END AS donorName,
+                       DATE_FORMAT(m.donate_date, '%Y-%m-%d') AS donateDate,
+                       m.gender_flag AS genderFlag,
+                       m.donate_age AS donateAge
+                FROM tb25_400_memorial m
+                WHERE m.del_flag = 'N'
+                        AND m.donate_date BETWEEN :startDate AND :endDate
+                        AND m.donor_name LIKE :keyWord
+                ORDER BY m.donate_date DESC
+        """, countQuery = """
+                SELECT COUNT(*)
+                FROM tb25_400_memorial m
+                WHERE m.del_flag = 'N'
+                        AND m.donate_date BETWEEN :startDate AND :endDate
+                        AND m.donor_name LIKE :keyWord
+        """, nativeQuery = true
+    )
+    Page<HeavenMemorialResponse> findSearchByPage(
+            Pageable pageable,
+            @Param("startDate") String startDate,
+            @Param("endDate") String endDate,
+            @Param("keyWord") String keyWord);
 
     /**
      *
