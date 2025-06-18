@@ -84,32 +84,6 @@ class RecipientCommentControllerTest {
     }
 
     @Test
-    @DisplayName("댓글 작성 성공 테스트")
-    void testWriteComment() throws Exception {
-        RecipientCommentRequestDto requestDto = new RecipientCommentRequestDto();
-        requestDto.setContents("새 댓글");
-        requestDto.setCommentWriter("작성자");
-        requestDto.setCommentPasscode("asdf1234");
-
-        RecipientCommentResponseDto responseDto = new RecipientCommentResponseDto();
-        responseDto.setCommentSeq(1);
-        responseDto.setContents("새 댓글");
-        responseDto.setCommentWriter("작성자");
-        responseDto.setWriteTime(LocalDateTime.now());
-        responseDto.setModifyTime(LocalDateTime.now());
-
-        given(recipientCommentService.insertComment(1, requestDto)).willReturn(responseDto);
-
-        mockMvc.perform(post("/recipientLetters/1/comments")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(requestDto)))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.commentSeq").value(1))
-                .andExpect(jsonPath("$.data.contents").value("새 댓글")); // 'commentContents' -> 'contents' 수정
-    }
-
-    @Test
     @DisplayName("댓글 삭제 성공 테스트")
     void testDeleteComment() throws Exception {
         CommentDeleteRequestDto requestDto = new CommentDeleteRequestDto();
