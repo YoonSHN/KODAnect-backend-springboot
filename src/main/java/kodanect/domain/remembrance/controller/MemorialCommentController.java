@@ -158,7 +158,7 @@ public class MemorialCommentController {
     {
         /* 댓글 비밀번호 검증 */
 
-        String successMessage = messageSourceAccessor.getMessage("board.comment.varify.success", new Object[] {});
+        String successMessage = messageSourceAccessor.getMessage("board.comment.verify.success", new Object[] {});
         memorialCommentService.varifyComment(donateSeq, commentSeq, memorialCommentPasswordRequest);
         return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, successMessage));
     }

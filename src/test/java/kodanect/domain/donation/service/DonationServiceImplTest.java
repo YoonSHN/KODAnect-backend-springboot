@@ -5,10 +5,7 @@ import kodanect.common.util.MessageResolver;
 import kodanect.domain.donation.dto.request.DonationStoryCreateRequestDto;
 import kodanect.domain.donation.dto.request.DonationStoryModifyRequestDto;
 import kodanect.domain.donation.dto.request.VerifyStoryPasscodeDto;
-import kodanect.domain.donation.dto.response.DonationStoryCommentDto;
-import kodanect.domain.donation.dto.response.DonationStoryDetailDto;
-import kodanect.domain.donation.dto.response.DonationStoryListDto;
-import kodanect.domain.donation.dto.response.DonationStoryWriteFormDto;
+import kodanect.domain.donation.dto.response.*;
 import kodanect.domain.donation.entity.DonationStory;
 import kodanect.domain.donation.exception.BadRequestException;
 import kodanect.domain.donation.exception.DonationNotFoundException;
@@ -113,26 +110,19 @@ public class DonationServiceImplTest {
         assertThat(resp.getContent()).isEmpty();
     }
 
-    // --- 폼 데이터 로드 ---
-    @Test
-    public void loadDonationStoryFormData_ShouldContainAllAreaCodes() {
-        DonationStoryWriteFormDto form = donationService.loadDonationStoryFormData();
-        assertThat(form.getAreaOptions())
-                .containsExactlyInAnyOrder(
-                        kodanect.domain.donation.dto.response.AreaCode.AREA100,
-                        kodanect.domain.donation.dto.response.AreaCode.AREA200,
-                        kodanect.domain.donation.dto.response.AreaCode.AREA300
-                );
-    }
-
     // --- 스토리 생성 ---
     @Test
     public void createDonationStory_ValidDto_ShouldSave() {
-        var dto = new DonationStoryCreateRequestDto(
-                kodanect.domain.donation.dto.response.AreaCode.AREA100,
-                "Title", "Abcd1234", "Writer", "<p><img src=\"/u/foo.png\"></p>"
-        );
-        donationService.createDonationStory(dto);
+        DonationStoryCreateRequestDto requestDto = DonationStoryCreateRequestDto.builder()
+                .areaCode(AreaCode.AREA100) // 올바른 enum 또는 문자열
+                .storyTitle("테스트 제목")
+                .storyWriter("작성자")
+                .storyPasscode("pass1234")  // 영문+숫자 8~16자
+                .storyContents("<p>내용</p>") // 이건 필수는 아님
+                .build();
+
+
+        donationService.createDonationStory(requestDto);
         then(donationRepository).should().save(any(DonationStory.class));
     }
 

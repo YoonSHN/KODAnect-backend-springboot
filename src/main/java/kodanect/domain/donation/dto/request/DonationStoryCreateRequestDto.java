@@ -13,6 +13,7 @@ import javax.validation.constraints.Size;
 @AllArgsConstructor
 @NoArgsConstructor
 @Setter
+@ToString(exclude={"storyPasscode"})
 public class DonationStoryCreateRequestDto {
 
     @NotNull(message="{donation.story.areaCode.null}")

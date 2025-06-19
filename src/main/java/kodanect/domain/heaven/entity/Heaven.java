@@ -7,10 +7,7 @@ import lombok.*;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 @Entity(name = "Heaven")
 @Table(name = "tb25_410_heaven_letter")
@@ -28,7 +25,7 @@ public class Heaven {
     private int letterSeq;
 
     /* 기증자 */
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "donate_seq")
     private Memorial memorial;
 
@@ -133,5 +130,11 @@ public class Heaven {
         letterContents = heavenUpdateRequest.getLetterContents();
         fileName = fileMap.get("fileName");
         orgFileName = fileMap.get("orgFileName");
+    }
+
+    /* 게시물 및 해당 댓글 소프트 삭제 */
+    public void softDelete() {
+        this.delFlag = "Y";
+        this.comments.forEach(HeavenComment::softDelete);
     }
 }

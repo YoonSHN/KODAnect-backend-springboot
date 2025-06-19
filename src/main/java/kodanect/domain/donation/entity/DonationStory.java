@@ -18,6 +18,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor(access= AccessLevel.PROTECTED)
 @Builder
+@ToString(exclude={"comments", "storyPasscode"})
 @EntityListeners(AuditingEntityListener.class)
 public class DonationStory {
 

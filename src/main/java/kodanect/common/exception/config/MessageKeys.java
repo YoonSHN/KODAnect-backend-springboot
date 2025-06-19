@@ -49,6 +49,8 @@ public final class MessageKeys {
     public static final String HEAVEN_NOT_FOUND = "heaven.notFound.error";
     public static final String HEAVEN_COMMENT_NOT_FOUND = "heaven.comment.notFound.error";
     public static final String HEAVEN_COMMENT_INFORM_MISMATCH = "heaven.comment.mismatch.error";
+    public static final String FILE_DELETE_FAIL = "file.delete.fail.error";
+    public static final String FILE_SAVE_FAIL = "file.save.fail.error";
 
     private MessageKeys() {}
 

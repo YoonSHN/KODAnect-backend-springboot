@@ -26,6 +26,7 @@ public class DonationStoryComment {
     private String commentWriter;
 
     @Column(name="comment_passcode", length = 60)
+    @ToString.Exclude
     private String commentPasscode;
 
     @Column(columnDefinition="TEXT")

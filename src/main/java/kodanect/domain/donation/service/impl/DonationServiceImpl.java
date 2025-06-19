@@ -13,7 +13,6 @@ import kodanect.domain.donation.entity.DonationStory;
 import kodanect.domain.donation.exception.*;
 import kodanect.domain.donation.repository.DonationCommentRepository;
 import kodanect.domain.donation.repository.DonationRepository;
-import kodanect.domain.donation.service.DonationCommentService;
 import kodanect.domain.donation.service.DonationService;
 import lombok.RequiredArgsConstructor;
 import org.jsoup.Jsoup;
@@ -32,27 +31,35 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class DonationServiceImpl implements DonationService {
 
+    // 로거 선언
+    private static final SecureLogger logger = SecureLogger.getLogger(DonationServiceImpl.class);
+
     /** Cursor 기반 기본 Size */
-    private static final SecureLogger log = SecureLogger.getLogger(DonationServiceImpl.class);
     private static final int DEFAULT_SIZE = 3;
     private static final String DONATION_ERROR_NOTFOUND = "donation.error.notfound";
 
     private final DonationRepository donationRepository;
     private final DonationCommentRepository commentRepository;
     private final MessageResolver messageResolver;
-    private final DonationCommentService commentService;
 
+    /* 스토리 목록 조회 */
     @Override
     public CursorPaginationResponse<DonationStoryListDto, Long> findStoriesWithCursor(Long cursor, int size) {
+        logger.debug(">>> findStoriesWithCursor() 호출");
+
         Pageable pageable = PageRequest.of(0, size + 1);
         List<DonationStoryListDto> results = donationRepository.findByCursor(cursor, pageable);
+        logger.debug("스토리 목록 조회 결과 수: {}", results.size());
 
         long totalCount = donationRepository.countAll();
+        logger.debug("게시글 총 개수 : {}", totalCount);
         return CursorFormatter.cursorFormat(results, size, totalCount); // 이 한 줄이면 충분
     }
 
+    /* 스토리 검색 */
     @Override
     public CursorPaginationResponse<DonationStoryListDto, Long> findSearchStoriesWithCursor(String type, String keyword, Long cursor, int size) {
+        logger.debug(">>> findSearchStoriesWithCursor() 호출");
         Pageable pageable = PageRequest.of(0, size + 1); // size+1개 조회해서 hasNext 판단
 
         List<DonationStoryListDto> results;
@@ -68,21 +75,17 @@ public class DonationServiceImpl implements DonationService {
             results = donationRepository.findByTitleOrContentsCursor(keyword, cursor, pageable);
             totalCount = donationRepository.countByTitleAndContents(keyword);
         }
+        logger.debug("스토리 목록 조회 결과 수: {}", results.size());
 
         return CursorFormatter.cursorFormat(results, size, totalCount);
     }
 
-    /** 스토리 작성 폼 데이터 반환 */
-    public DonationStoryWriteFormDto loadDonationStoryFormData() {
-        List<AreaCode> areas = List.of(AreaCode.AREA100, AreaCode.AREA200, AreaCode.AREA300);
-        if (areas.isEmpty()) {
-            throw new NotFoundAreaCode(messageResolver.get("donation.error.area.unavailable"));
-        }
-        return DonationStoryWriteFormDto.builder().areaOptions(areas).build();
-    }
+
 
     /** 스토리 등록 처리 */
     public void createDonationStory(DonationStoryCreateRequestDto requestDto) {
+        logger.debug(">>> createDonationStory() 호출");
+
         validateStoryRequest(requestDto.getAreaCode(), requestDto.getStoryTitle(), requestDto.getStoryPasscode());
 
         // 이미지가 여러개 저장될 수 도 있음.
@@ -110,13 +113,10 @@ public class DonationServiceImpl implements DonationService {
         if (storyContents == null || storyContents.isBlank()) { //null 체크
             return new String[]{"", ""};
         }
-        log.info("==== storyContents ====");
-        log.info(storyContents);
 
         Document doc = Jsoup.parse(storyContents);
         Elements imgTags = doc.select("img");
 
-        log.info("총 이미지 수: " + imgTags.size());
 
         for (Element img : imgTags) {
             String src = img.attr("src");  // 또는 "data-cke-saved-src"
@@ -140,8 +140,10 @@ public class DonationServiceImpl implements DonationService {
         };
     }
 
+    /* 스토리 상세 조회 */
     @Override
     public DonationStoryDetailDto findDonationStoryWithStoryId(Long storySeq) {
+        logger.debug(">>> findDonationStoryWithStoryId() 호출");
         // 1) 스토리 로드 + 조회수 증가
         DonationStory story = donationRepository.findStoryOnlyById(storySeq)
                 .orElseThrow(() -> new DonationNotFoundException(DONATION_ERROR_NOTFOUND));
@@ -151,6 +153,7 @@ public class DonationServiceImpl implements DonationService {
         var pageable = PageRequest.of(0, DEFAULT_SIZE + 1);  // +1로 hasNext 체크
         List<DonationStoryCommentDto> latest = commentRepository.findLatestComments(storySeq, pageable);
 
+        logger.debug("조회된 댓글 수 : {}", latest.size());
         // 3) 커서 포맷팅
         long total = commentRepository.countAllByStorySeq(storySeq);
         CursorCommentPaginationResponse<DonationStoryCommentDto, Long> commentsPage =
@@ -179,7 +182,7 @@ public class DonationServiceImpl implements DonationService {
     }
     /** 스토리 수정 */
     public void  updateDonationStory(Long storySeq, DonationStoryModifyRequestDto requestDto) {
-        log.info("===== updateDonationStory 호출됨 =====");
+        logger.debug(">>> updateDonationStory() 호출");
 
         DonationStory story = donationRepository.findStoryOnlyById(storySeq)
                 .orElseThrow(() -> new DonationNotFoundException(messageResolver.get(DONATION_ERROR_NOTFOUND)));
@@ -191,6 +194,8 @@ public class DonationServiceImpl implements DonationService {
 
     /** 스토리 삭제 */
     public void deleteDonationStory(Long storySeq, VerifyStoryPasscodeDto storyPasscodeDto) {
+        logger.debug(">>> deleteDonationStory() 호출");
+
         DonationStory story = donationRepository.findStoryOnlyById(storySeq)
                 .orElseThrow(() -> new DonationNotFoundException(messageResolver.get(DONATION_ERROR_NOTFOUND)));
 
@@ -212,6 +217,9 @@ public class DonationServiceImpl implements DonationService {
     private void validateStoryRequest(AreaCode areaCode, String title, String password) {
         if (areaCode == null) {
             throw new BadRequestException(messageResolver.get("donation.error.required.area"));
+        }
+        if (!(areaCode == AreaCode.AREA100 || areaCode == AreaCode.AREA200 || areaCode == AreaCode.AREA300)) {
+            throw new BadRequestException(messageResolver.get("donation.error.invalid.area"));
         }
         if (title == null || title.isBlank()) {
             throw new BadRequestException(messageResolver.get("donation.error.required.title"));

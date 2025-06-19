@@ -2,6 +2,7 @@ package kodanect.domain.heaven.controller;
 
 import kodanect.common.response.CursorCommentPaginationResponse;
 import kodanect.common.response.CursorPaginationResponse;
+import kodanect.domain.heaven.dto.HeavenDto;
 import kodanect.domain.heaven.dto.response.HeavenCommentResponse;
 import kodanect.domain.heaven.dto.response.HeavenDetailResponse;
 import kodanect.domain.heaven.dto.response.HeavenResponse;
@@ -40,16 +41,17 @@ public class HeavenControllerTest {
 
     @Before
     public void beforeEach() {
-        when(messageSourceAccessor.getMessage("heaven.list.get.success")).thenReturn("게시물 전체 조회 성공");
-        when(messageSourceAccessor.getMessage("heaven.list.search.success")).thenReturn("검색을 통한 게시물 전체 조회 성공");
-        when(messageSourceAccessor.getMessage("heaven.detail.get.success")).thenReturn("게시물 상세 조회 성공");
+        when(messageSourceAccessor.getMessage("board.read.success")).thenReturn("게시물 조회 성공");
+        when(messageSourceAccessor.getMessage("board.list.read.success")).thenReturn("게시물 리스트 조회 성공");
+        when(messageSourceAccessor.getMessage("board.search.read.success")).thenReturn("검색을 통한 게시물 조회 성공");
     }
 
     @Test
     @DisplayName("게시물 전체 조회 테스트")
     public void getHeavenListTest() throws Exception {
         /* given */
-        String anonymityFlag = "N";
+        String memorialAnonymityFlag = "Y";
+        String heavenAnonymityFlag = "N";
         int readCount = 5;
         LocalDateTime now = LocalDateTime.now();
         Integer nextCursor = 10;
@@ -60,7 +62,7 @@ public class HeavenControllerTest {
         List<HeavenResponse> heavenResponseList = new ArrayList<>();
 
         for (int i = 1; i <= totalCount; i++) {
-            heavenResponseList.add(new HeavenResponse(i, "제목"+i, "기증자"+i, "작성자"+i, anonymityFlag, readCount, now));
+            heavenResponseList.add(new HeavenResponse(i, "제목"+i, "기증자"+i, memorialAnonymityFlag, "작성자"+i, heavenAnonymityFlag, readCount, now));
         }
 
         CursorPaginationResponse<HeavenResponse, Integer> cursorPaginationResponse = CursorPaginationResponse.<HeavenResponse, Integer>builder()
@@ -79,7 +81,7 @@ public class HeavenControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.code").value(200))
-                .andExpect(jsonPath("$.message").value("게시물 전체 조회 성공"))
+                .andExpect(jsonPath("$.message").value("게시물 리스트 조회 성공"))
                 .andExpect(jsonPath("$.data.content[29].letterSeq").value(30))
                 .andExpect(jsonPath("$.data.nextCursor").value(10))
                 .andExpect(jsonPath("$.data.hasNext").value(true))
@@ -90,7 +92,8 @@ public class HeavenControllerTest {
     @DisplayName("검색을 통한 게시물 전체 조회 테스트")
     public void searchHeavenListTest() throws Exception {
         /* given */
-        String anonymityFlag = "N";
+        String memorialAnonymityFlag = "Y";
+        String heavenAnonymityFlag = "N";
         int readCount = 5;
         LocalDateTime now = LocalDateTime.now();
         boolean hasNext = false;
@@ -100,7 +103,7 @@ public class HeavenControllerTest {
         List<HeavenResponse> heavenResponseList = new ArrayList<>();
 
         for (int i = 1; i <= totalCount; i++) {
-            heavenResponseList.add(new HeavenResponse(i, "제목"+i, "기증자"+i, "작성자"+i, anonymityFlag, readCount, now));
+            heavenResponseList.add(new HeavenResponse(i, "제목"+i, "기증자"+i, memorialAnonymityFlag, "작성자"+i, heavenAnonymityFlag, readCount, now));
         }
 
         CursorPaginationResponse<HeavenResponse, Integer> cursorPaginationResponse = CursorPaginationResponse.<HeavenResponse, Integer>builder()
@@ -120,7 +123,7 @@ public class HeavenControllerTest {
                     .param("size", "20"))
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.code").value(200))
-                .andExpect(jsonPath("$.message").value("검색을 통한 게시물 전체 조회 성공"))
+                .andExpect(jsonPath("$.message").value("검색을 통한 게시물 조회 성공"))
                 .andExpect(jsonPath("$.data.content[0].letterSeq").value(1))
                 .andExpect(jsonPath("$.data.nextCursor", nullValue()))
                 .andExpect(jsonPath("$.data.hasNext").value(hasNext))
@@ -134,7 +137,7 @@ public class HeavenControllerTest {
         Integer letterSeq = 1;
         String letterTitle = "사랑하는 가족에게";
         String letterWriter = "작성자";
-        String anonymityFlag = "Y";
+        String heavenAnonymityFlag = "N";
         Integer readCount = 5;
         String letterContents = "이 편지는 하늘로 보냅니다.";
         LocalDateTime writeTime = LocalDateTime.now();
@@ -152,14 +155,19 @@ public class HeavenControllerTest {
                 .commentHasNext(commentHasNext)
                 .build();
 
-        HeavenDetailResponse heavenDetailResponse = HeavenDetailResponse.builder()
+        HeavenDto heavenDto = HeavenDto.builder()
                 .letterSeq(letterSeq)
                 .letterTitle(letterTitle)
                 .letterWriter(letterWriter)
-                .anonymityFlag(anonymityFlag)
+                .heavenAnonymityFlag(heavenAnonymityFlag)
                 .readCount(readCount)
                 .letterContents(letterContents)
                 .writeTime(writeTime)
+                .build();
+
+
+        HeavenDetailResponse heavenDetailResponse = HeavenDetailResponse.builder()
+                .heavenDto(heavenDto)
                 .cursorCommentPaginationResponse(cursorCommentPaginationResponse)
                 .build();
 
@@ -169,7 +177,7 @@ public class HeavenControllerTest {
         mockMvc.perform(get("/heavenLetters/{letterSeq}", letterSeq))
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.code").value(200))
-                .andExpect(jsonPath("$.message").value("게시물 상세 조회 성공"))
+                .andExpect(jsonPath("$.message").value("게시물 조회 성공"))
                 .andExpect(jsonPath("$.data.letterSeq").value(1))
                 .andExpect(jsonPath("$.data.cursorCommentPaginationResponse.content[0].commentSeq").value(1))
                 .andExpect(jsonPath("$.data.cursorCommentPaginationResponse.commentNextCursor", nullValue()))

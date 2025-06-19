@@ -25,7 +25,7 @@ public class HeavenComment {
     private int commentSeq;
 
     /* 편지 일련번호 */
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "letter_seq")
     private Heaven heaven;
 
@@ -95,5 +95,10 @@ public class HeavenComment {
     public void updateHeavenComment(HeavenCommentUpdateRequest heavenCommentUpdateRequest) {
         commentWriter = heavenCommentUpdateRequest.getCommentWriter();
         contents = heavenCommentUpdateRequest.getContents();
+    }
+
+    /* 댓글 소프트 삭제 */
+    public void softDelete() {
+        this.delFlag = "Y";
     }
 }

@@ -32,7 +32,7 @@ public class HeavenController {
     ) {
         CursorPaginationResponse<HeavenResponse, Integer> heavenList = heavenService.getHeavenList(cursor, size);
 
-        String message = messageSourceAccessor.getMessage("heaven.list.get.success");
+        String message = messageSourceAccessor.getMessage("board.list.read.success");
 
         return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, message, heavenList));
     }
@@ -47,7 +47,7 @@ public class HeavenController {
     ) {
         CursorPaginationResponse<HeavenResponse, Integer> heavenList = heavenService.getHeavenListSearchResult(type, keyWord, cursor, size);
 
-        String message = messageSourceAccessor.getMessage("heaven.list.search.success");
+        String message = messageSourceAccessor.getMessage("board.search.read.success");
 
         return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, message, heavenList));
     }
@@ -59,7 +59,7 @@ public class HeavenController {
     ) {
         HeavenDetailResponse heavenDetailResponse = heavenService.getHeavenDetail(letterSeq);
 
-        String message = messageSourceAccessor.getMessage("heaven.detail.get.success");
+        String message = messageSourceAccessor.getMessage("board.read.success");
 
         return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, message, heavenDetailResponse));
     }
@@ -73,7 +73,7 @@ public class HeavenController {
     ) {
         CursorPaginationResponse<MemorialHeavenResponse, Integer> memorialHeavenList = heavenService.getMemorialHeavenList(donateSeq, cursor, size);
 
-        String message = messageSourceAccessor.getMessage("heaven.list.get.success");
+        String message = messageSourceAccessor.getMessage("board.list.read.success");
 
         return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, message, memorialHeavenList));
     }
@@ -85,7 +85,7 @@ public class HeavenController {
     ) {
         heavenService.createHeaven(heavenCreateRequest);
 
-        String message = messageSourceAccessor.getMessage("heaven.create.success");
+        String message = messageSourceAccessor.getMessage("board.create.success");
 
         return ResponseEntity.ok(ApiResponse.success(HttpStatus.CREATED, message));
     }
@@ -98,7 +98,7 @@ public class HeavenController {
     ) {
         heavenService.verifyHeavenPasscode(letterSeq, heavenVerifyRequest.getLetterPasscode());
 
-        String message = messageSourceAccessor.getMessage("heaven.verify.passcode.success");
+        String message = messageSourceAccessor.getMessage("board.verify.success");
 
         return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, message));
     }
@@ -111,7 +111,7 @@ public class HeavenController {
     ) {
         heavenService.updateHeaven(letterSeq, heavenUpdateRequest);
 
-        String message = messageSourceAccessor.getMessage("heaven.update.success");
+        String message = messageSourceAccessor.getMessage("board.update.success");
 
         return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, message));
     }
@@ -124,7 +124,7 @@ public class HeavenController {
     ) {
         heavenService.deleteHeaven(letterSeq, heavenVerifyRequest.getLetterPasscode());
 
-        String message = messageSourceAccessor.getMessage("heaven.delete.success");
+        String message = messageSourceAccessor.getMessage("board.delete.success");
 
         return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, message));
     }

@@ -6,7 +6,6 @@ import kodanect.domain.donation.dto.request.DonationStoryModifyRequestDto;
 import kodanect.domain.donation.dto.request.VerifyStoryPasscodeDto;
 import kodanect.domain.donation.dto.response.DonationStoryDetailDto;
 import kodanect.domain.donation.dto.response.DonationStoryListDto;
-import kodanect.domain.donation.dto.response.DonationStoryWriteFormDto;
 
 public interface DonationService {
 
@@ -17,8 +16,6 @@ public interface DonationService {
     // 기증 스토리 상세 조회
     DonationStoryDetailDto findDonationStoryWithStoryId(Long storySeq);
 
-    // 스토리 작성 폼 데이터 로드
-    DonationStoryWriteFormDto loadDonationStoryFormData();
 
     // 기증 스토리 등록
     void createDonationStory(DonationStoryCreateRequestDto requestDto);

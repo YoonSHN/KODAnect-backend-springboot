@@ -10,6 +10,7 @@ import javax.validation.constraints.NotBlank;
 @NoArgsConstructor
 @Builder
 @Setter
+@ToString
 public class DonationStoryCommentModifyRequestDto {
     @NotBlank(message="{donation.error.required.writer}")
     private String commentWriter;

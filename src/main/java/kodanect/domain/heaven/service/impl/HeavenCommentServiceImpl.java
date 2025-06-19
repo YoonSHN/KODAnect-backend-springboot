@@ -83,6 +83,7 @@ public class HeavenCommentServiceImpl implements HeavenCommentService {
 
         heavenComment.verifyPasscode(heavenCommentVerifyRequest.getCommentPasscode());
 
-        heavenCommentRepository.delete(heavenComment);
+        /* 댓글 소프트 삭제 */
+        heavenComment.softDelete();
     }
 }

@@ -1,7 +1,6 @@
-package kodanect.domain.heaven.dto.response;
+package kodanect.domain.heaven.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import kodanect.common.util.CursorIdentifiable;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -10,10 +9,13 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Getter @ToString
 @Builder
-public class HeavenResponse implements CursorIdentifiable<Integer> {
+public class HeavenDto {
 
     /* 편지 일련번호 */
     private int letterSeq;
+
+    /* 기증자 일련번호 */
+    private Integer donateSeq;
 
     /* 편지 제목 */
     private String letterTitle;
@@ -35,16 +37,17 @@ public class HeavenResponse implements CursorIdentifiable<Integer> {
     /* 조회 건수 */
     private Integer readCount;
 
+    /* 편지 내용 */
+    private String letterContents;
+
+    /* 이미지 파일 명 */
+    @JsonIgnore
+    private String fileName;
+
+    /* 이미지 원본 파일 명 */
+    @JsonIgnore
+    private String orgFileName;
+
     /* 생성 일시 */
     private LocalDateTime writeTime;
-
-    /* 생성 일시 형식화 */
-    public String getWriteTime() {
-        return writeTime.toLocalDate().toString();
-    }
-
-    @Override
-    public Integer getCursorId() {
-        return letterSeq;
-    }
 }

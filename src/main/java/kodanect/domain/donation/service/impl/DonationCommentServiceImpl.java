@@ -1,5 +1,6 @@
 package kodanect.domain.donation.service.impl;
 
+import kodanect.common.exception.config.SecureLogger;
 import kodanect.common.response.CursorPaginationResponse;
 import kodanect.common.util.CursorFormatter;
 import kodanect.common.util.MessageResolver;
@@ -25,6 +26,10 @@ import java.util.List;
 @RequiredArgsConstructor
 public class DonationCommentServiceImpl implements DonationCommentService {
 
+    // 로거 선언
+    private static final SecureLogger logger = SecureLogger.getLogger(DonationCommentServiceImpl.class);
+
+
     private static final String DONATION_NOT_FOUND_MESSAGE = "donation.error.notfound";
     private static final String DONATION_COMMENT_ERROR_NOTFOUND = "donation.comment.error.notfound";
 
@@ -39,9 +44,12 @@ public class DonationCommentServiceImpl implements DonationCommentService {
      */
     @Override
     public CursorPaginationResponse<DonationStoryCommentDto, Long> findCommentsWithCursor(Long storySeq, Long cursor, int size) {
+        logger.debug(">>> findCommentWithCursor() 호출");
+        logger.info("댓글 더보기 조회 - storySeq : {}, cursor : {}, size ; {} ", storySeq, cursor, size);
         Pageable pageable = PageRequest.of(0, size + 1);
 
         List<DonationStoryComment> commentEntities = commentRepository.findByCursorEntity(storySeq, cursor, pageable);
+        logger.debug("조회된 댓글 수: {}", commentEntities.size());
 
         //  Entity → DTO 변환 (정적 팩토리 메서드 사용)
         List<DonationStoryCommentDto> comments = commentEntities.stream()
@@ -49,6 +57,7 @@ public class DonationCommentServiceImpl implements DonationCommentService {
                 .toList();
 
         long totalCount = commentRepository.countAllByStorySeq(storySeq);
+        logger.debug("전체 댓글 수 : {}", totalCount);
         return CursorFormatter.cursorFormat(comments, size, totalCount);
     }
 
@@ -58,10 +67,10 @@ public class DonationCommentServiceImpl implements DonationCommentService {
      */
     public void createDonationStoryComment(Long storySeq, DonationCommentCreateRequestDto requestDto)
             throws NotFoundException, BadRequestException, DonationCommentNotFoundException {
-
+        logger.debug(">>> createDonationStoryComment() 호출");
+        logger.info("댓글 등록 - storySeq : {}, requestDto : {}" , storySeq, requestDto);
         DonationStory story = storyRepository.findById(storySeq)
                 .orElseThrow(() -> new DonationNotFoundException(messageResolver.get(DONATION_NOT_FOUND_MESSAGE)));
-
         // 작성자 필수 검증
         if (requestDto.getCommentWriter() == null || requestDto.getCommentWriter().isBlank()) {
             throw new BadRequestException(messageResolver.get("donation.error.required.writer"));
@@ -86,6 +95,7 @@ public class DonationCommentServiceImpl implements DonationCommentService {
 
         story.addComment(comment); // 연관관계 편의 메서드
         commentRepository.save(comment);
+        logger.info("댓글 등록 - comment : {}", comment);
     }
 
     /**
@@ -94,6 +104,8 @@ public class DonationCommentServiceImpl implements DonationCommentService {
 
     @Override
     public void verifyPasswordWithPassword(Long storySeq, Long commentSeq, VerifyCommentPasscodeDto commentPassCodeDto) {
+        logger.debug(">>> verifyPasswordWithPassword() 호출");
+        logger.info("댓글 수정 인증 - storySeq : {}, commentSeq : {}",storySeq, commentSeq);
         DonationStory story = storyRepository.findById(storySeq)
                 .orElseThrow(() -> new DonationNotFoundException(messageResolver.get(DONATION_NOT_FOUND_MESSAGE)));
 
@@ -110,6 +122,8 @@ public class DonationCommentServiceImpl implements DonationCommentService {
         if(!commentPassCodeDto.getCommentPasscode().equals(comment.getCommentPasscode())){
             throw new PasscodeMismatchException("donation.error.passcode.mismatch");
         }
+
+        logger.info("댓글 수정 인증 성공 - commentSeq: {}", commentSeq);
     }
 
 
@@ -117,6 +131,8 @@ public class DonationCommentServiceImpl implements DonationCommentService {
      * 댓글 수정
      */
     public void updateDonationComment(Long storySeq, Long commentSeq, DonationStoryCommentModifyRequestDto requestDto) {
+        logger.debug(">>> updateDonationComment() 호출");
+        logger.info("댓글 수정 - storySeq : {}, commentSeq : {}, requestDto : {}",storySeq, commentSeq, requestDto);
         DonationStory story = storyRepository.findById(storySeq)
                 .orElseThrow(() -> new DonationNotFoundException(messageResolver.get("donation.error.delete.not_found")));
         DonationStoryComment storyComment = commentRepository.findById(commentSeq)
@@ -128,12 +144,15 @@ public class DonationCommentServiceImpl implements DonationCommentService {
         }
         // 댓글 내용 수정
         storyComment.modifyDonationStoryComment(requestDto);
+        logger.info("댓글 수정 완료 : {}", requestDto);
     }
 
     /**
      * 댓글 삭제
      */
     public void deleteDonationComment(Long storySeq, Long commentSeq, VerifyCommentPasscodeDto commentDto) {
+        logger.debug(">>> deleteDonationComment() 호출");
+        logger.info("댓글 삭제 - storySeq : {}, commentSeq : {}", storySeq, commentSeq);
         DonationStory story = storyRepository.findById(storySeq)
                 .orElseThrow(() -> new DonationNotFoundException(messageResolver.get("donation.error.delete.not_found")));
         DonationStoryComment storyComment = commentRepository.findById(commentSeq)
@@ -151,6 +170,7 @@ public class DonationCommentServiceImpl implements DonationCommentService {
         }
 
         commentRepository.delete(storyComment);
+        logger.info("댓글 삭제 완료 - comment : {}", storyComment);
     }
 
     /**

@@ -1,4 +1,4 @@
-package kodanect.domain.controller;
+package kodanect.domain.donation.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import kodanect.KodanectBootApplication;
@@ -124,7 +124,7 @@ class DonationControllerTest {
 
         mockMvc.perform(get("/donationLetters/search")
                         .param("type", "제목")
-                        .param("keyword", "키워드")
+                        .param("keyWord", "키워드")
                         .param("cursor", "0")
                         .param("size", "5")
                         .accept(MediaType.APPLICATION_JSON))
@@ -149,7 +149,7 @@ class DonationControllerTest {
 
         mockMvc.perform(get("/donationLetters/search")
                         .param("type", "잘못된")
-                        .param("keyword", "키워드")
+                        .param("keyWord", "키워드")
                         .param("cursor", "0")
                         .param("size", "5")
                         .accept(MediaType.APPLICATION_JSON))
@@ -157,22 +157,9 @@ class DonationControllerTest {
                 .andExpect(jsonPath("$.data.content").isEmpty());
     }
 
-    // 3) GET /donationLetters/new – 작성 폼 데이터
-    @Test
-    @DisplayName("GET /donationLetters/new - 성공")
-    void getDonationWriteForm_success() throws Exception {
-        DonationStoryWriteFormDto formDto = DonationStoryWriteFormDto.builder()
-                .areaOptions(List.of(AreaCode.AREA100, AreaCode.AREA200))
-                .build();
-        given(donationService.loadDonationStoryFormData()).willReturn(formDto);
 
-        mockMvc.perform(get("/donationLetters/new")
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.areaOptions.length()").value(2));
-    }
 
-    // 4) POST /donationLetters – 등록
+    // 3) POST /donationLetters – 등록
     @Test
     @DisplayName("POST /donationLetters - 성공 (201)")
     void createStory_success() throws Exception {
@@ -193,7 +180,7 @@ class DonationControllerTest {
                 .andExpect(jsonPath("$.message").value("등록 성공"));
     }
 
-    // 5) GET /donationLetters/{storySeq} – 상세 조회
+    // 4) GET /donationLetters/{storySeq} – 상세 조회
     @Test
     @DisplayName("GET /donationLetters/{storySeq} - 성공")
     void getDonationStoryDetail_success() throws Exception {
@@ -277,12 +264,7 @@ class DonationControllerTest {
     @Test
     @DisplayName("PATCH /donationLetters/{storySeq} - 성공")
     void modifyStory_success() throws Exception {
-        DonationStoryModifyRequestDto reqDto = DonationStoryModifyRequestDto.builder()
-                .areaCode(AreaCode.AREA100)
-                .storyTitle("수정제목")
-                .storyWriter("수정작가")
-                .storyContents("수정본문")
-                .build();
+
         given(messageSourceAccessor.getMessage("donation.update.success"))
                 .willReturn("수정 성공");
         doNothing().when(donationService).updateDonationStory(eq(1L), any(DonationStoryModifyRequestDto.class));

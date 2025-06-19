@@ -30,7 +30,7 @@ public class HeavenCommentController {
     ) {
         CursorCommentPaginationResponse<HeavenCommentResponse, Integer> commentList = heavenCommentService.getMoreCommentList(letterSeq, cursor, size);
 
-        String message = messageSourceAccessor.getMessage("heaven.comment.read.success");
+        String message = messageSourceAccessor.getMessage("board.comment.read.success");
 
         return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, message, commentList));
     }
@@ -43,7 +43,7 @@ public class HeavenCommentController {
     ) {
         heavenCommentService.createHeavenComment(letterSeq, heavenCommentCreateRequest);
 
-        String message = messageSourceAccessor.getMessage("heaven.comment.create.success");
+        String message = messageSourceAccessor.getMessage("board.comment.create.success");
 
         return ResponseEntity.ok(ApiResponse.success(HttpStatus.CREATED, message));
     }
@@ -57,7 +57,7 @@ public class HeavenCommentController {
     ) {
         heavenCommentService.verifyHeavenCommentPasscode(letterSeq, commentSeq, heavenCommentVerifyRequest);
 
-        String message = messageSourceAccessor.getMessage("heaven.comment.verify.passcode.success");
+        String message = messageSourceAccessor.getMessage("board.comment.verify.success");
 
         return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, message));
     }
@@ -71,7 +71,7 @@ public class HeavenCommentController {
     ) {
         heavenCommentService.updateHeavenComment(letterSeq, commentSeq, heavenCommentUpdateRequest);
 
-        String message = messageSourceAccessor.getMessage("heaven.comment.update.success");
+        String message = messageSourceAccessor.getMessage("board.comment.update.success");
 
         return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, message));
     }
@@ -85,7 +85,7 @@ public class HeavenCommentController {
     ) {
         heavenCommentService.deleteHeavenComment(letterSeq, commentSeq, heavenCommentVerifyRequest);
 
-        String message = messageSourceAccessor.getMessage("heaven.comment.delete.success");
+        String message = messageSourceAccessor.getMessage("board.comment.delete.success");
 
         return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, message));
     }
