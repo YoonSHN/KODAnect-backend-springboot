@@ -72,7 +72,7 @@ public class ActionLogMdcAspect {
             String controllerClassName = joinPoint.getSignature().getDeclaringTypeName();
             String controllerSimpleName = joinPoint.getSignature().getDeclaringType().getSimpleName();
             String methodName = joinPoint.getSignature().getName();
-            Map<String, Object> params = extractParameters(joinPoint);
+            Map<String, String> params = extractParameters(joinPoint);
             String parametersJson = objectMapper.writeValueAsString(params);
             String userAgentString = request.getHeader("User-Agent");
             UserAgent userAgent = UserAgent.parseUserAgentString(userAgentString);
@@ -126,23 +126,31 @@ public class ActionLogMdcAspect {
 
     /**
      * AOP 조인 포인트로부터 메서드 파라미터 이름과 값을 추출합니다.
-     * HttpServletRequest 타입의 파라미터는 제외됩니다.
+     *
+     * - HttpServletRequest 타입의 파라미터는 제외되지 않고 toString 처리됩니다.
+     * - 각 파라미터 값은 문자열로 변환되며, null 값은 "null", toString 실패 시 "NON_STRINGIFIABLE"로 대체됩니다.
      *
      * @param joinPoint 현재 실행 중인 컨트롤러 메서드 조인 포인트
-     * @return 파라미터 이름과 값의 Map
+     * @return 파라미터 이름과 문자열 값의 Map
      */
-    private Map<String, Object> extractParameters(ProceedingJoinPoint joinPoint) {
-        Map<String, Object> paramMap = new HashMap<>();
+    private Map<String, String> extractParameters(ProceedingJoinPoint joinPoint) {
+        Map<String, String> paramMap = new HashMap<>();
         MethodSignature signature = (MethodSignature) joinPoint.getSignature();
         String[] names = signature.getParameterNames();
         Object[] values = joinPoint.getArgs();
 
         for (int i = 0; i < names.length; i++) {
             Object value = values[i];
-            if (value instanceof HttpServletRequest) {
-                continue;
+
+            String stringValue;
+
+            try {
+                stringValue = (value != null) ? value.toString() : "null";
+            } catch (Exception e) {
+                stringValue = "NON_STRINGIFIABLE";
             }
-            paramMap.put(names[i], value);
+
+            paramMap.put(names[i], stringValue);
         }
         return paramMap;
     }
