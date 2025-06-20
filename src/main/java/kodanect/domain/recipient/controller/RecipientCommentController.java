@@ -12,7 +12,6 @@ import kodanect.domain.recipient.exception.RecipientInvalidPasscodeException;
 import kodanect.domain.recipient.service.RecipientCommentService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -99,17 +98,9 @@ public class RecipientCommentController {
     @PutMapping("/{letterSeq}/comments/{commentSeq}")
     public ResponseEntity<ApiResponse<Object>> updateComment(@PathVariable("letterSeq") Integer letterSeq,
                                                         @PathVariable("commentSeq") Integer commentSeq,
-                                                        @Valid @RequestBody RecipientCommentUpdateRequestDto requestDto,
-                                                        BindingResult bindingResult // @Valid 유효성 검사 결과
-    ) {
+                                                        @Valid @RequestBody RecipientCommentUpdateRequestDto requestDto)
+    {
         logger.info("댓글 수정 요청 시작: commentSeq={}", commentSeq);
-
-        // @Valid 유효성 검사 실패 시
-        if (bindingResult.hasErrors()) {
-            String errorMessage = bindingResult.getAllErrors().get(0).getDefaultMessage();
-            // 유효성 검사 실패 시에도 사용자가 입력한 데이터를 반환
-            return ResponseEntity.badRequest().body(ApiResponse.fail(HttpStatus.BAD_REQUEST, errorMessage, requestDto));
-        }
 
         try {
             recipientCommentService.updateComment(commentSeq, requestDto);

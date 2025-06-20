@@ -11,11 +11,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.support.MessageSourceAccessor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.WebDataBinder;
+import org.springframework.transaction.annotation.Transactional;
+
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import java.beans.PropertyEditorSupport;
+
 import java.util.Map;
 
 @RestController
@@ -28,6 +29,7 @@ public class  DonationController {
     private final DonationService donationService;
     private final DonationCommentService donationCommentService;
     private final MessageSourceAccessor messageSourceAccessor;
+
 
     /**
      * 스토리 전체 목록 조회 (더보기 방식 페이징 포함)
@@ -76,6 +78,7 @@ public class  DonationController {
     /**
      * 스토리 상세 조회
      */
+    @Transactional
     @GetMapping("/{storySeq}")
     public ResponseEntity<ApiResponse<DonationStoryDetailDto>> getDonationStoryDetail(@PathVariable Long storySeq) {
         DonationStoryDetailDto detailDto = donationService.findDonationStoryWithStoryId(storySeq);
@@ -192,6 +195,7 @@ public class  DonationController {
     /**
      * 스토리 댓글 삭제
      */
+    @Transactional
     @DeleteMapping("/{storySeq}/comments/{commentSeq}")
     public ResponseEntity<ApiResponse<Void>> deleteComment(
             @PathVariable Long storySeq,
@@ -203,17 +207,5 @@ public class  DonationController {
         return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK,message));
     }
 
-    /**
-     * 문자열로 넘어온 권역 코드를 enum 타입인 AreaCode로 변환해주는 바인더 등록 메서드
-     * - 스프링 MVC가 문자열을 AreaCode 타입으로 자동 변환할 수 있게 도와줌
-     */
-    @InitBinder
-    public void initBinder(WebDataBinder binder) {
-        binder.registerCustomEditor(AreaCode.class, new PropertyEditorSupport() {
-            @Override
-            public void setAsText(String text) {
-                setValue(AreaCode.valueOf(text));
-            }
-        });
-    }
+
 }

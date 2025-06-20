@@ -30,8 +30,6 @@ import java.util.*;
 @RequiredArgsConstructor
 public class ActionLogFlusher {
 
-    private static final int MAX_LOG_TEXT_LENGTH = 3000;
-
     private final FrontendLogBuffer frontendBuffer;
     private final BackendLogBuffer backendBuffer;
     private final SystemInfoBuffer systemInfoBuffer;
@@ -101,10 +99,6 @@ public class ActionLogFlusher {
 
             try {
                 String logText = objectMapper.writeValueAsString(context);
-
-                if (logText.length() > MAX_LOG_TEXT_LENGTH) {
-                    logText = logText.substring(0, MAX_LOG_TEXT_LENGTH);
-                }
 
                 String urlName = extractUrlName(feList, beList);
                 String ipAddr = MdcContext.getIpAddress();

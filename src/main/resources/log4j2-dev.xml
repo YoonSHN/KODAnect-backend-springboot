@@ -26,6 +26,16 @@
             <AppenderRef ref="console"/>
         </Logger>
 
+        <!-- Spring Bean 생성 관련 Support 클래스 로그 (불필요한 DEBUG 로그 억제) -->
+        <Logger name="org.springframework.beans.factory.support" level="ERROR" additivity="false">
+            <AppenderRef ref="console"/>
+        </Logger>
+
+        <!-- Bean 후처리기 등록 시 발생하는 불필요한 Spring DEBUG 로그 억제 -->
+        <Logger name="org.springframework.context.support.PostProcessorRegistrationDelegate" level="ERROR" additivity="false">
+            <AppenderRef ref="console"/>
+        </Logger>
+
         <!-- SQL 실행 시간 측정 로그 -->
         <Logger name="jdbc.sqltiming" level="DEBUG" additivity="false">
             <AppenderRef ref="console"/>

@@ -49,7 +49,7 @@ public class ActionLog {
     /**
      * 로그 내용
      */
-    @Column(name = "log_text", length = 3000)
+    @Column(name = "log_text", columnDefinition = "TEXT")
     private String logText;
 
     /**

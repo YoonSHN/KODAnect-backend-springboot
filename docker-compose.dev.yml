@@ -19,6 +19,10 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
       SENTRY_AUTH_TOKEN: ${SENTRY_AUTH_TOKEN}
       SENTRY_DSN: ${SENTRY_DSN}
+      JAVA_TOOL_OPTIONS: >
+        -Xms256m -Xmx512m
+        -XX:+UseG1GC
+        -XX:MaxMetaspaceSize=128m
     volumes:
       - ./uploads:/app/uploads
       - ./files:/app/files

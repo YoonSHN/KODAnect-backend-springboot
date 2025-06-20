@@ -63,7 +63,6 @@ public class DonationStoryComment {
     public void modifyDonationStoryComment(DonationStoryCommentModifyRequestDto requestDto) {
         this.commentWriter = requestDto.getCommentWriter();
         this.contents = requestDto.getContents();
-        this.commentPasscode = requestDto.getCommentPasscode();
     }
     @PrePersist
     protected void onCreate() {

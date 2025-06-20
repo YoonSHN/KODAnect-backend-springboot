@@ -9,7 +9,6 @@ import kodanect.domain.recipient.service.RecipientService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -134,17 +133,9 @@ public class RecipientController {
             */
     @PatchMapping(value = "/{letterSeq}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<Object>> edit(@PathVariable("letterSeq") Integer letterSeq,
-                                               @ModelAttribute @Valid RecipientRequestDto recipientRequestDto,
-                                               BindingResult bindingResult // @Valid 에 대한 에러를 처리하기 위함
-    ) {
+                                               @ModelAttribute @Valid RecipientRequestDto recipientRequestDto)
+    {
         logger.info("게시물 수정 요청: letterSeq={}, title={}", letterSeq, recipientRequestDto.getLetterTitle());
-
-        // @Valid 유효성 검사 실패 시
-        if (bindingResult.hasErrors()) {
-            String errorMessage = bindingResult.getAllErrors().get(0).getDefaultMessage();
-            // 유효성 검사 실패 시에도 사용자가 입력한 데이터를 반환
-            return ResponseEntity.badRequest().body(ApiResponse.fail(HttpStatus.BAD_REQUEST, errorMessage, recipientRequestDto));
-        }
 
         try {
             recipientService.updateRecipient(

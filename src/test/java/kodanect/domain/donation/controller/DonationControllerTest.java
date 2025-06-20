@@ -406,7 +406,6 @@ class DonationControllerTest {
         DonationStoryCommentModifyRequestDto req = DonationStoryCommentModifyRequestDto.builder()
                 .commentWriter("X")
                 .contents("수정댓글")
-                .commentPasscode("passcode!")
                 .build();
         given(messageSourceAccessor.getMessage("donation.comment.update.success"))
                 .willReturn("댓글 수정 성공");

@@ -22,7 +22,6 @@ import org.jsoup.select.Elements;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -143,7 +142,6 @@ public class DonationServiceImpl implements DonationService {
     }
 
     /* 스토리 상세 조회 */
-    @Transactional
     @Override
     public DonationStoryDetailDto findDonationStoryWithStoryId(Long storySeq) {
         logger.debug(">>> findDonationStoryWithStoryId() 호출");

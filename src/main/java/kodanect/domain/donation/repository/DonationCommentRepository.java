@@ -43,6 +43,14 @@ public interface DonationCommentRepository extends JpaRepository<DonationStoryCo
             Pageable pageable
     );
 
+    @Query("""
+        SELECT COUNT(d)
+        FROM DonationStoryComment d
+        WHERE d.commentSeq = :commentSeq
+          AND d.story.storySeq = :storySeq
+        """)
+    long existsCommentInStory(@Param("storySeq") Long storySeq, @Param("commentSeq") Long commentSeq);
+
     @Query(value =  "SELECT COUNT(*) FROM tb25_421_donation_story_comment WHERE story_seq = :storySeq ", nativeQuery=true)
     long countAllByStorySeq(@Param("storySeq") Long storySeq);
 

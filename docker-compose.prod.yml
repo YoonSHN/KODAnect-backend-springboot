@@ -17,11 +17,19 @@ services:
       SENTRY_DSN: ${SENTRY_DSN}
       SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT}
       IMAGE_TAG: ${IMAGE_TAG}
+      JAVA_TOOL_OPTIONS: >
+        -Xms256m -Xmx512m
+        -XX:+UseG1GC
+        -XX:MaxMetaspaceSize=128m
+        -Xlog:gc*:file=/app/gc.log:time,uptime,tags
+    deploy:
+      resources:
+        limits:
+          memory: 700m
     ports:
       - "8080:8080"
     volumes:
       - /home/app/files:/app/files
       - /home/app/uploads:/app/uploads
+      - /var/log/kodanect:/app/logs
     network_mode: host
-
-

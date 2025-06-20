@@ -246,8 +246,11 @@ public class DonationCommentServiceImplTest {
         DonationStoryComment comment = DonationStoryComment.builder()
                 .commentSeq(commentSeq)
                 .story(story)
-                .commentPasscode("Correct123") // ✅ 실제 저장된 비밀번호
+                .commentPasscode("Correct123") //
                 .build();
+
+        story.getComments().add(comment);
+        comment.setStory(story);
 
         given(storyRepository.findById(storySeq)).willReturn(Optional.of(story));
         given(commentRepository.findById(commentSeq)).willReturn(Optional.of(comment));
@@ -271,11 +274,15 @@ public class DonationCommentServiceImplTest {
                 .build();
         when(storyRepository.findById(storySeq)).thenReturn(Optional.of(story));
         when(commentRepository.findById(commentSeq)).thenReturn(Optional.of(comment));
+        when(commentRepository.existsCommentInStory(storySeq, commentSeq)).thenReturn(1L);
 
         DonationStoryCommentModifyRequestDto dto = DonationStoryCommentModifyRequestDto.builder()
                 .commentWriter("new")
                 .contents("new content")
                 .build();
+
+        comment.setStory(story);
+        story.getComments().add(comment);
 
         service.updateDonationComment(storySeq, commentSeq, dto);
 
@@ -286,7 +293,7 @@ public class DonationCommentServiceImplTest {
     @Test(expected = DonationNotFoundException.class)
     public void updateDonationComment_스토리_없음_예외() {
         when(storyRepository.findById(anyLong())).thenReturn(Optional.empty());
-        service.updateDonationComment(1L, 2L, new DonationStoryCommentModifyRequestDto("w","c","p"));
+        service.updateDonationComment(1L, 2L, new DonationStoryCommentModifyRequestDto("w","c"));
     }
 
     @Test(expected = DonationCommentNotFoundException.class)
@@ -294,10 +301,10 @@ public class DonationCommentServiceImplTest {
         Long storySeq = 1L;
         when(storyRepository.findById(storySeq)).thenReturn(Optional.of(DonationStory.builder().storySeq(storySeq).build()));
         when(commentRepository.findById(anyLong())).thenReturn(Optional.empty());
-        service.updateDonationComment(storySeq, 99L, new DonationStoryCommentModifyRequestDto("w","c","p"));
+        service.updateDonationComment(storySeq, 99L, new DonationStoryCommentModifyRequestDto("w","c"));
     }
 
-    @Test(expected = BadRequestException.class)
+    @Test(expected = PasscodeMismatchException.class)
     public void updateDonationComment_작성자_누락_예외() {
         Long storySeq = 1L, commentSeq = 2L;
         DonationStory story = DonationStory.builder().storySeq(storySeq).build();
@@ -332,6 +339,7 @@ public class DonationCommentServiceImplTest {
 
         when(storyRepository.findById(storySeq)).thenReturn(Optional.of(story));
         when(commentRepository.findById(commentSeq)).thenReturn(Optional.of(comment));
+        when(commentRepository.existsCommentInStory(storySeq, commentSeq)).thenReturn(1L);
 
         service.deleteDonationComment(storySeq, commentSeq,
                 new VerifyCommentPasscodeDto("Abcd1234"));
@@ -352,7 +360,7 @@ public class DonationCommentServiceImplTest {
         service.deleteDonationComment(1L, 2L, new VerifyCommentPasscodeDto("p"));
     }
 
-    @Test(expected = NotFoundException.class)
+    @Test(expected = PasscodeMismatchException.class)
     public void deleteDonationComment_댓글_없음_예외() {
         DonationStory story = DonationStory.builder().storySeq(1L).build();
         when(storyRepository.findById(1L)).thenReturn(Optional.of(story));
@@ -371,9 +379,12 @@ public class DonationCommentServiceImplTest {
                 .commentSeq(commentSeq)
                 .commentPasscode("Abcd1234")
                 .build();
+
+        comment.setStory(story);
+        story.getComments().add(comment);
+
         when(storyRepository.findById(storySeq)).thenReturn(Optional.of(story));
         when(commentRepository.findById(commentSeq)).thenReturn(Optional.of(comment));
-        when(messageResolver.get("donation.error.delete.password_mismatch")).thenReturn("Mismatch");
 
         service.deleteDonationComment(storySeq, commentSeq, new VerifyCommentPasscodeDto("WrongPass"));
     }

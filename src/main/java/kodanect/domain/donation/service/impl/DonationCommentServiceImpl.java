@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -71,7 +72,6 @@ public class DonationCommentServiceImpl implements DonationCommentService {
         logger.info("댓글 등록 - storySeq : {}, requestDto : {}" , storySeq, requestDto);
         DonationStory story = storyRepository.findById(storySeq)
                 .orElseThrow(() -> new DonationNotFoundException(messageResolver.get(DONATION_NOT_FOUND_MESSAGE)));
-
         // 작성자 필수 검증
         if (requestDto.getCommentWriter() == null || requestDto.getCommentWriter().isBlank()) {
             throw new BadRequestException(messageResolver.get("donation.error.required.writer"));
@@ -139,9 +139,12 @@ public class DonationCommentServiceImpl implements DonationCommentService {
         DonationStoryComment storyComment = commentRepository.findById(commentSeq)
                 .orElseThrow(() -> new DonationCommentNotFoundException(messageResolver.get(DONATION_COMMENT_ERROR_NOTFOUND)));
 
+        if (commentRepository.existsCommentInStory(storySeq, commentSeq) == 0) {
+            throw new PasscodeMismatchException("error.comment.story.isNotMatch");
+        }
         // 작성자 검증
         if (requestDto.getCommentWriter() == null || requestDto.getCommentWriter().isBlank()) {
-            throw new BadRequestException(messageResolver.get("donation.error.required.writer"));
+            throw new PasscodeMismatchException(messageResolver.get("donation.error.required.writer"));
         }
         // 댓글 내용 수정
         storyComment.modifyDonationStoryComment(requestDto);
@@ -151,13 +154,18 @@ public class DonationCommentServiceImpl implements DonationCommentService {
     /**
      * 댓글 삭제
      */
+    @Transactional
     public void deleteDonationComment(Long storySeq, Long commentSeq, VerifyCommentPasscodeDto commentDto) {
         logger.debug(">>> deleteDonationComment() 호출");
         logger.info("댓글 삭제 - storySeq : {}, commentSeq : {}", storySeq, commentSeq);
         DonationStory story = storyRepository.findById(storySeq)
                 .orElseThrow(() -> new DonationNotFoundException(messageResolver.get("donation.error.delete.not_found")));
         DonationStoryComment storyComment = commentRepository.findById(commentSeq)
-                .orElseThrow(() -> new NotFoundException(messageResolver.get(DONATION_COMMENT_ERROR_NOTFOUND)));
+                .orElseThrow(() -> new PasscodeMismatchException(messageResolver.get(DONATION_COMMENT_ERROR_NOTFOUND)));
+
+        if (commentRepository.existsCommentInStory(storySeq, commentSeq) == 0) {
+            throw new PasscodeMismatchException("error.comment.story.isNotMatch");
+        }
 
         // 비밀번호 일치 여부 확인
         if (!commentDto.getCommentPasscode().equals(storyComment.getCommentPasscode())) {
