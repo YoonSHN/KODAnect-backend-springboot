@@ -39,11 +39,6 @@ public class BackendLogDto {
     private String parameters;
 
     /**
-     * HTTP 응답 상태 코드
-     */
-    private int httpStatus;
-
-    /**
      * 로그 기록 시각
      */
     private String timestamp;

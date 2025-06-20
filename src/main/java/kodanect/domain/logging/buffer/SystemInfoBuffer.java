@@ -8,26 +8,30 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * 세션 ID를 기준으로 사용자 시스템 정보를 저장하는 버퍼 컴포넌트입니다.
+ * 사용자 시스템 정보를 세션 ID를 기준으로 버퍼링하는 컴포넌트입니다.
  *
- * 프론트엔드 로그와 백엔드 로그가 수집되는 동안 사용자의 시스템 정보 ({@link SystemInfoDto})를 세션 단위로 임시 저장합니다.
- * 동시성 환경에서도 안전하게 접근할 수 있도록 {@link ConcurrentHashMap}을 사용합니다.
- * </p>
+ * - 버퍼 구조: {@code Map<String, SystemInfoDto>}
+ * - 동시성 안전을 위해 {@link ConcurrentHashMap} 사용합니다.
+ * - 동일 세션 ID에 대해 한 번만 저장되며, 이후 덮어쓰기 방지합니다.
+ * - 백엔드 로그와 함께 시스템 정보를 연결하기 위한 목적입니다.
  */
 @Component
 public class SystemInfoBuffer {
 
+    private static final String UNKNOWN_SESSION_ID = "Unknown";
     private final Map<String, SystemInfoDto> buffer = new ConcurrentHashMap<>();
 
     /**
-     * 시스템 정보를 세션 ID 기준으로 저장합니다.
-     * 이미 해당 세션 ID에 정보가 존재할 경우 기존 값을 유지합니다.
+     * 시스템 정보를 버퍼에 추가합니다.
      *
-     * @param sessionId 세션 ID
-     * @param systemInfo 사용자 시스템 정보
+     * 세션 ID 단위로 시스템 정보를 누적 저장합니다.
+     * 이미 해당 세션 ID에 정보가 존재할 경우 기존 값을 유지하며 덮어쓰지 않습니다.
+     *
+     * @param sessionId   사용자 세션 ID
+     * @param systemInfo  시스템 정보 객체
      */
     public void add(String sessionId, SystemInfoDto systemInfo) {
-        if(sessionId == null || sessionId.isBlank() || systemInfo == null) {
+        if (UNKNOWN_SESSION_ID.equals(sessionId) || systemInfo == null) {
             return;
         }
 
@@ -38,7 +42,7 @@ public class SystemInfoBuffer {
      * 세션 ID에 해당하는 시스템 정보를 조회합니다.
      *
      * @param sessionId 조회 대상 세션 ID
-     * @return 존재할 경우 시스템 정보, 없으면 Optional.empty()
+     * @return 존재할 경우 {@link Optional}로 감싼 시스템 정보, 없을 경우 {@link Optional#empty()}
      */
     public Optional<SystemInfoDto> get(String sessionId) {
         if (sessionId == null || sessionId.isBlank()) {
@@ -48,9 +52,9 @@ public class SystemInfoBuffer {
     }
 
     /**
-     * 버퍼에서 해당 세션 ID의 정보를 제거합니다.
+     * 지정된 세션 ID의 시스템 정보를 버퍼에서 제거합니다.
      *
-     * @param sessionId 삭제할 세션 ID
+     * @param sessionId 삭제 대상 세션 ID
      */
     public void remove(String sessionId) {
         buffer.remove(sessionId);

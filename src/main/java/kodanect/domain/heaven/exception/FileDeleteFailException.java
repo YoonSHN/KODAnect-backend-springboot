@@ -3,20 +3,20 @@ package kodanect.domain.heaven.exception;
 import kodanect.common.exception.custom.AbstractCustomException;
 import org.springframework.http.HttpStatus;
 
-import static kodanect.common.exception.config.MessageKeys.FILE_SAVE_FAIL;
+import static kodanect.common.exception.config.MessageKeys.FILE_DELETE_FAIL;
 
 public class FileDeleteFailException extends AbstractCustomException {
 
     private final String fileName;
 
     public FileDeleteFailException(String fileName) {
-        super(FILE_SAVE_FAIL);
+        super(FILE_DELETE_FAIL);
         this.fileName = fileName;
     }
 
     @Override
     public String getMessageKey() {
-        return FILE_SAVE_FAIL;
+        return FILE_DELETE_FAIL;
     }
 
     @Override

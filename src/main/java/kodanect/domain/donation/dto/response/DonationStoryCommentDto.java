@@ -17,16 +17,16 @@ public class DonationStoryCommentDto implements CursorIdentifiable<Long> {
 
     private String commentWriter; // 추모자
 
-    private String comments;
+    private String contents;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
-    private LocalDateTime commentWriteTime; // yyyy-MM-dd 형식의 문자열
+    private LocalDateTime writeTime; // yyyy-MM-dd 형식의 문자열
 
     public DonationStoryCommentDto(Long commentSeq, String commentWriter, String comments, LocalDateTime writeTime) {
         this.commentSeq = commentSeq;
         this.commentWriter = commentWriter;
-        this.comments = comments;
-        this.commentWriteTime = writeTime;
+        this.contents = comments;
+        this.writeTime = writeTime;
     }
 
     @Override
@@ -42,8 +42,8 @@ public class DonationStoryCommentDto implements CursorIdentifiable<Long> {
         return DonationStoryCommentDto.builder()
                 .commentSeq(storyComment.getCommentSeq())
                 .commentWriter(storyComment.getCommentWriter())
-                .comments(storyComment.getContents())
-                .commentWriteTime(storyComment.getWriteTime())
+                .contents(storyComment.getContents())
+                .writeTime(storyComment.getWriteTime())
                 .build();
     }
 }

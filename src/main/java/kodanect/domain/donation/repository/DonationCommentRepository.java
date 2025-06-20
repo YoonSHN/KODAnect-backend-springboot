@@ -36,7 +36,6 @@ public interface DonationCommentRepository extends JpaRepository<DonationStoryCo
         )
         FROM DonationStoryComment c
         WHERE c.story.storySeq = :storySeq
-          AND c.delFlag = 'N'
         ORDER BY c.commentSeq DESC
         """)
     List<DonationStoryCommentDto> findLatestComments(
@@ -45,7 +44,7 @@ public interface DonationCommentRepository extends JpaRepository<DonationStoryCo
     );
 
     @Query(value =  "SELECT COUNT(*) FROM tb25_421_donation_story_comment WHERE story_seq = :storySeq ", nativeQuery=true)
-    long countAllByStorySeq(Long storySeq);
+    long countAllByStorySeq(@Param("storySeq") Long storySeq);
 
 
 

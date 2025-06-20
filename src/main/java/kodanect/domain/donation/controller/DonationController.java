@@ -29,7 +29,6 @@ public class  DonationController {
     private final DonationCommentService donationCommentService;
     private final MessageSourceAccessor messageSourceAccessor;
 
-
     /**
      * 스토리 전체 목록 조회 (더보기 방식 페이징 포함)
      */
@@ -129,7 +128,7 @@ public class  DonationController {
     }
 
     /**
-     * 스토리 더보기 댓글 조회 컨트롤러 호출
+     * 스토리 더보기 댓글 조회
      */
     @GetMapping("/{storySeq}/comments")
     public ResponseEntity<ApiResponse<CursorPaginationResponse<DonationStoryCommentDto, Long>>> getAllDonationCommentList(
@@ -178,7 +177,7 @@ public class  DonationController {
     /**
      * 스토리 댓글 수정
      */
-    @PatchMapping("/{storySeq}/comments/{commentSeq}")
+    @PutMapping("/{storySeq}/comments/{commentSeq}")
     public ResponseEntity<ApiResponse<Void>> modifyComment(
             @PathVariable Long storySeq,
             @PathVariable Long commentSeq,

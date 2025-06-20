@@ -1,6 +1,5 @@
-package kodanect.domain.logging;
+package kodanect.domain.logging.buffer;
 
-import kodanect.domain.logging.buffer.SystemInfoBuffer;
 import kodanect.domain.logging.dto.SystemInfoDto;
 import org.junit.Before;
 import org.junit.Test;
@@ -80,19 +79,17 @@ public class SystemInfoBufferTest {
     }
 
     /**
-     * GIVEN: 잘못된 입력(null, 공백 세션 ID 또는 null 시스템 정보)이 주어졌을 때
+     * Given: sessionId가 "Unknown"이거나 시스템 정보가 null인 경우
      * WHEN: add()를 호출하면
      * THEN: 버퍼에 아무것도 저장되지 않아야 한다.
      */
     @Test
     public void add_shouldIgnoreInvalidInput() {
-        buffer.add(null, createSystemInfo());
-        buffer.add("  ", createSystemInfo());
+        buffer.add("Unknown", createSystemInfo());
         buffer.add("session-4", null);
 
+        assertThat(buffer.get("Unknown")).isEmpty();
         assertThat(buffer.get("session-4")).isEmpty();
-        assertThat(buffer.get(null)).isEmpty();
-        assertThat(buffer.get("  ")).isEmpty();
     }
 
     private SystemInfoDto createSystemInfo() {

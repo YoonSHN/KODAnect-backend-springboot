@@ -188,7 +188,7 @@ class DonationControllerTest {
                 .storySeq(1L)
                 .title("제목")
                 .storyWriter("작가")
-                .uploadDate("2025-06-12")
+                .writeTime("2025-06-12")
                 .areaCode(AreaCode.AREA100)
                 .readCount(0)
                 .storyContent("본문")
@@ -319,8 +319,8 @@ class DonationControllerTest {
         DonationStoryCommentDto comment = DonationStoryCommentDto.builder()
                 .commentSeq(5L)
                 .commentWriter("댓글작성자")
-                .comments("댓글본문")
-                .commentWriteTime(LocalDateTime.now())
+                .contents("댓글본문")
+                .writeTime(LocalDateTime.now())
                 .build();
         CursorPaginationResponse<DonationStoryCommentDto, Long> pageResp =
                 CursorPaginationResponse.<DonationStoryCommentDto, Long>builder()
@@ -399,20 +399,21 @@ class DonationControllerTest {
                 .andExpect(jsonPath("$.message").value("서버 오류"));
     }
 
-    // 11) PATCH /{storySeq}/comments/{commentSeq} – 댓글 수정
+    // 11) PUT /{storySeq}/comments/{commentSeq} – 댓글 수정
     @Test
     @DisplayName("PATCH /donationLetters/{storySeq}/comments/{commentSeq} - 성공")
     void modifyComment_success() throws Exception {
         DonationStoryCommentModifyRequestDto req = DonationStoryCommentModifyRequestDto.builder()
                 .commentWriter("X")
                 .contents("수정댓글")
+                .commentPasscode("passcode!")
                 .build();
         given(messageSourceAccessor.getMessage("donation.comment.update.success"))
                 .willReturn("댓글 수정 성공");
         doNothing().when(donationCommentService)
                 .updateDonationComment(eq(1L), eq(2L), any(DonationStoryCommentModifyRequestDto.class));
 
-        mockMvc.perform(patch("/donationLetters/1/comments/2")
+        mockMvc.perform(put("/donationLetters/1/comments/2")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isOk())

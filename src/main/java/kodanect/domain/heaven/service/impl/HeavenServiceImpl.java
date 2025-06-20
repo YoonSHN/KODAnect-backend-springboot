@@ -17,7 +17,7 @@ import kodanect.domain.heaven.entity.Heaven;
 import kodanect.domain.heaven.exception.InvalidTypeException;
 import kodanect.domain.heaven.repository.HeavenCommentRepository;
 import kodanect.domain.heaven.repository.HeavenRepository;
-import kodanect.domain.heaven.service.FileService;
+import kodanect.common.imageupload.service.FileService;
 import kodanect.domain.heaven.service.HeavenCommentService;
 import kodanect.domain.heaven.service.HeavenService;
 import kodanect.domain.remembrance.entity.Memorial;
@@ -87,13 +87,10 @@ public class HeavenServiceImpl implements HeavenService {
         /* 댓글 개수 조회 */
         long commentCount = heavenCommentRepository.countByLetterSeq(letterSeq);
 
-        /* 파일 조회 */
-        String imageUrl = fileService.getFile(heavenDto.getFileName());
-
         CursorCommentCountPaginationResponse<HeavenCommentResponse, Integer> cursorCommentCountPaginationResponse =
                 CursorFormatter.cursorCommentCountFormat(heavenCommentList, COMMENT_SIZE, commentCount);
 
-        return HeavenDetailResponse.of(heavenDto, cursorCommentCountPaginationResponse, imageUrl);
+        return HeavenDetailResponse.of(heavenDto, cursorCommentCountPaginationResponse);
     }
 
     /* 기증자 추모관 상세 조회 시 하늘나라 편지 전체 조회 */
@@ -119,9 +116,10 @@ public class HeavenServiceImpl implements HeavenService {
         HeavenValidator.validateDonorNameMatches(heavenCreateRequest.getDonorName(), memorial);
 
         /* 파일 생성 */
-        Map<String, String> fileMap = fileService.saveFile(heavenCreateRequest.getFile());
+        Map<String, String> fileMap = fileService.saveFile(heavenCreateRequest.getLetterContents());
         String fileName = fileMap.get(FILE_NAME_KEY);
         String orgFileName = fileMap.get(ORG_FILE_NAME_KEY);
+
 
         Heaven heaven = Heaven.builder()
                 .memorial(memorial)
@@ -156,7 +154,7 @@ public class HeavenServiceImpl implements HeavenService {
         /* 유효성 검사 */
         HeavenValidator.validateDonorNameMatches(heavenUpdateRequest.getDonorName(), memorial);
 
-        Map<String, String> fileMap = fileService.updateFile(heavenUpdateRequest.getFile(), heaven.getFileName());
+        Map<String, String> fileMap = fileService.updateFile(heavenUpdateRequest.getLetterContents(), heaven.getOrgFileName());
 
         heaven.updateHeaven(heavenUpdateRequest, memorial, fileMap);
     }
@@ -170,7 +168,7 @@ public class HeavenServiceImpl implements HeavenService {
         heaven.verifyPasscode(letterPasscode);
 
         /* 파일 삭제 */
-        fileService.deleteFile(heaven.getFileName());
+        fileService.deleteFile(heaven.getOrgFileName());
 
         /* 게시물 및 해당 댓글 소프트 삭제 */
         heaven.softDelete();

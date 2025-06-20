@@ -286,7 +286,7 @@ public class DonationCommentServiceImplTest {
     @Test(expected = DonationNotFoundException.class)
     public void updateDonationComment_스토리_없음_예외() {
         when(storyRepository.findById(anyLong())).thenReturn(Optional.empty());
-        service.updateDonationComment(1L, 2L, new DonationStoryCommentModifyRequestDto("w","c"));
+        service.updateDonationComment(1L, 2L, new DonationStoryCommentModifyRequestDto("w","c","p"));
     }
 
     @Test(expected = DonationCommentNotFoundException.class)
@@ -294,7 +294,7 @@ public class DonationCommentServiceImplTest {
         Long storySeq = 1L;
         when(storyRepository.findById(storySeq)).thenReturn(Optional.of(DonationStory.builder().storySeq(storySeq).build()));
         when(commentRepository.findById(anyLong())).thenReturn(Optional.empty());
-        service.updateDonationComment(storySeq, 99L, new DonationStoryCommentModifyRequestDto("w","c"));
+        service.updateDonationComment(storySeq, 99L, new DonationStoryCommentModifyRequestDto("w","c","p"));
     }
 
     @Test(expected = BadRequestException.class)
@@ -313,28 +313,37 @@ public class DonationCommentServiceImplTest {
     }
 
     @Test
-    public void deleteDonationComment_정상_삭제() {
+    public void deleteDonationComment_정상_소프트삭제() {
         Long storySeq = 1L, commentSeq = 2L;
-        DonationStory story = DonationStory.builder()
-                .storySeq(storySeq)
-                .comments(new ArrayList<>())
-                .build();
+
         DonationStoryComment comment = DonationStoryComment.builder()
                 .commentSeq(commentSeq)
                 .commentPasscode("Abcd1234")
+                .delFlag("N") // 기본 상태
                 .build();
-        story.addComment(comment);
+
+        DonationStory story = DonationStory.builder()
+                .storySeq(storySeq)
+                .comments(new ArrayList<>(List.of(comment)))
+                .build();
+
         comment.setStory(story);
+        story.getComments().add(comment);
+
         when(storyRepository.findById(storySeq)).thenReturn(Optional.of(story));
         when(commentRepository.findById(commentSeq)).thenReturn(Optional.of(comment));
 
         service.deleteDonationComment(storySeq, commentSeq,
                 new VerifyCommentPasscodeDto("Abcd1234"));
 
-        assertThat(story.getComments()).isEmpty();
-        ArgumentCaptor<DonationStoryComment> captor = ArgumentCaptor.forClass(DonationStoryComment.class);
-        verify(commentRepository).delete(captor.capture());
-        assertThat(captor.getValue().getCommentSeq()).isEqualTo(commentSeq);
+        // 삭제 플래그가 Y로 바뀌었는지 확인
+        assertThat(comment.getDelFlag()).isEqualTo("Y");
+
+        //save가 호출되었는지 확인
+        verify(commentRepository).save(comment);
+
+        //  여전히 리스트에 포함되어 있을 수 있음 (소프트 삭제니까)
+        assertThat(story.getComments()).contains(comment);
     }
 
     @Test(expected = DonationNotFoundException.class)

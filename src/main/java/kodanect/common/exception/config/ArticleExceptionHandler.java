@@ -6,6 +6,7 @@ import kodanect.domain.article.exception.ArticleNotFoundException;
 import kodanect.domain.article.exception.InvalidBoardCodeException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.support.MessageSourceAccessor;
+import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -19,8 +20,8 @@ import static kodanect.common.exception.config.MessageKeys.FILE_NOT_FOUND;
 /**
  * 게시판 관련 예외를 처리하는 핸들러 클래스.
  */
-@RestControllerAdvice
-@Order(1)
+@RestControllerAdvice(basePackages = "kodanect.domain.article")
+@Order(Ordered.HIGHEST_PRECEDENCE)
 @RequiredArgsConstructor
 public class ArticleExceptionHandler {
 

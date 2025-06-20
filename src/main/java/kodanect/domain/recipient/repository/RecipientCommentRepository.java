@@ -17,7 +17,7 @@ import java.util.Optional;
 public interface RecipientCommentRepository extends JpaRepository<RecipientCommentEntity, Integer>, JpaSpecificationExecutor<RecipientCommentEntity> {
 
     // @Query를 사용한 명시적 정렬 메서드를 추가
-    @Query("SELECT rc FROM RecipientCommentEntity rc WHERE rc.letterSeq = :letterSeq AND rc.delFlag = :delFlag ORDER BY rc.writeTime ASC, rc.commentSeq ASC")
+    @Query("SELECT rc FROM RecipientCommentEntity rc WHERE rc.letterSeq = :letterSeq AND rc.delFlag = :delFlag ORDER BY rc.writeTime DESC, rc.commentSeq DESC")
     List<RecipientCommentEntity> findCommentsByLetterSeqAndDelFlagSorted( // 메서드 이름 변경
                                                                           @Param("letterSeq") RecipientEntity letterSeq,
                                                                           @Param("delFlag") String delFlag);
@@ -37,10 +37,14 @@ public interface RecipientCommentRepository extends JpaRepository<RecipientComme
     // lastCommentId 이후의 댓글을 조회하는 JPQL (더 효율적일 수 있음)
     @Query("SELECT rc FROM RecipientCommentEntity rc " +
             "WHERE rc.letterSeq = :letterSeq AND rc.delFlag = 'N' " +
-            "AND (:lastCommentId IS NULL OR :lastCommentId = 0 OR rc.commentSeq > :lastCommentId) " +
-            "ORDER BY rc.writeTime ASC, rc.commentSeq ASC")
+            "AND (:lastCommentId IS NULL OR :lastCommentId = 0 OR rc.commentSeq < :lastCommentId) " +
+            "ORDER BY rc.writeTime DESC, rc.commentSeq DESC")
     List<RecipientCommentEntity> findPaginatedComments(
             @Param("letterSeq") RecipientEntity letterSeq,
             @Param("lastCommentId") Integer lastCommentId,
             Pageable pageable); // Pageable을 받아서 LIMIT/OFFSET 처리
+
+    // 단일 게시물의 활성화된 댓글 수를 조회
+    @Query("SELECT COUNT(rc) FROM RecipientCommentEntity rc WHERE rc.letterSeq.letterSeq = :letterSeq AND rc.delFlag = 'N'")
+    long countActiveCommentsByLetterSeq(@Param("letterSeq") Integer letterSeq);
 }

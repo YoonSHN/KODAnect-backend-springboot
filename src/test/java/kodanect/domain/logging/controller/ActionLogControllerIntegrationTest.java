@@ -15,6 +15,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.servlet.http.Cookie;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -53,18 +54,8 @@ class ActionLogControllerIntegrationTest {
      *       로그 수집 후 flushAll()이 호출되면
      * THEN: ActionLog가 DB에 저장되며, logText에 "click" 문자열이 포함되어야 한다.
      */
-
-    /**
-     * GIVEN: 세션 ID와 프론트엔드 로그 3건이 준비되어 있고
-     * WHEN: 클라이언트가 /action-logs 엔드포인트에 POST 요청을 보내고,
-     *       로그 수집 후 flushAll()이 호출되면
-     * THEN: 저장된 모든 ActionLog의 logText를 합쳤을 때,
-     *       각각의 프론트엔드 이벤트 타입이 포함되어 있어야 한다.
-     */
     @Test
     void fullFlow_shouldFlushAllLogsToDatabase() throws Exception {
-        String sessionId = "session-full-123";
-
         FrontendLogDto log1 = buildFrontendLogDto("clickButton", "btn-1", "/page-1", "/referrer-1", "2025-06-16T23:00:00");
         FrontendLogDto log2 = buildFrontendLogDto("clickMenu", "menu-1", "/page-2", "/referrer-2", "2025-06-16T23:00:10");
         FrontendLogDto log3 = buildFrontendLogDto("clickTab", "tab-1", "/page-3", "/referrer-3", "2025-06-16T23:00:20");
@@ -72,7 +63,7 @@ class ActionLogControllerIntegrationTest {
         FrontendLogRequestDto request = new FrontendLogRequestDto(List.of(log1, log2, log3));
 
         mockMvc.perform(post("/action-logs")
-                        .header("X-Session-Id", sessionId)
+                        .cookie(new Cookie("sessionId", "test-session-123"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk());

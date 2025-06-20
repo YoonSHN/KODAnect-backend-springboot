@@ -68,14 +68,13 @@ public class BackendLogBufferTest {
     }
 
     /**
-     * Given: sessionId 또는 로그가 null/invalid인 경우
+     * Given: sessionId가 "Unknown"이거나 로그가 null인 경우
      * When: add()를 호출하면
      * Then: 로그는 버퍼에 추가되지 않아야 한다.
      */
     @Test
     public void add_shouldIgnoreInvalidInput() {
-        buffer.add(null, null);
-        buffer.add("", createLog("POST"));
+        buffer.add("Unknown", createLog("POST"));
         buffer.add("session-1", null);
 
         Map<UserActionKey, List<BackendLogDto>> result = buffer.drainAll();
@@ -89,7 +88,6 @@ public class BackendLogBufferTest {
                 .controller("TestController")
                 .method("testMethod")
                 .parameters("{\"id\":1}")
-                .httpStatus(200)
                 .timestamp("2024-01-01T00:00:00Z")
                 .build();
     }

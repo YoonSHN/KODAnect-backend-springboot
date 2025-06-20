@@ -13,7 +13,7 @@ import java.util.Optional;
 public interface DonationRepository extends JpaRepository<DonationStory, Long> {
 
     /**
-     * 게시글 목록을 wㅗ회 (더보기 방식에 사용)
+     * 게시글 목록을 조회 (더보기 방식에 사용)
      */
 
     @Query("""

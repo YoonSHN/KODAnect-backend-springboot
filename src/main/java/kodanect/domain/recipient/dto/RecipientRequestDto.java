@@ -9,6 +9,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.*;
+
 // 게시물 생성 및 수정 요청에 사용될 DTO
 @RecipientConditionalValidation(
         conditionalProperty = "organCode",
@@ -54,15 +55,6 @@ public class RecipientRequestDto {
     @NotBlank(message = "내용은 필수 입력 항목입니다.")
     private String letterContents;
 
-    // 첨부파일 (CKEditor API를 통해 업로드된 파일의 저장된 이름)
-    private String fileName;
-
-    // 첨부파일 (CKEditor API를 통해 업로드된 파일의 원본 이름)
-    private String orgFileName;
-
-    // 첨부파일의 전체 URL (CKEditor API에서 직접 받아 저장)
-    private String imageUrl;
-
     // 게시물 비밀번호 (영문, 숫자 포함 8자 이상)
     @Size(min = 8, max = 20, message = "비밀번호는 8자 이상 20자 이하여야 합니다.")
     @Pattern(regexp = "^(?=.*[a-zA-Z])(?=.*\\d).{8,}$", message = "비밀번호는 영문, 숫자를 포함하여 8자 이상이어야 합니다.")
@@ -79,10 +71,10 @@ public class RecipientRequestDto {
                 .anonymityFlag(this.anonymityFlag)
                 .letterContents(this.letterContents)
                 .letterPasscode(this.letterPasscode)
-                .fileName(this.fileName)
-                .orgFileName(this.orgFileName)
-                .imageUrl(this.imageUrl)
                 // writerId, modifierId, delFlag, readCount 등은 서비스 계층에서 처리
+                .fileName(null)
+                .orgFileName(null)
+                .imageUrl(null)
                 .build();
     }
 }

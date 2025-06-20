@@ -16,6 +16,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 
+import javax.servlet.http.Cookie;
 import java.util.List;
 
 import static org.mockito.Mockito.*;
@@ -64,7 +65,6 @@ public class ActionLogControllerTest {
      */
     @Test
     public void collectFrontendLogs_shouldReturnOkAndCallServices() throws Exception {
-        String sessionId = "session-abc";
         FrontendLogDto log = FrontendLogDto.builder().eventType("click").pageUrl("/home").build();
         FrontendLogRequestDto requestDto = new FrontendLogRequestDto(List.of(log));
 
@@ -72,15 +72,15 @@ public class ActionLogControllerTest {
                 .thenReturn("로그를 성공적으로 저장했습니다.");
 
         mockMvc.perform(post("/action-logs")
-                        .header("X-Session-Id", sessionId)
+                        .cookie(new Cookie("sessionId", "session-abc"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDto)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("로그를 성공적으로 저장했습니다."));
 
-        verify(service).saveFrontendLog(eq(sessionId), anyList());
-        verify(service).saveBackendLog(sessionId);
-        verify(service).saveSystemInfo(sessionId);
+        verify(service).saveFrontendLog(anyList());
+        verify(service).saveBackendLog();
+        verify(service).saveSystemInfo();
     }
 
 }

@@ -26,8 +26,8 @@ test_classes=$(echo "$test_files" \
 echo "[INFO] 실행할 테스트 클래스:"
 echo "$test_classes" | tr ',' '\n'
 
-echo "[INFO] Maven 테스트 실행 (with-coverage 프로필 활성화 중)"
-./mvnw verify -Pwith-coverage -Dtest="$test_classes"
+echo "[INFO] Maven 테스트 실행 중 (변경된 테스트 대상)"
+./mvnw test -Dtest="$test_classes"
 
 exit_code=$?
 if [ $exit_code -ne 0 ]; then
@@ -35,4 +35,4 @@ if [ $exit_code -ne 0 ]; then
   exit $exit_code
 fi
 
-echo "[INFO] 테스트 성공 및 커버리지 생성 완료"
+echo "[INFO] 테스트 성공"

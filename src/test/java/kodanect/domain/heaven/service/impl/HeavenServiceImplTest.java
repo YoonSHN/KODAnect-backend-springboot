@@ -9,7 +9,7 @@ import kodanect.domain.heaven.dto.response.HeavenDetailResponse;
 import kodanect.domain.heaven.dto.response.HeavenResponse;
 import kodanect.domain.heaven.repository.HeavenCommentRepository;
 import kodanect.domain.heaven.repository.HeavenRepository;
-import kodanect.domain.heaven.service.FileService;
+import kodanect.common.imageupload.service.FileService;
 import kodanect.domain.heaven.service.HeavenCommentService;
 import org.junit.Test;
 import org.junit.jupiter.api.DisplayName;
@@ -175,7 +175,7 @@ public class HeavenServiceImplTest {
         assertEquals("사랑하는 가족에게", heavenDetailResponse.getHeavenDto().getLetterTitle());
         assertEquals("작성자", heavenDetailResponse.getHeavenDto().getLetterWriter());
         assertEquals("이 편지는 하늘로 보냅니다.", heavenDetailResponse.getHeavenDto().getLetterContents());
-        assertEquals(now.toLocalDate().toString(), heavenDetailResponse.getWriteTime());
+        assertEquals(now.toLocalDate().toString(), heavenDetailResponse.getHeavenDto().getWriteTime());
 
         assertEquals(1, firstHeavenCommentResponse.getCommentSeq());
         assertEquals("댓글 작성자1", firstHeavenCommentResponse.getCommentWriter());

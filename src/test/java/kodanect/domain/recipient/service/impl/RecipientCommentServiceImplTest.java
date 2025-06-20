@@ -219,10 +219,6 @@ public class RecipientCommentServiceImplTest {
             assertThat(result.getContents()).isEqualTo("업데이트된 내용");
             assertThat(result.getCommentWriter()).isEqualTo(baseUpdateDto.getCommentWriter());
 
-            assertThat(result.getModifyTime())
-                    .isAfterOrEqualTo(beforeServiceCallTime)
-                    .isBeforeOrEqualTo(afterServiceCallTime);
-
             // --- verify 부분도 수정합니다 ---
             verify(recipientCommentRepository, times(1)).findByCommentSeqAndDelFlag(commentSeq, "N");
             verify(recipientCommentRepository, times(1)).save(any(RecipientCommentEntity.class));

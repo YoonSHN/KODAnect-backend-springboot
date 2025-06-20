@@ -153,8 +153,8 @@ public class RecipientCommentRepositoryTest {
         assertThat(foundComments).hasSize(2);
 
         // writeTime 기준으로 올바르게 정렬되었는지 확인
-        assertThat(foundComments.get(0).getContents()).isEqualTo("첫 번째 댓글"); // time1
-        assertThat(foundComments.get(1).getContents()).isEqualTo("두 번째 댓글"); // time2
+        assertThat(foundComments.get(0).getContents()).isEqualTo("두 번째 댓글"); // time1
+        assertThat(foundComments.get(1).getContents()).isEqualTo("첫 번째 댓글"); // time2
 
         // 각 댓글의 delFlag가 'N'인지 확인
         assertThat(foundComments.get(0).getDelFlag()).isEqualTo("N");
@@ -352,8 +352,8 @@ public class RecipientCommentRepositoryTest {
 
         // Then (첫 페이지 결과 검증: "첫 댓글", "두 번째 댓글", "세 번째 댓글")
         assertThat(firstPageComments).isNotNull().hasSize(3);
-        assertThat(firstPageComments.get(0).getContents()).isEqualTo("첫 댓글");
-        assertThat(firstPageComments.get(1).getContents()).isEqualTo("두 번째 댓글");
+        assertThat(firstPageComments.get(0).getContents()).isEqualTo("마지막 댓글");
+        assertThat(firstPageComments.get(1).getContents()).isEqualTo("네 번째 댓글");
         assertThat(firstPageComments.get(2).getContents()).isEqualTo("세 번째 댓글");
 
         // When (두 번째 페이지 조회 - lastCommentId는 첫 페이지의 마지막 댓글 ID)
@@ -363,8 +363,8 @@ public class RecipientCommentRepositoryTest {
         // Then (두 번째 페이지 결과 검증: "네 번째 댓글", "마지막 댓글")
         // 삭제된 댓글은 delFlag='Y'이므로 포함되지 않음
         assertThat(secondPageComments).isNotNull().hasSize(2);
-        assertThat(secondPageComments.get(0).getContents()).isEqualTo("네 번째 댓글");
-        assertThat(secondPageComments.get(1).getContents()).isEqualTo("마지막 댓글");
+        assertThat(secondPageComments.get(0).getContents()).isEqualTo("두 번째 댓글");
+        assertThat(secondPageComments.get(1).getContents()).isEqualTo("첫 댓글");
 
         // When (더 이상 댓글이 없는 경우)
         Integer lastCommentIdOfSecondPage = secondPageComments.get(secondPageComments.size() - 1).getCommentSeq();

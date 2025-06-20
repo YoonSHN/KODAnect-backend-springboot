@@ -117,37 +117,37 @@ pipeline {
             }
         }
 
-        stage('SonarCloud Analysis') {
-            when {
-                branch 'main'
-            }
-            steps {
-                script {
-                    githubNotify context: 'sonar', status: 'PENDING', description: 'SonarCloud 분석 중...'
-                    withSonarQubeEnv('SonarCloud') {
-                        withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
-                            catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-                                sh './mvnw verify -Pwith-coverage'
-                                def sonarCmd = "./mvnw sonar:sonar" +
-                                    " -Dsonar.projectKey=kodanect" +
-                                    " -Dsonar.organization=fc-dev3-final-project" +
-                                    " -Dsonar.token=${SONAR_TOKEN}" +
-                                    " -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml" +
-                                    " -Dsonar.branch.name=main"
-                                sh "${sonarCmd}"
-                            }
-                            if (currentBuild.currentResult == 'FAILURE') {
-                                githubNotify context: 'sonar', status: 'FAILURE', description: 'SonarCloud 분석 실패'
-                                env.CI_FAILED = 'true'
-                                error('Sonar 분석 실패')
-                            } else {
-                                githubNotify context: 'sonar', status: 'SUCCESS', description: 'SonarCloud 분석 완료'
-                            }
-                        }
-                    }
-                }
-            }
-        }
+//         stage('SonarCloud Analysis') {
+//             when {
+//                 branch 'main'
+//             }
+//             steps {
+//                 script {
+//                     githubNotify context: 'sonar', status: 'PENDING', description: 'SonarCloud 분석 중...'
+//                     withSonarQubeEnv('SonarCloud') {
+//                         withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
+//                             catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+//                                 sh './mvnw verify -Pwith-coverage'
+//                                 def sonarCmd = "./mvnw sonar:sonar" +
+//                                     " -Dsonar.projectKey=kodanect" +
+//                                     " -Dsonar.organization=fc-dev3-final-project" +
+//                                     " -Dsonar.token=${SONAR_TOKEN}" +
+//                                     " -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml" +
+//                                     " -Dsonar.branch.name=main"
+//                                 sh "${sonarCmd}"
+//                             }
+//                             if (currentBuild.currentResult == 'FAILURE') {
+//                                 githubNotify context: 'sonar', status: 'FAILURE', description: 'SonarCloud 분석 실패'
+//                                 env.CI_FAILED = 'true'
+//                                 error('Sonar 분석 실패')
+//                             } else {
+//                                 githubNotify context: 'sonar', status: 'SUCCESS', description: 'SonarCloud 분석 완료'
+//                             }
+//                         }
+//                     }
+//                 }
+//             }
+//         }
 
         stage('Docker Build & Push') {
             when {

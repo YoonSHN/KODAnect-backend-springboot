@@ -72,14 +72,15 @@ public class FrontendLogBufferTest {
     }
 
     /**
-     * Given: sessionId 또는 로그 리스트가 null/invalid인 경우
+     * Given: sessionId가 "Unknown"이거나 로그 리스트가 null 또는 비어 있는 경우
      * When: add()를 호출하면
      * Then: 로그는 버퍼에 추가되지 않아야 한다.
      */
     @Test
     public void add_shouldIgnoreInvalidInput() {
-        buffer.add(null, null);
-        buffer.add("", Collections.emptyList());
+        buffer.add("Unknown", Collections.singletonList(createLog("clickButton")));
+        buffer.add("valid-session", Collections.emptyList());
+        buffer.add("valid-session", null);
 
         Map<UserActionKey, List<FrontendLogDto>> result = buffer.drainAll();
         assertThat(result).isEmpty();

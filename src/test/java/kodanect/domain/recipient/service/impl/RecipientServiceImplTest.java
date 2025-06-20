@@ -13,6 +13,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -78,8 +79,9 @@ public class RecipientServiceImplTest {
         FileSystemUtils.deleteRecursively(tempUploadDir);
     }
 
-    // 게시물 등록 - 이미지 파일 없음
+    /** ## 게시물 등록 - 이미지 파일 없음 */
     @Test
+    @DisplayName("이미지 파일이 없는 게시물 등록 시 성공적으로 엔티티 저장 및 DTO 반환")
     public void testInsertRecipient_withoutImageFile_shouldSaveEntity() throws IOException {
         // Given
         RecipientRequestDto recipientDto = new RecipientRequestDto();
@@ -88,39 +90,38 @@ public class RecipientServiceImplTest {
         recipientDto.setRecipientYear("2023");
         recipientDto.setLetterWriter("파일 없음");
         recipientDto.setAnonymityFlag("Y");
-        recipientDto.setLetterContents("이미지 파일이 없는 게시물");
+        // 이미지 파일이 없으므로 letterContents에 이미지 태그를 포함하지 않음
+        recipientDto.setLetterContents("이미지 파일이 없는 게시물"); // 비어있지 않은 내용으로 설정
         recipientDto.setLetterPasscode("testPass1234");
 
-        // 이미지 파일 관련 필드를 null로 설정 (MultipartFile 대신 String 필드)
-        recipientDto.setFileName(null);
-        recipientDto.setOrgFileName(null);
+        // RequestDto에는 fileName, orgFileName setter가 없으므로 해당 라인 제거 (SonarQube 지적사항 반영)
 
-        // 저장될 Entity Mocking
+
+        // 서비스가 반환할 엔티티 Mocking (이미지 관련 필드는 null)
         RecipientEntity savedEntity = RecipientEntity.builder()
                 .letterSeq(1)
                 .organCode(recipientDto.getOrganCode())
                 .letterTitle(recipientDto.getLetterTitle())
                 .recipientYear(recipientDto.getRecipientYear())
-                .letterWriter(ANONYMOUS_WRITER_VALUE)
+                .letterWriter(ANONYMOUS_WRITER_VALUE) // 익명 처리 로직 반영
                 .anonymityFlag(recipientDto.getAnonymityFlag())
                 .letterContents(recipientDto.getLetterContents())
-                .fileName(null)
-                .orgFileName(null)
                 .writeTime(LocalDateTime.now())
                 .build();
+
+        // globalsProperties.getFileBaseUrl() 모킹
+        when(globalsProperties.getFileBaseUrl()).thenReturn("/upload_img/"); // 적절한 기본 URL 설정
 
         when(recipientRepository.save(any(RecipientEntity.class))).thenReturn(savedEntity);
 
         // When
         RecipientDetailResponseDto responseDto = recipientService.insertRecipient(recipientDto);
 
-        // Then
+        // Then _ recipientRepository.save()가 한 번 호출되었는지 확인
         verify(recipientRepository, times(1)).save(any(RecipientEntity.class));
 
+        // responseDto의 값이 예상대로 설정되었는지 확인
         assertThat(responseDto.getLetterSeq()).isEqualTo(1);
-        assertThat(responseDto.getImageUrl()).isNull();
-        assertThat(responseDto.getFileName()).isNull();
-        assertThat(responseDto.getOrgFileName()).isNull();
         assertThat(responseDto.getLetterContents()).isEqualTo(recipientDto.getLetterContents());
     }
 

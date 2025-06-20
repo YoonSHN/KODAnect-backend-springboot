@@ -17,24 +17,19 @@ import java.time.LocalDateTime;
 public class RecipientCommentResponseDto implements CursorIdentifiable<Integer> {
 
     private Integer commentSeq;
-    private Integer letterSeq;
     private String commentWriter;
     private String contents;
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDateTime writeTime;
-    @JsonFormat(pattern = "yyyy-MM-dd")
-    private LocalDateTime modifyTime;
     private String delFlag;
 
     // Entity -> DTO 변환 메서드 (정적 팩토리 메서드)
     public static RecipientCommentResponseDto fromEntity(RecipientCommentEntity entity) {
         return RecipientCommentResponseDto.builder()
                 .commentSeq(entity.getCommentSeq())
-                .letterSeq(entity.getLetterSeq().getLetterSeq())
                 .commentWriter(entity.getCommentWriter())
                 .contents(entity.getContents())
                 .writeTime(entity.getWriteTime())
-                .modifyTime(entity.getModifyTime())
                 .delFlag(entity.getDelFlag())
                 .build();
     }

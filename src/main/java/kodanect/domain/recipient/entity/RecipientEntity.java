@@ -72,15 +72,15 @@ public class RecipientEntity {
     private String letterContents;
 
     // 이미지 파일 명
-    @Column(name = "file_name", length = 600)
+    @Column(name = "file_name", length = 2000)
     private String fileName;
 
     // 이미지 원본 파일 명
-    @Column(name = "org_file_name", length = 600)
+    @Column(name = "org_file_name", length = 2000)
     private String orgFileName;
 
     // 게시물 이미지 URL
-    @Column(name = "image_path", length = 600)
+    @Column(name = "image_path", length = 4000)
     private String imageUrl;
 
     // 생성 일시

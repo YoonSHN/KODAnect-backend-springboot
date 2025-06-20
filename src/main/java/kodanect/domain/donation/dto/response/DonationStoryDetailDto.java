@@ -17,7 +17,7 @@ public class DonationStoryDetailDto {
     private String title;
 
     private String storyWriter;
-    private String uploadDate;
+    private String writeTime;
 
     private AreaCode areaCode;
 
@@ -26,6 +26,8 @@ public class DonationStoryDetailDto {
     private String fileName;        // 저장된 파일 이름 (서버 파일명)
     private String orgFileName;
 
+    private String imageUrl; //파일 주소
+
     private CursorCommentPaginationResponse<DonationStoryCommentDto, Long> comments;
 
     public static DonationStoryDetailDto fromEntity(DonationStory story){
@@ -33,7 +35,7 @@ public class DonationStoryDetailDto {
                 .storySeq(story.getStorySeq())
                 .title(story.getStoryTitle())
                 .storyWriter(story.getStoryWriter())
-                .uploadDate(story.getWriteTime().toLocalDate().toString())
+                .writeTime(story.getWriteTime().toLocalDate().toString())
                 .areaCode(story.getAreaCode())
                 .readCount(story.getReadCount())
                 .storyContent(story.getStoryContents())
@@ -44,5 +46,9 @@ public class DonationStoryDetailDto {
 
     public void setComments(CursorCommentPaginationResponse<DonationStoryCommentDto, Long> comments) {
         this.comments = comments;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
     }
 }

@@ -46,11 +46,14 @@ public class ActionLogServiceImplTest {
     @Test
     public void saveFrontendLog_shouldDelegateToBuffer() {
         String sessionId = "session-123";
+
+        MDC.put("sessionId", sessionId);
+
         List<FrontendLogDto> logs = List.of(
                 FrontendLogDto.builder().eventType("clickButton").build()
         );
 
-        service.saveFrontendLog(sessionId, logs);
+        service.saveFrontendLog(logs);
 
         verify(frontendLogBuffer).add(sessionId, logs);
     }
@@ -64,6 +67,7 @@ public class ActionLogServiceImplTest {
     public void saveBackendLog_shouldExtractFromMdcAndStore() {
         String sessionId = "session-456";
 
+        MDC.put("sessionId", sessionId);
         MDC.put("httpMethod", "POST");
         MDC.put("endpoint", "/api/test");
         MDC.put("controller", "TestController");
@@ -71,7 +75,7 @@ public class ActionLogServiceImplTest {
         MDC.put("parameters", "{\"id\":1}");
         MDC.put("timestamp", "2025-06-16T00:00:00Z");
 
-        service.saveBackendLog(sessionId);
+        service.saveBackendLog();
 
         verify(backendLogBuffer).add(eq(sessionId), argThat(log ->
                 "POST".equals(log.getHttpMethod()) &&
@@ -92,13 +96,14 @@ public class ActionLogServiceImplTest {
     public void saveSystemInfo_shouldExtractFromMdcAndStore() {
         String sessionId = "session-789";
 
+        MDC.put("sessionId", sessionId);
         MDC.put("browserName", "Chrome");
         MDC.put("browserVersion", "114.0");
         MDC.put("operatingSystem", "Mac OS");
         MDC.put("device", "Computer");
         MDC.put("locale", "ko-KR");
 
-        service.saveSystemInfo(sessionId);
+        service.saveSystemInfo();
 
         verify(systemInfoBuffer).add(eq(sessionId), argThat(info ->
                 "Chrome".equals(info.getBrowserName()) &&

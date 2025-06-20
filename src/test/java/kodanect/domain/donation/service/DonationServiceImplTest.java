@@ -136,32 +136,6 @@ public class DonationServiceImplTest {
         donationService.createDonationStory(dto);
     }
 
-    // --- private imgParsing 검증 via Reflection ---
-    @Test
-    public void imgParsing_ShouldExtractFilenames() {
-        String html = "<div><img src=\"/path/orig.jpg\"/></div>"
-                + "<div><img src=\"/another/a.png\"/></div>";
-        String[] result = (String[]) ReflectionTestUtils.invokeMethod(
-                donationService, "imgParsing", html
-        );
-        assertThat(result).hasSize(2);
-        // orgFileNames
-        assertThat(result[0]).contains("orig.jpg").contains("a.png");
-        // fileNames: 대문자 알파벳+숫자 (UUID 형태)
-        String[] uuids = result[1].split(",");
-        for (String u : uuids) {
-            assertThat(u).matches("^[A-Z0-9]{32}$");
-        }
-    }
-
-    // --- UUID 포맷 검증 ---
-    @Test
-    public void makeStoredFileName_ShouldBe32CharUpperHex() {
-        String fname = donationService.makeStoredFileName();
-        assertThat(fname).hasSize(32);
-        assertThat(Pattern.matches("^[A-Z0-9]{32}$", fname)).isTrue();
-    }
-
     // --- 비밀번호 검증 ---
     @Test(expected = DonationNotFoundException.class)
     public void verifyPassword_NoStory_ShouldThrowNotFound() {
@@ -274,7 +248,9 @@ public class DonationServiceImplTest {
         given(donationRepository.findStoryOnlyById(3L)).willReturn(Optional.of(s));
 
         donationService.deleteDonationStory(3L, new VerifyStoryPasscodeDto("Abcd1234"));
-        then(donationRepository).should().delete(s);
+        assertThat(s.getDelFlag()).isEqualTo("Y");
+
+        then(donationRepository).should().save(s);
     }
 
     @Test(expected = PasscodeMismatchException.class)

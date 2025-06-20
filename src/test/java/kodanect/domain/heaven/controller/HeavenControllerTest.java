@@ -76,8 +76,8 @@ public class HeavenControllerTest {
 
         /* when & then */
         mockMvc.perform(get("/heavenLetters")
-                    .param("cursor", "30")
-                    .param("size", "20"))
+                        .param("cursor", "30")
+                        .param("size", "20"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.code").value(200))
@@ -117,10 +117,10 @@ public class HeavenControllerTest {
 
         /* when & then */
         mockMvc.perform(get("/heavenLetters/search")
-                    .param("type", "ALL")
-                    .param("keyWord", "제목")
-                    .param("cursor", "10")
-                    .param("size", "20"))
+                        .param("type", "ALL")
+                        .param("keyWord", "제목")
+                        .param("cursor", "10")
+                        .param("size", "20"))
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.message").value("검색을 통한 게시물 조회 성공"))

@@ -1,7 +1,6 @@
 package kodanect.domain.heaven.dto.request;
 
 import lombok.*;
-import org.springframework.web.multipart.MultipartFile;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -26,7 +25,4 @@ public class HeavenUpdateRequest {
 
     /* 편지 내용 */
     private String letterContents;
-
-    /* 파일 */
-    private MultipartFile file;
 }

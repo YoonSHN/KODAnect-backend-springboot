@@ -198,13 +198,9 @@ public class RecipientControllerTest {
         updatedDto.setAnonymityFlag("N");
         updatedDto.setReadCount(1);
         updatedDto.setLetterContents("수정 내용");
-        updatedDto.setFileName("updated_file.jpg"); // 이미지 파일명도 설정
-        updatedDto.setOrgFileName("updated_original.jpg");
         updatedDto.setWriteTime(LocalDateTime.now().minusDays(1));
         updatedDto.setModifyTime(LocalDateTime.now());
         updatedDto.setDelFlag("N");
-        updatedDto.setCommentCount(0);
-        updatedDto.setImageUrl("/uploads/updated_file.jpg");
 
 
         // recipientService.updateRecipient 호출 시 updatedDto 반환하도록 스터빙

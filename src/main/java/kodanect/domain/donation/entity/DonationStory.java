@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import kodanect.domain.donation.dto.request.DonationStoryModifyRequestDto;
 import kodanect.domain.donation.dto.response.AreaCode;
 import lombok.*;
+import org.hibernate.annotations.Where;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import javax.persistence.*;
@@ -20,6 +21,7 @@ import java.util.List;
 @Builder
 @ToString(exclude={"comments", "storyPasscode"})
 @EntityListeners(AuditingEntityListener.class)
+@Where(clause = "del_flag = 'N'")
 public class DonationStory {
 
     @Id
@@ -62,7 +64,7 @@ public class DonationStory {
     @Column(name="del_flag", length = 1, nullable = false)
     private String delFlag;
 
-    @OneToMany(mappedBy="story", fetch= FetchType.LAZY, cascade=CascadeType.ALL, orphanRemoval=true)
+    @OneToMany(mappedBy="story", fetch= FetchType.LAZY, cascade=CascadeType.ALL)
     @JsonIgnore
     @Builder.Default
     private List<DonationStoryComment> comments = new ArrayList<>();
@@ -86,7 +88,14 @@ public class DonationStory {
     public void removeComment(DonationStoryComment comment){
         comments.remove(comment);
         comment.setStory(null);
-        this.delFlag= "Y";
+    }
+    // comment 소프트 삭제
+    public void softDeleteStoryAndComments(){
+        this.delFlag= "Y";  //게시글 소프트 삭제
+        for(DonationStoryComment comment : comments){
+            comment.softDelete();  //댓글도 소프트 삭제
+        }
+
     }
     //조회수 증가
     public void increaseReadCount(){ //조회수 증가메서드

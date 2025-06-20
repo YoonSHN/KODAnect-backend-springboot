@@ -1,7 +1,7 @@
 package kodanect.domain.recipient.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import kodanect.common.response.CursorCommentPaginationResponse;
+import kodanect.common.response.CursorCommentCountPaginationResponse;
 import kodanect.domain.recipient.entity.RecipientEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -26,17 +26,16 @@ public class RecipientDetailResponseDto {
     private String anonymityFlag;
     private int readCount;
     private String letterContents;
-    private String fileName;
-    private String orgFileName;
+    private String fileNames;
+    private String orgFileNames;
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDateTime writeTime;
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDateTime modifyTime;
     private String delFlag;
-    private int commentCount;        // 댓글 수는 조회 시 필요한 정보이므로 DTO에 포함
-    private String imageUrl;         // 게시물에 등록된 이미지의 URL
+    private String imageUrls;
     // 게시물 조회 시 초기 댓글 데이터를 CursorReplyPaginationResponse 형태로 포함
-    private CursorCommentPaginationResponse<RecipientCommentResponseDto, Integer> initialCommentData;
+    private CursorCommentCountPaginationResponse<RecipientCommentResponseDto, Integer> initialCommentData;
 
     // Entity -> DTO 변환 메서드 (정적 팩토리 메서드)
     public static RecipientDetailResponseDto fromEntity(RecipientEntity entity, String anonymousWriterValue) {
@@ -53,20 +52,20 @@ public class RecipientDetailResponseDto {
                 .anonymityFlag(entity.getAnonymityFlag())
                 .readCount(entity.getReadCount())
                 .letterContents(entity.getLetterContents())
-                .fileName(entity.getFileName())
-                .orgFileName(entity.getOrgFileName())
+                // DB에서 String 형태로 저장된 값을 그대로 DTO에 전달
+                .fileNames(entity.getFileName())
+                .orgFileNames(entity.getOrgFileName())
+                .imageUrls(entity.getImageUrl())
                 .writeTime(entity.getWriteTime())
                 .modifyTime(entity.getModifyTime())
                 .delFlag(entity.getDelFlag())
-                .commentCount(0)
-                .imageUrl(entity.getImageUrl())
                 // 초기에는 댓글 데이터를 비워두고, 서비스 계층에서 설정
                 .initialCommentData(null) // 초기화 시 null 또는 기본 빈 객체
                 .build();
     }
 
     // 서비스 계층에서 초기 댓글 데이터를 설정하기 위한 setter
-    public void setInitialCommentData(CursorCommentPaginationResponse<RecipientCommentResponseDto, Integer> initialCommentData) {
+    public void setInitialCommentData(CursorCommentCountPaginationResponse<RecipientCommentResponseDto, Integer> initialCommentData) {
         this.initialCommentData = initialCommentData;
     }
 

@@ -80,8 +80,7 @@ public class SecureLogger {
         }
         return input
                 .replaceAll("[\r\n\t]", "")
-                .replaceAll("\\p{Cntrl}", "")
-                .replaceAll("[{}]", "");
+                .replaceAll("\\p{Cntrl}", "");
     }
 
     /**

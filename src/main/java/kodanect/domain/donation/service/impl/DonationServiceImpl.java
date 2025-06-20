@@ -22,6 +22,7 @@ import org.jsoup.select.Elements;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -126,12 +127,13 @@ public class DonationServiceImpl implements DonationService {
                 continue;
             }
 
-            // 원본 파일명 추출
-            String orgFileName = src.substring(src.lastIndexOf("/") + 1);
+            // 원본 파일명 추출 ( \\\ 제거)
+            String orgFileName = src.substring(src.lastIndexOf("/") + 1).replace("\"","");
+            String fileExt = src.substring(src.lastIndexOf(".") + 1).replace("\"", "");
 
             // 파일명 저장
             orgFileNames.add(orgFileName);
-            fileNames.add(makeStoredFileName()); // UUID 같은 방식
+            fileNames.add(makeStoredFileName() + "." + fileExt); // UUID + ".jpg(확장자)"
         }
 
         return new String[]{
@@ -141,6 +143,7 @@ public class DonationServiceImpl implements DonationService {
     }
 
     /* 스토리 상세 조회 */
+    @Transactional
     @Override
     public DonationStoryDetailDto findDonationStoryWithStoryId(Long storySeq) {
         logger.debug(">>> findDonationStoryWithStoryId() 호출");
@@ -161,11 +164,33 @@ public class DonationServiceImpl implements DonationService {
 
         // 4) DTO 조립
         DonationStoryDetailDto dto = DonationStoryDetailDto.fromEntity(story);
+
         dto.setComments(commentsPage);
+        dto.setImageUrl(getWholeImageUrl(story.getStoryContents())); // imageUrl
 
         return dto;
     }
 
+    private String getWholeImageUrl(String contents){
+        List<String> fileUrls = new ArrayList<>();
+        if (contents == null || contents.isBlank()) { //null 체크
+            return "";
+        }
+        Document doc = Jsoup.parse(contents);
+        Elements imgTags = doc.select("img");
+
+        for(Element img : imgTags){
+            String src = img.attr("src");
+
+            if (src == null || !src.contains("/")) {
+                continue;
+            }
+
+            src = src.replace("\"", "");
+            fileUrls.add(src);
+        }
+        return String.join(",", fileUrls);
+    }
 
 
     /** 비밀번호 검증 */
@@ -205,7 +230,9 @@ public class DonationServiceImpl implements DonationService {
         if (!storyPasscodeDto.getStoryPasscode().equals(story.getStoryPasscode())) {
             throw new PasscodeMismatchException(messageResolver.get("donation.error.delete.password_mismatch"));
         }
-        donationRepository.delete(story);
+
+        story.softDeleteStoryAndComments();
+        donationRepository.save(story);
     }
 
     /** 비밀번호 유효성 검증 */
