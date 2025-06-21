@@ -219,15 +219,15 @@ public class RecipientCommentServiceImpl implements RecipientCommentService {
             predicates.add(cb.equal(root.get(DEL_FLAG), "N"));
 
             // lastCommentId가 null이 아니고 0이 아니면 커서 조건 추가 (commentSeq는 int 타입이므로 intValue() 사용)
+            // 최신 댓글부터 보여주기 위해 commentSeq 내림차순 정렬이므로, cursor보다 작은 값을 찾습니다.
             if (lastCommentId != null && lastCommentId != 0) {
-                // 커서 방식에서 commentSeq가 오름차순 정렬이므로, lastCommentId보다 큰 값을 찾습니다.
-                predicates.add(cb.greaterThan(root.get(COMMENT_SEQ), lastCommentId));
+                predicates.add(cb.lessThan(root.get(COMMENT_SEQ), lastCommentId)); // <-- 여기!
             }
             return cb.and(predicates.toArray(new Predicate[0]));
         };
 
-        // 4. 정렬 조건 설정 (commentSeq 기준 오름차순 - 오래된 댓글부터)
-        Sort sort = Sort.by(Sort.Direction.ASC, COMMENT_SEQ);
+        // 4. 정렬 조건 설정 (commentSeq 기준 내림차순 - 최신 댓글부터)
+        Sort sort = Sort.by(Sort.Direction.DESC, COMMENT_SEQ);
 
         // 5. Pageable 설정 (PageRequest.of(0, querySize)를 사용하여 limit만 적용)
         Pageable pageable = PageRequest.of(0, querySize, sort);

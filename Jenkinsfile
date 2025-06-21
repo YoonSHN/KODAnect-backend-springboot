@@ -319,7 +319,8 @@ EOF
                 script {
                     githubNotify context: 'healthcheck', status: 'PENDING', description: '헬스체크 중...'
                     def healthCheckUrl = "http://10.8.110.14:8080/actuator/health"
-                    def retries = 5
+                    def retries = 10
+                    def delaySeconds = 10
                     def success = false
                     for (int i = 0; i < retries; i++) {
                         try {
@@ -335,7 +336,7 @@ EOF
                         } catch (Exception e) {
                             echo "헬스체크 중 오류 발생 (시도 ${i+1}/${retries}): ${e.getMessage()}"
                         }
-                        sleep 5
+                        sleep delaySeconds
                     }
                     if (success) {
                         githubNotify context: 'healthcheck', status: 'SUCCESS', description: '헬스체크 성공'
