@@ -186,12 +186,12 @@ class DonationControllerTest {
     void getDonationStoryDetail_success() throws Exception {
         DonationStoryDetailDto detailDto = DonationStoryDetailDto.builder()
                 .storySeq(1L)
-                .title("제목")
+                .storyTitle("제목")
                 .storyWriter("작가")
                 .writeTime("2025-06-12")
                 .areaCode(AreaCode.AREA100)
                 .readCount(0)
-                .storyContent("본문")
+                .storyContents("본문")
                 .fileName(null)
                 .orgFileName(null)
                 .build();
@@ -227,7 +227,7 @@ class DonationControllerTest {
     void verifyStoryPassword_success() throws Exception {
         VerifyStoryPasscodeDto req = new VerifyStoryPasscodeDto("abcd1234");
         DonationStoryDetailDto detailDto = DonationStoryDetailDto.builder()
-                .storySeq(1L).title("제목").storyWriter("글쓴이").storyContent("내용1").build();
+                .storySeq(1L).storyTitle("제목").storyWriter("글쓴이").storyContents("내용1").build();
 
         given(messageSourceAccessor.getMessage("donation.password.match"))
                 .willReturn("비밀번호 일치");

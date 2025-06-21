@@ -347,11 +347,15 @@ public class RecipientServiceImpl implements RecipientService {
                 .addTags("img")
                 .addAttributes("img", "src", "data-cke-saved-src", "style", "width", "height");
         String cleanContents = Jsoup.clean(processedContents, safelist);
+        logger.info("cleanAndValidateContents - Jsoup 필터링 후 내용: {}", cleanContents);
 
-        // 3. 필터링된 HTML에서 순수 텍스트 추출 후 최종 유효성 검사
-        String pureTextContents = Jsoup.parse(cleanContents).text();
-        if (pureTextContents.trim().isEmpty()) {
-            logger.warn("게시물 작업 실패: 필터링 후 내용이 비어있음");
+        // 3. 필터링된 HTML에서 순수 텍스트 추출 또는 이미지 존재 여부 확인 후 최종 유효성 검사
+        Document doc = Jsoup.parse(cleanContents);
+        String pureTextContents = doc.text();
+        boolean hasImages = doc.select("img").isEmpty(); // img 태그가 있으면 false, 없으면 true
+
+        if (pureTextContents.trim().isEmpty() && hasImages) { // pureTextContents가 비었고, 이미지도 없을 경우
+            logger.warn("cleanAndValidateContents - 게시물 작업 실패: 필터링 후 순수 텍스트와 이미지가 모두 없음");
             throw new RecipientInvalidDataException("게시물 내용은 필수 입력 항목입니다. (HTML 태그 필터링 후)");
         }
         // 최종적으로 정제된 HTML 내용 반환

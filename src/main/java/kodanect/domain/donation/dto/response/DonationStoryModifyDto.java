@@ -27,8 +27,8 @@ public class DonationStoryModifyDto {
     public static DonationStoryModifyDto fromEntity(DonationStoryDetailDto storyDetailDto){
         return DonationStoryModifyDto.builder()
                 .areaCode(storyDetailDto.getAreaCode())
-                .storyTitle(storyDetailDto.getTitle())
+                .storyTitle(storyDetailDto.getStoryTitle())
                 .storyWriter(storyDetailDto.getStoryWriter())
-                .storyContents(storyDetailDto.getStoryContent()).build();
+                .storyContents(storyDetailDto.getStoryContents()).build();
     }
 }

@@ -14,7 +14,7 @@ public class DonationStoryDetailDto {
 
     private Long storySeq;
 
-    private String title;
+    private String storyTitle;
 
     private String storyWriter;
     private String writeTime;
@@ -22,7 +22,7 @@ public class DonationStoryDetailDto {
     private AreaCode areaCode;
 
     private Integer readCount;
-    private String storyContent;
+    private String storyContents;
     private String fileName;        // 저장된 파일 이름 (서버 파일명)
     private String orgFileName;
 
@@ -33,12 +33,12 @@ public class DonationStoryDetailDto {
     public static DonationStoryDetailDto fromEntity(DonationStory story){
         return DonationStoryDetailDto.builder()
                 .storySeq(story.getStorySeq())
-                .title(story.getStoryTitle())
+                .storyTitle(story.getStoryTitle())
                 .storyWriter(story.getStoryWriter())
                 .writeTime(story.getWriteTime().toLocalDate().toString())
                 .areaCode(story.getAreaCode())
                 .readCount(story.getReadCount())
-                .storyContent(story.getStoryContents())
+                .storyContents(story.getStoryContents())
                 .fileName(story.getFileName())
                 .orgFileName(story.getOrgFileName())
                 .build();
