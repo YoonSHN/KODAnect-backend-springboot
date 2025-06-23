@@ -9,15 +9,21 @@ import kodanect.domain.heaven.dto.response.HeavenDetailResponse;
 import kodanect.domain.heaven.dto.response.HeavenResponse;
 import kodanect.domain.heaven.dto.response.MemorialHeavenResponse;
 import kodanect.domain.heaven.service.HeavenService;
+import kodanect.domain.remembrance.dto.common.BlankGroup;
+import kodanect.domain.remembrance.dto.common.PatternGroup;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.support.MessageSourceAccessor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import javax.validation.Valid;
 
 @RestController
 @RequestMapping("/heavenLetters")
+@Validated({BlankGroup.class, PatternGroup.class})
 @RequiredArgsConstructor
 public class HeavenController {
 
@@ -81,7 +87,7 @@ public class HeavenController {
     /* 게시물 등록 */
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<Void>> createHeaven(
-            @ModelAttribute HeavenCreateRequest heavenCreateRequest
+            @ModelAttribute @Valid HeavenCreateRequest heavenCreateRequest
     ) {
         heavenService.createHeaven(heavenCreateRequest);
 
@@ -94,7 +100,7 @@ public class HeavenController {
     @PostMapping("/{letterSeq}/verifyPwd")
     public ResponseEntity<ApiResponse<Void>> verifyHeavenPasscode(
             @PathVariable Integer letterSeq,
-            @RequestBody HeavenVerifyRequest heavenVerifyRequest
+            @RequestBody @Valid HeavenVerifyRequest heavenVerifyRequest
     ) {
         heavenService.verifyHeavenPasscode(letterSeq, heavenVerifyRequest.getLetterPasscode());
 
@@ -107,7 +113,7 @@ public class HeavenController {
     @PatchMapping(value = "/{letterSeq}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<Void>> updateHeaven(
         @PathVariable Integer letterSeq,
-        @ModelAttribute HeavenUpdateRequest heavenUpdateRequest
+        @ModelAttribute @Valid HeavenUpdateRequest heavenUpdateRequest
     ) {
         heavenService.updateHeaven(letterSeq, heavenUpdateRequest);
 
@@ -120,7 +126,7 @@ public class HeavenController {
     @DeleteMapping("/{letterSeq}")
     public ResponseEntity<ApiResponse<Void>> deleteHeaven(
         @PathVariable Integer letterSeq,
-        @RequestBody HeavenVerifyRequest heavenVerifyRequest
+        @RequestBody @Valid HeavenVerifyRequest heavenVerifyRequest
     ) {
         heavenService.deleteHeaven(letterSeq, heavenVerifyRequest.getLetterPasscode());
 

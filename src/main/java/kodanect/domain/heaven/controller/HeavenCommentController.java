@@ -7,14 +7,20 @@ import kodanect.domain.heaven.dto.request.HeavenCommentUpdateRequest;
 import kodanect.domain.heaven.dto.request.HeavenCommentVerifyRequest;
 import kodanect.domain.heaven.dto.response.HeavenCommentResponse;
 import kodanect.domain.heaven.service.HeavenCommentService;
+import kodanect.domain.remembrance.dto.common.BlankGroup;
+import kodanect.domain.remembrance.dto.common.PatternGroup;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.support.MessageSourceAccessor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import javax.validation.Valid;
 
 @RestController
 @RequestMapping("/heavenLetters/{letterSeq}/comments")
+@Validated({BlankGroup.class, PatternGroup.class})
 @RequiredArgsConstructor
 public class HeavenCommentController {
 
@@ -39,7 +45,7 @@ public class HeavenCommentController {
     @PostMapping
     public ResponseEntity<ApiResponse<Void>> createHeavenComment(
             @PathVariable Integer letterSeq,
-            @RequestBody HeavenCommentCreateRequest heavenCommentCreateRequest
+            @RequestBody @Valid HeavenCommentCreateRequest heavenCommentCreateRequest
     ) {
         heavenCommentService.createHeavenComment(letterSeq, heavenCommentCreateRequest);
 
@@ -53,7 +59,7 @@ public class HeavenCommentController {
     public ResponseEntity<ApiResponse<Void>> verifyHeavenCommentPasscode(
             @PathVariable Integer letterSeq,
             @PathVariable Integer commentSeq,
-            @RequestBody HeavenCommentVerifyRequest heavenCommentVerifyRequest
+            @RequestBody @Valid HeavenCommentVerifyRequest heavenCommentVerifyRequest
     ) {
         heavenCommentService.verifyHeavenCommentPasscode(letterSeq, commentSeq, heavenCommentVerifyRequest);
 
@@ -67,7 +73,7 @@ public class HeavenCommentController {
     public ResponseEntity<ApiResponse<Void>> updateHeavenComment(
             @PathVariable Integer letterSeq,
             @PathVariable Integer commentSeq,
-            @RequestBody HeavenCommentUpdateRequest heavenCommentUpdateRequest
+            @RequestBody @Valid HeavenCommentUpdateRequest heavenCommentUpdateRequest
     ) {
         heavenCommentService.updateHeavenComment(letterSeq, commentSeq, heavenCommentUpdateRequest);
 
@@ -81,7 +87,7 @@ public class HeavenCommentController {
     public ResponseEntity<ApiResponse<Void>> deleteHeavenComment(
             @PathVariable Integer letterSeq,
             @PathVariable Integer commentSeq,
-            @RequestBody HeavenCommentVerifyRequest heavenCommentVerifyRequest
+            @RequestBody @Valid HeavenCommentVerifyRequest heavenCommentVerifyRequest
     ) {
         heavenCommentService.deleteHeavenComment(letterSeq, commentSeq, heavenCommentVerifyRequest);
 

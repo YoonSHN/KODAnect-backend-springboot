@@ -134,7 +134,7 @@ public class DonationCommentServiceImplTest {
         given(storyRepository.findById(storySeq)).willReturn(Optional.of(story));
 
         DonationCommentCreateRequestDto dto = DonationCommentCreateRequestDto.builder()
-                .commentWriter("writer")
+                .commentWriter("작성자")
                 .commentPasscode("")
                 .contents("내용")
                 .build();
@@ -267,7 +267,7 @@ public class DonationCommentServiceImplTest {
         DonationStory story = DonationStory.builder().storySeq(storySeq).build();
         DonationStoryComment comment = DonationStoryComment.builder()
                 .commentSeq(commentSeq)
-                .commentWriter("old")
+                .commentWriter("oldㅊㅊㅊㅊㅊㅊㅊㅊ")
                 .commentPasscode("Abcd1234")
                 .contents("old content")
                 .story(story)

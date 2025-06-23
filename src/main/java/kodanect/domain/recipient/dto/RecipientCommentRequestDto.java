@@ -18,6 +18,7 @@ public class RecipientCommentRequestDto {
 
     @NotBlank(message = "작성자는 필수 입력 항목입니다.")
     @Size(max = 150, message = "작성자는 최대 150자(바이트) 이하여야 합니다.") // DB varchar(150)에 맞춰 조정
+    @Pattern(regexp = "^[a-zA-Z가-힣ㄱ-ㅎㅏ-ㅣ\\s]*$", message = "작성자는 한글과 영문만 입력 가능합니다.") // 한글, 영문, 공백 허용
     private String commentWriter;
 
     @NotBlank(message = "비밀번호는 필수 입력 항목입니다.")

@@ -53,6 +53,15 @@ public final class MessageKeys {
     public static final String FILE_SAVE_FAIL = "file.save.fail.error";
     public static final String FILE_UNSUPPORTED_TYPE = "file.unsupported.type.error";
     public static final String FILE_SIZE_EXCEED = "file.size.exceed.error";
+    public static final String BOARD_WRITER_EMPTY = "board.writer.empty.error";
+    public static final String BOARD_WRITER_INVALID = "board.writer.invalid.error";
+    public static final String BOARD_ANONYMITY_INVALID = "board.anonymity.invalid.error";
+    public static final String BOARD_PASSCODE_EMPTY = "board.passcode.empty.error";
+    public static final String BOARD_PASSCODE_INVALID = "board.passcode.invalid.error";
+    public static final String BOARD_TITLE_EMPTY = "board.title.empty.error";
+    public static final String BOARD_TITLE_INVALID = "board.title.invalid.error";
+    public static final String BOARD_CONTENTS_EMPTY = "board.contents.empty.error";
+
 
     // 액션 로그 관련
     public static final String ACTION_LOG_JSON_SERIALIZATION_FAIL = "error.actionlog.json.serialization";

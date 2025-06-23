@@ -87,7 +87,7 @@ public class DonationServiceImpl implements DonationService {
         logger.debug(">>> createDonationStory() 호출");
 
         validateStoryRequest(requestDto.getAreaCode(), requestDto.getStoryTitle(), requestDto.getStoryPasscode());
-
+        validateWriter(requestDto.getStoryWriter());
         // 이미지가 여러개 저장될 수 도 있음.
 
         String [] imgNames = imgParsing(requestDto.getStoryContents());
@@ -104,6 +104,13 @@ public class DonationServiceImpl implements DonationService {
                 .build();
 
         donationRepository.save(story);
+    }
+    // 작성자 닉네임 유효성 추가( 한글, 영어, 공백 1~30 글자 가능, 특수 문자,숫자 불가능)
+    private void validateWriter(String writer){
+        // 유효하지 않은 경우에만 예외 발생
+        if (writer == null || !writer.matches("^[a-zA-Z가-힣\\s]{1,30}$")) {
+            throw new InvalidWriterException(messageResolver.get("donation.writer.invalid"));
+        }
     }
 
     private String[] imgParsing(String storyContents) {
@@ -210,6 +217,7 @@ public class DonationServiceImpl implements DonationService {
         DonationStory story = donationRepository.findStoryOnlyById(storySeq)
                 .orElseThrow(() -> new DonationNotFoundException(messageResolver.get(DONATION_ERROR_NOTFOUND)));
 
+        validateWriter(requestDto.getStoryWriter());
         String [] imgNames = imgParsing(requestDto.getStoryContents());
 
         story.modifyDonationStory(requestDto, imgNames[1], imgNames[0]);
