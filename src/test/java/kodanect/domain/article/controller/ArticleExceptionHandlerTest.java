@@ -1,6 +1,6 @@
 package kodanect.domain.article.controller;
 
-import kodanect.common.config.GlobalsProperties;
+import kodanect.common.config.properties.GlobalsProperties;
 import kodanect.common.exception.config.ArticleExceptionHandler;
 import kodanect.common.exception.custom.FileMissingException;
 import kodanect.domain.article.dto.ArticleDetailDto;

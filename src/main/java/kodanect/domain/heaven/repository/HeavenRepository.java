@@ -43,7 +43,7 @@ public interface HeavenRepository extends JpaRepository<Heaven, Integer> {
             FROM Heaven h
             WHERE h.delFlag = 'N'
             AND (:cursor IS NULL OR h.letterSeq < :cursor)
-            ORDER BY h.letterSeq DESC
+            ORDER BY h.writeTime DESC
         """
     )
     List<HeavenResponse> findByCursor(@Param("cursor") Integer cursor, Pageable pageable);
@@ -76,7 +76,7 @@ public interface HeavenRepository extends JpaRepository<Heaven, Integer> {
             WHERE h.delFlag = 'N'
             AND (:cursor IS NULL OR h.letterSeq < :cursor)
             AND (h.letterTitle LIKE %:keyWord% OR h.letterContents LIKE %:keyWord%)
-            ORDER BY h.letterSeq DESC
+            ORDER BY h.writeTime DESC
         """
     )
     List<HeavenResponse> findByTitleOrContentsContaining(@Param("keyWord") String keyWord, @Param("cursor") Integer cursor, Pageable pageable);
@@ -109,7 +109,7 @@ public interface HeavenRepository extends JpaRepository<Heaven, Integer> {
             WHERE h.delFlag = 'N'
             AND (:cursor IS NULL OR h.letterSeq < :cursor)
             AND h.letterTitle LIKE %:keyWord%
-            ORDER BY h.letterSeq DESC
+            ORDER BY h.writeTime DESC
         """
     )
     List<HeavenResponse> findByTitleContaining(@Param("keyWord") String keyWord, @Param("cursor") Integer cursor, Pageable pageable);
@@ -142,7 +142,7 @@ public interface HeavenRepository extends JpaRepository<Heaven, Integer> {
             WHERE h.delFlag = 'N'
             AND (:cursor IS NULL OR h.letterSeq < :cursor)
             AND h.letterContents LIKE %:keyWord%
-            ORDER BY h.letterSeq DESC
+            ORDER BY h.writeTime DESC
         """
     )
     List<HeavenResponse> findByContentsContaining(@Param("keyWord") String keyWord, @Param("cursor") Integer cursor, Pageable pageable);
@@ -163,7 +163,7 @@ public interface HeavenRepository extends JpaRepository<Heaven, Integer> {
             WHERE h.delFlag = 'N'
             AND (:cursor IS NULL OR h.letterSeq < :cursor)
             AND h.memorial = :memorial
-            ORDER BY h.letterSeq DESC
+            ORDER BY h.writeTime DESC
         """
     )
     List<MemorialHeavenResponse> findMemorialHeavenResponseById(@Param("memorial") Memorial memorial, @Param("cursor") Integer cursor, Pageable pageable);

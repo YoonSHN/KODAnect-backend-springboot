@@ -1,6 +1,6 @@
 package kodanect.common.imageupload.service.impl;
 
-import kodanect.common.config.GlobalsProperties;
+import kodanect.common.config.properties.GlobalsProperties;
 import kodanect.common.imageupload.service.FileService;
 import kodanect.common.validation.FileValidator;
 import kodanect.domain.heaven.exception.FileDeleteFailException;

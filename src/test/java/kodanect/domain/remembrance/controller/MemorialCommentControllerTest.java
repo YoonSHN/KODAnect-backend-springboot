@@ -1,7 +1,7 @@
 package kodanect.domain.remembrance.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import kodanect.common.config.EgovConfigCommon;
+import kodanect.common.config.common.EgovConfigCommon;
 import kodanect.common.response.CursorCommentPaginationResponse;
 import kodanect.domain.remembrance.dto.MemorialCommentCreateRequest;
 import kodanect.domain.remembrance.dto.MemorialCommentPasswordRequest;

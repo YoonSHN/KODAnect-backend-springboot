@@ -1,6 +1,6 @@
 package kodanect.domain.recipient.service.impl;
 
-import kodanect.common.config.GlobalsProperties;
+import kodanect.common.config.properties.GlobalsProperties;
 import kodanect.domain.recipient.dto.RecipientDetailResponseDto;
 import kodanect.domain.recipient.dto.RecipientRequestDto;
 import kodanect.domain.recipient.entity.RecipientCommentEntity;

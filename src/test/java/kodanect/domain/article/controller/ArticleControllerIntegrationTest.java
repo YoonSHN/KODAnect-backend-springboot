@@ -1,6 +1,6 @@
 package kodanect.domain.article.controller;
 
-import kodanect.common.config.GlobalsProperties;
+import kodanect.common.config.properties.GlobalsProperties;
 import kodanect.common.util.RequestBasedHitLimiter;
 import kodanect.domain.article.entity.*;
 import kodanect.domain.article.repository.ArticleFileRepository;

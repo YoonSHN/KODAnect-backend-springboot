@@ -1,6 +1,6 @@
 package kodanect.domain.logging.scheduler;
 
-import kodanect.domain.logging.code.CrudCode;
+import kodanect.common.constant.CrudCode;
 import kodanect.domain.logging.flusher.ActionLogFlusher;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;

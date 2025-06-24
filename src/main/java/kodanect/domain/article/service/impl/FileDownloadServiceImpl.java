@@ -1,6 +1,6 @@
 package kodanect.domain.article.service.impl;
 
-import kodanect.common.config.GlobalsProperties;
+import kodanect.common.config.properties.GlobalsProperties;
 import kodanect.common.exception.config.SecureLogger;
 import kodanect.common.exception.custom.FileAccessViolationException;
 import kodanect.common.exception.custom.FileMissingException;

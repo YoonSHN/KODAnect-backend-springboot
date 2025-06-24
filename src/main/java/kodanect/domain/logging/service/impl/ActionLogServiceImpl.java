@@ -1,9 +1,9 @@
 package kodanect.domain.logging.service.impl;
 
-import kodanect.domain.logging.buffer.BackendLogBuffer;
-import kodanect.domain.logging.buffer.FrontendLogBuffer;
-import kodanect.domain.logging.context.MdcContext;
-import kodanect.domain.logging.buffer.SystemInfoBuffer;
+import kodanect.common.buffer.BackendLogBuffer;
+import kodanect.common.buffer.FrontendLogBuffer;
+import kodanect.common.constant.MdcContext;
+import kodanect.common.buffer.SystemInfoBuffer;
 import kodanect.domain.logging.dto.BackendLogDto;
 import kodanect.domain.logging.dto.FrontendLogDto;
 import kodanect.domain.logging.dto.SystemInfoDto;

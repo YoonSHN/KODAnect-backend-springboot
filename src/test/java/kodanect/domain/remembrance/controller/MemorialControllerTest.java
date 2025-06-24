@@ -1,6 +1,6 @@
 package kodanect.domain.remembrance.controller;
 
-import kodanect.common.config.EgovConfigCommon;
+import kodanect.common.config.common.EgovConfigCommon;
 import kodanect.common.response.CursorCommentPaginationResponse;
 import kodanect.common.response.CursorPaginationResponse;
 import kodanect.common.util.CursorFormatter;

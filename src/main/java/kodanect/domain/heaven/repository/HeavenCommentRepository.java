@@ -28,7 +28,7 @@ public interface HeavenCommentRepository extends JpaRepository<HeavenComment, In
             WHERE hc.delFlag = 'N'
             AND (:cursor IS NULL OR hc.commentSeq < :cursor)
             AND hc.heaven.letterSeq = :letterSeq
-            ORDER BY hc.commentSeq DESC
+            ORDER BY hc.writeTime DESC
         """
     )
     List<HeavenCommentResponse> findByCursor(Integer letterSeq, Integer cursor, Pageable pageable);
