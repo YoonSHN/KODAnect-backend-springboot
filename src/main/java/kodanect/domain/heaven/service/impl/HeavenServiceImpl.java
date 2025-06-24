@@ -5,6 +5,7 @@ import kodanect.common.response.CursorPaginationResponse;
 import kodanect.common.util.CursorFormatter;
 import kodanect.common.util.HeavenFinder;
 import kodanect.common.util.MemorialFinder;
+import kodanect.common.util.ViewTracker;
 import kodanect.common.validation.HeavenValidator;
 import kodanect.domain.heaven.dto.HeavenDto;
 import kodanect.domain.heaven.dto.request.HeavenCreateRequest;
@@ -46,6 +47,7 @@ public class HeavenServiceImpl implements HeavenService {
     private final HeavenFinder heavenFinder;
     private final MemorialFinder memorialFinder;
     private final FileService fileService;
+    private final ViewTracker viewTracker;
 
     /* 게시물 전체 조회 (페이징) */
     @Override
@@ -74,12 +76,14 @@ public class HeavenServiceImpl implements HeavenService {
     /* 게시물 상세 조회 */
     @Transactional(value = Transactional.TxType.NOT_SUPPORTED)
     @Override
-    public HeavenDetailResponse getHeavenDetail(Integer letterSeq) {
+    public HeavenDetailResponse getHeavenDetail(Integer letterSeq, String clientIp) {
         /* 게시물 상세 조회 */
         HeavenDto heavenDto = heavenFinder.findAnonymizedByIdOrThrow(letterSeq);
 
-        /* 조회수 증가 */
-        heavenRepository.updateReadCount(letterSeq);
+        /* 시간 확인 후 조회 수 증가 */
+        if (viewTracker.shouldIncreaseView(letterSeq, clientIp)) {
+            heavenRepository.updateReadCount(letterSeq);
+        }
 
         /* 댓글 리스트 조회 */
         List<HeavenCommentResponse> heavenCommentList = heavenCommentService.getHeavenCommentList(letterSeq, null, COMMENT_SIZE + 1);
@@ -147,7 +151,7 @@ public class HeavenServiceImpl implements HeavenService {
 
     /* 게시물 수정 */
     @Override
-    public void updateHeaven(Integer letterSeq, HeavenUpdateRequest heavenUpdateRequest) {
+    public Heaven updateHeaven(Integer letterSeq, HeavenUpdateRequest heavenUpdateRequest) {
         Heaven heaven = heavenFinder.findByIdOrThrow(letterSeq);
         Memorial memorial = memorialRepository.findById(heavenUpdateRequest.getDonateSeq()).orElse(null);
 
@@ -157,6 +161,8 @@ public class HeavenServiceImpl implements HeavenService {
         Map<String, String> fileMap = fileService.updateFile(heavenUpdateRequest.getLetterContents(), heaven.getOrgFileName());
 
         heaven.updateHeaven(heavenUpdateRequest, memorial, fileMap);
+
+        return heaven;
     }
 
     /* 게시물 삭제 */

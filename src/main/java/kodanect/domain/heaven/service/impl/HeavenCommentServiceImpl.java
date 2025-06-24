@@ -27,7 +27,7 @@ public class HeavenCommentServiceImpl implements HeavenCommentService {
     private final HeavenFinder heavenFinder;
     private final HeavenCommentFinder heavenCommentFinder;
 
-    /* 게시물 전체 조회 (페이징) */
+    /* 댓글 전체 조회 (페이징) */
     @Override
     public List<HeavenCommentResponse> getHeavenCommentList(Integer letterSeq, Integer cursor, int size) {
         Pageable pageable = PageRequest.of(0, size + 1);
@@ -70,10 +70,12 @@ public class HeavenCommentServiceImpl implements HeavenCommentService {
 
     /* 댓글 수정 */
     @Override
-    public void updateHeavenComment(Integer letterSeq, Integer commentSeq, HeavenCommentUpdateRequest heavenCommentUpdateRequest) {
+    public HeavenComment updateHeavenComment(Integer letterSeq, Integer commentSeq, HeavenCommentUpdateRequest heavenCommentUpdateRequest) {
         HeavenComment heavenComment = heavenCommentFinder.findByIdAndValidateOwnership(letterSeq, commentSeq);
 
         heavenComment.updateHeavenComment(heavenCommentUpdateRequest);
+
+        return heavenComment;
     }
 
     /* 댓글 삭제 */

@@ -44,7 +44,7 @@ public class HeavenCreateRequest {
 
     /* 편지 제목 */
     @NotBlank(message = BOARD_TITLE_EMPTY, groups = BlankGroup.class)
-    @Pattern(regexp = "^[a-zA-Z가-힣0-9]{1,50}$", message = BOARD_TITLE_INVALID, groups = PatternGroup.class)
+    @Pattern(regexp = "^[a-zA-Z가-힣0-9\\s]{1,50}$", message = BOARD_TITLE_INVALID, groups = PatternGroup.class)
     private String letterTitle;
 
     /* 편지 내용 */

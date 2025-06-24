@@ -6,6 +6,7 @@ import kodanect.domain.heaven.dto.response.HeavenDetailResponse;
 import kodanect.domain.heaven.dto.response.HeavenResponse;
 import kodanect.domain.heaven.dto.request.HeavenUpdateRequest;
 import kodanect.domain.heaven.dto.response.MemorialHeavenResponse;
+import kodanect.domain.heaven.entity.Heaven;
 
 public interface HeavenService {
 
@@ -16,7 +17,7 @@ public interface HeavenService {
     CursorPaginationResponse<HeavenResponse, Integer> getHeavenListSearchResult(String type, String keyWord, Integer cursor, int size);
 
     /* 게시물 상세 조회 */
-    HeavenDetailResponse getHeavenDetail(Integer letterSeq);
+    HeavenDetailResponse getHeavenDetail(Integer letterSeq, String clientIp);
 
     /* 기증자 추모관 상세 조회 시 하늘나라 편지 전체 조회 */
     CursorPaginationResponse<MemorialHeavenResponse, Integer> getMemorialHeavenList(Integer donateSeq, Integer cursor, int size);
@@ -28,7 +29,7 @@ public interface HeavenService {
     void verifyHeavenPasscode(Integer letterSeq, String letterPasscode);
 
     /* 게시물 수정 */
-    void updateHeaven(Integer letterSeq, HeavenUpdateRequest heavenUpdateRequest);
+    Heaven updateHeaven(Integer letterSeq, HeavenUpdateRequest heavenUpdateRequest);
 
     /* 게시물 삭제 */
     void deleteHeaven(Integer letterSeq, String letterPasscode);

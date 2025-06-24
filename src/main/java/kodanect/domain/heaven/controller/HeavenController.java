@@ -19,6 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 
 @RestController
@@ -61,9 +62,10 @@ public class HeavenController {
     /* 게시물 상세 조회 */
     @GetMapping("/{letterSeq}")
     public ResponseEntity<ApiResponse<HeavenDetailResponse>> getHeavenDetail(
-            @PathVariable Integer letterSeq
+            @PathVariable Integer letterSeq,
+            HttpServletRequest request
     ) {
-        HeavenDetailResponse heavenDetailResponse = heavenService.getHeavenDetail(letterSeq);
+        HeavenDetailResponse heavenDetailResponse = heavenService.getHeavenDetail(letterSeq, getClientIP(request));
 
         String message = messageSourceAccessor.getMessage("board.read.success");
 
@@ -133,5 +135,16 @@ public class HeavenController {
         String message = messageSourceAccessor.getMessage("board.delete.success");
 
         return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, message));
+    }
+
+    /* IP 반환 메서드 */
+    private String getClientIP(HttpServletRequest request) {
+        String ip = request.getHeader("X-Forwarded-For");
+
+        if (ip == null || ip.isEmpty()) {
+            ip = request.getRemoteAddr();
+        }
+
+        return ip;
     }
 }

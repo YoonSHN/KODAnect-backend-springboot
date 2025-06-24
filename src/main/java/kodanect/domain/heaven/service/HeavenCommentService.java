@@ -5,6 +5,7 @@ import kodanect.domain.heaven.dto.request.HeavenCommentCreateRequest;
 import kodanect.domain.heaven.dto.request.HeavenCommentUpdateRequest;
 import kodanect.domain.heaven.dto.request.HeavenCommentVerifyRequest;
 import kodanect.domain.heaven.dto.response.HeavenCommentResponse;
+import kodanect.domain.heaven.entity.HeavenComment;
 
 import java.util.List;
 
@@ -22,8 +23,8 @@ public interface HeavenCommentService {
     /* 댓글 수정 인증 */
     void verifyHeavenCommentPasscode(Integer letterSeq, Integer commentSeq, HeavenCommentVerifyRequest heavenCommentVerifyRequest);
 
-    /* 게시물 수정 */
-    void updateHeavenComment(Integer letterSeq, Integer commentSeq, HeavenCommentUpdateRequest heavenCommentUpdateRequest);
+    /* 댓글 수정 */
+    HeavenComment updateHeavenComment(Integer letterSeq, Integer commentSeq, HeavenCommentUpdateRequest heavenCommentUpdateRequest);
 
     /* 댓글 삭제 */
     void deleteHeavenComment(Integer letterSeq, Integer commentSeq, HeavenCommentVerifyRequest heavenCommentVerifyRequest);

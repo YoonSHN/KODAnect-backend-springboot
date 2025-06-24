@@ -212,29 +212,37 @@ public class MemorialServiceImpl implements MemorialService {
                     InvalidContentsException
     {
         /* 게시글 조회 */
-        Memorial memorial = memorialFinder.findByIdOrThrow(donateSeq);
+        ReentrantReadWriteLock lock = getLock(donateSeq);
+        lock.readLock().lock();
 
-        /* 댓글 리스트 모두 조회 */
-        List<MemorialCommentResponse> memorialCommentResponses =
-                memorialCommentService.getMemorialCommentList(donateSeq, null, DEFAULT_SIZE + 1);
+        try{
+            Memorial memorial = memorialFinder.findByIdOrThrow(donateSeq);
 
-        /* 댓글 총 갯수 조회 */
-        long totalCount = memorialCommentService.getTotalCommentCount(donateSeq);
+            /* 댓글 리스트 모두 조회 */
+            List<MemorialCommentResponse> memorialCommentResponses =
+                    memorialCommentService.getMemorialCommentList(donateSeq, null, DEFAULT_SIZE + 1);
 
-        /* 댓글 리스트 페이징 포매팅 */
-        CursorCommentPaginationResponse<MemorialCommentResponse, Integer> cursoredReplies =
-                CursorFormatter.cursorCommentCountFormat(memorialCommentResponses, DEFAULT_SIZE, totalCount);
+            /* 댓글 총 갯수 조회 */
+            long totalCount = memorialCommentService.getTotalCommentCount(donateSeq);
 
-        /* 하늘나라 편지 리스트 조회 */
-        CursorPaginationResponse<MemorialHeavenResponse, Integer> cursoredLetters =
-                heavenService.getMemorialHeavenList(donateSeq, null, DEFAULT_SIZE);
+            /* 댓글 리스트 페이징 포매팅 */
+            CursorCommentPaginationResponse<MemorialCommentResponse, Integer> cursoredReplies =
+                    CursorFormatter.cursorCommentCountFormat(memorialCommentResponses, DEFAULT_SIZE, totalCount);
 
-        /* 기증자 상세 조회 */
-        return MemorialDetailResponse.of(
-                memorial,
-                cursoredReplies,
-                cursoredLetters
-        );
+            /* 하늘나라 편지 리스트 조회 */
+            CursorPaginationResponse<MemorialHeavenResponse, Integer> cursoredLetters =
+                    heavenService.getMemorialHeavenList(donateSeq, null, DEFAULT_SIZE);
+
+            /* 기증자 상세 조회 */
+            return MemorialDetailResponse.of(
+                    memorial,
+                    cursoredReplies,
+                    cursoredLetters
+            );
+        }
+        finally {
+            lock.readLock().unlock();
+        }
     }
 }
 
