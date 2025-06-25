@@ -94,6 +94,7 @@ public class Heaven {
     private String delFlag = DEFAULT_DEL_FLAG;
 
     @OneToMany(mappedBy = "heaven")
+    @Builder.Default
     private List<HeavenComment> comments = new ArrayList<>();
 
     /* 영속성 컨텍스트에 처음 저장되기 직전에 실행되는 메서드 */

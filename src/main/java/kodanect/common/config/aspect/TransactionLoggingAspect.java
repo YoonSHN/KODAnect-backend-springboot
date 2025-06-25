@@ -5,6 +5,8 @@ import lombok.RequiredArgsConstructor;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 /**
@@ -23,6 +25,7 @@ import org.springframework.stereotype.Component;
  */
 @Aspect
 @Component
+@Order(Ordered.LOWEST_PRECEDENCE - 1)
 @RequiredArgsConstructor
 public class TransactionLoggingAspect {
 
@@ -35,7 +38,7 @@ public class TransactionLoggingAspect {
      * @return 원래 메서드의 실행 결과
      * @throws Throwable 원래 메서드에서 발생하는 예외 그대로 전달
      */
-    @Around("@annotation(org.springframework.transaction.annotation.Transactional) || @within(org.springframework.transaction.annotation.Transactional)")
+    @Around("execution(* kodanect.domain..service.impl..*(..))")
     public Object logTransaction(ProceedingJoinPoint joinPoint) throws Throwable {
         String methodName = (joinPoint.getSignature() != null)
                 ? joinPoint.getSignature().getName() : "UnknownMethod";

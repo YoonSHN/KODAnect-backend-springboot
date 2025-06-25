@@ -26,6 +26,22 @@
             <AppenderRef ref="console"/>
         </Logger>
 
+        <!-- 트랜잭션 인터셉터 (Spring AOP 기반 트랜잭션 처리 로그) -->
+        <Logger name="org.springframework.transaction.interceptor" level="DEBUG" additivity="false">
+            <AppenderRef ref="console"/>
+        </Logger>
+
+        <!-- 트랜잭션 PlatformTransactionManager 관련 로그 -->
+        <Logger name="org.springframework.orm.jpa.JpaTransactionManager" level="DEBUG" additivity="false">
+            <AppenderRef ref="console"/>
+        </Logger>
+
+        <Logger name="org.hibernate.transaction" level="DEBUG" additivity="false">
+            <AppenderRef ref="console"/>
+        </Logger>
+
+
+
         <!-- Spring Bean 생성 관련 Support 클래스 로그 (불필요한 DEBUG 로그 억제) -->
         <Logger name="org.springframework.beans.factory.support" level="ERROR" additivity="false">
             <AppenderRef ref="console"/>
