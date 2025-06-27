@@ -20,7 +20,7 @@ KODA(한국장기조직기증원) 공식 홈페이지는 현재 PC 웹과 모바
 <br>
 
 **백엔드 스택**
-Spring Boot, JPA, eGovFrame, Flyway, MySQL, H2, Apache, Log4j2, JUnit, Mockito, JMeter, K6
+Spring Boot, JPA, eGovFrame, MySQL, H2, Apache, Log4j2, JUnit, Mockito, JMeter, K6
 <div align="center">
   <img src="https://github.com/user-attachments/assets/de41c475-f0f8-4931-83bd-4e028a2fa370" style="width:100%;" />
 </div>
@@ -28,7 +28,7 @@ Spring Boot, JPA, eGovFrame, Flyway, MySQL, H2, Apache, Log4j2, JUnit, Mockito, 
 <br>
 
 **인프라 스택**
-Docker, Docker Compose, Jenkins, Spring Cloud, Nginx, Sentry
+Docker,  Jenkins, Gabia Cloud, Nginx, Sentry, SonarQube
 <div align="center">
   <img src="https://github.com/user-attachments/assets/59835619-e181-4c27-b56d-f232358af6bf" style="width:100%;" />
 </div>
