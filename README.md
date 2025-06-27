@@ -20,13 +20,15 @@ KODA(한국장기조직기증원) 공식 홈페이지는 현재 PC 웹과 모바
 <br>
 
 **백엔드 스택**
+Spring Boot, JPA, eGovFrame, Flyway, MySQL, H2, Apache, Log4j2, JUnit, Mockito, JMeter, K6
 <div align="center">
   <img src="https://github.com/user-attachments/assets/de41c475-f0f8-4931-83bd-4e028a2fa370" style="width:100%;" />
 </div>
-
+---
 <br>
 
 **인프라 스택**
+Docker, Docker Compose, Jenkins, Spring Cloud, Nginx, Sentry
 <div align="center">
   <img src="https://github.com/user-attachments/assets/59835619-e181-4c27-b56d-f232358af6bf" style="width:100%;" />
 </div>
@@ -34,6 +36,7 @@ KODA(한국장기조직기증원) 공식 홈페이지는 현재 PC 웹과 모바
 <br>
 
 **협업 도구 스택**
+GitHub, Postman, Figma, Notion, Slack
 <div align="center">
   <img src="https://github.com/user-attachments/assets/3b0c8fac-f416-4deb-b801-6be31b398120" style="width:100%;" />
 </div>
@@ -45,4 +48,28 @@ KODA(한국장기조직기증원) 공식 홈페이지는 현재 PC 웹과 모바
   <img src="https://github.com/user-attachments/assets/d9567878-78ad-4aa5-8fd2-4dba3a1b336b" style="width:100%;" />
 </div>
 
+1. **개발자가 GitHub에 코드를 푸시**  
+2. Jenkins가 코드 분석(Checkstyle, JUnit 등) 및 Docker 이미지 빌드 수행  
+3. 빌드된 이미지를 Nginx, Spring, FastAPI, MySQL 인프라로 배포  
+4. 배포 후 오류는 Sentry를 통해 Slack으로 팀에 자동 알림 전송
+
+
+
+---
+
+## 📁 폴더 구조 & 주요 모듈
+
+- `kodanect.domain`: 주요 도메인 CRUD, 예외 처리, 서비스 계층
+- `kodanect.common`: AOP, 글로벌 예외 처리, 로깅 설정(Log4j2 + MDC)
+- `docker-compose.*.yml`: 개발 및 운영 환경용 Docker 설정
+- `config/checkstyle/`: 코드 스타일 정의
+- `Jenkinsfile`: CI/CD 자동화 스크립트
+
+## 🔍 주요 특징 요약
+
+-  **로깅/모니터링**: Log4j2 + MDC + SecureLogger + Sentry 연동
+-  **품질 분석**: Checkstyle, SpotBugs, OWASP Dependency-Check
+-  **CI/CD**: Jenkins 기반 자동 빌드 및 Slack 알림
+-  **예외 관리**: eGov AOP 기반 글로벌 예외 처리 구조
+-  **파일 관리**: Docker 컨테이너 바인딩 방식으로 업로드 파일 처리
 
