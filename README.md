@@ -47,6 +47,10 @@ GitHub, Postman, Figma, Notion, Slack
 <div align="center">
   <img src="https://github.com/user-attachments/assets/d9567878-78ad-4aa5-8fd2-4dba3a1b336b" style="width:100%;" />
 </div>
+<div align="center">
+  <img src="https://github.com/user-attachments/assets/4e8058e6-eb01-47b5-8fe1-4dd22d59503f"  style="width:100%;" />
+</div>
+
 
 1. **개발자가 GitHub에 코드를 푸시**  
 2. Jenkins가 코드 분석(Checkstyle, JUnit 등) 및 Docker 이미지 빌드 수행  
@@ -72,4 +76,16 @@ GitHub, Postman, Figma, Notion, Slack
 -  **CI/CD**: Jenkins 기반 자동 빌드 및 Slack 알림
 -  **예외 관리**: eGov AOP 기반 글로벌 예외 처리 구조
 -  **파일 관리**: Docker 컨테이너 바인딩 방식으로 업로드 파일 처리
+
+## 주요 이미지
+
+<div align="center">
+  <img src="https://github.com/user-attachments/assets/875b4f96-5097-4ee0-a39b-ac1926535341" style="width:100%;" />
+</div>
+<div align="center">
+  <img src="https://github.com/user-attachments/assets/5dff56cf-eab9-48ba-bd50-6a5644343a73" style="width:100%;" />
+</div>
+<div align="center">
+  <img src="https://github.com/user-attachments/assets/e5d0ddb6-3b14-4ad5-af05-96372d5a0043" style="width:100%;" />
+</div>
 
